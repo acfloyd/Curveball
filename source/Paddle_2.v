@@ -1,6 +1,5 @@
 
-
-module Graphics_ASIC(
+module Paddle_2(
 	input clk,
 	input rst,
 	input[15:0] x_loc,

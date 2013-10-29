@@ -1,5 +1,4 @@
 
-
 module Frame_Score(
 	input clk,
 	input rst,

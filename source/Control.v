@@ -1,5 +1,4 @@
 
-
 module Control(
 	input clk,
 	input rst,
@@ -13,5 +12,9 @@ module Control(
 	output[23:0] color,
 	output[18:0] address
     );
-	
+	reg[15:0] x,y;
+	assign color = (paddle_1) ? paddle_1 :
+					(ball) ? ball :
+					(frame_score) ? frame_score :
+					(paddle_2) ? paddle_2 : 24'b0;
 endmodule
