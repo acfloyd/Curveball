@@ -4,8 +4,9 @@ module Graphics_ASIC(
 	input rst,
 	input[3:0] chipselect,
 	input[15:0] databus,
+	input[3:0] data_address,
     output[23:0] color,
-    output[18:0] address
+    output[18:0] pixel_address
     );
 	reg [15:0] paddle_1_x, paddle_1_x_buffer;
 	reg [15:0] paddle_1_y, paddle_1_y_buffer;
