@@ -1,22 +1,7 @@
 module ps2_mouse(output [9:0] data_out, output RDA, inout MOUSE_CLOCK, MOUSE_DATA, input [23:0] data_in, input clk, rst, io_cs, addr, dav);
 
-  reg [7:0] status, x_move, y_move;
-  wire [7:0] next_status, next_x_move, next_y_move;
-  
-  assign next_status = (dav) ? data_in[23:16] : 8'd0;
-  assign next_x_move = (dav) ? data_in[15:8] : 8'd0;
-  assign next_y_move = (dav) ? data_in[7:0] : 8'd0;
-  
-  always@(posedge clk, posedge rst) begin
-    if(rst) begin
-      status <= 8'd0;
-      x_move <= 8'd0;
-      y_move <= 8'd0;
-    end
-    else begin
-      
-    end
-  end
+  ps2_tx tx(.TCP(TCP), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
+  ps2_rx rx(.data(data_out), .dav(RDA), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
   
 endmodule 
 
