@@ -20,7 +20,7 @@ module ps2_mouse(output [9:0] data_out, output RDA, inout MOUSE_CLOCK, MOUSE_DAT
   
 endmodule 
 
-module ps2_rx(output [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
+module ps2_rx(output reg [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
   
   reg [7:0] shifter, next_shift;
   reg [3:0] state, next_state;
@@ -29,9 +29,6 @@ module ps2_rx(output [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA, inp
   
   localparam INIT = 4'd0, IDLE = 4'd1, START = 4'd2, STOP = 4'd11;
   
-  assign data[23:16] = (count == 2'd1) ? shifter : 8'd0;
-  assign data[15:8] = (count == 2'd2) ? shifter : 8'd0;
-  assign data[7:0] = (count == 2'd3) ? shifter : 8'd0;
   assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
   
   always@(posedge MOUSE_CLOCK, negedge MOUSE_CLOCK) begin
@@ -42,12 +39,24 @@ module ps2_rx(output [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA, inp
   end
   
   always@(posedge clk, posedge rst) begin
-    if(rst)
+    if(rst) begin
       state <= INIT;
+      shifter <= 8'd0;
+      count <= 2'd0;
+      data <= 24'd0;
+    end
     else begin
       state <= next_state;
       shifter <= next_shift; 
-      count <= next_count;   
+      count <= next_count;
+      case(count)
+        2'd1:
+          data[23:16] <= shifter;
+        2'd2:
+          data[15:8] <= shifter;
+        2'd3:
+          data[7:0] <= shifter;
+      endcase 
     end
   end
   
@@ -62,7 +71,7 @@ module ps2_rx(output [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA, inp
       end
       IDLE: begin
         if(m_clk && !MOUSE_DATA)
-          next_state = START;
+          next_state = state + 4'd1;
       end
       STOP: begin
         next_state = IDLE; 
@@ -81,12 +90,13 @@ endmodule
 
 module ps2_tx(output reg TCP, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst);
   
+  reg [13:0] hold_clk, next_hold_clk;
   reg [7:0] shifter, next_shift;
   reg [3:0] state, next_state;
   reg m_clk, t_clk, m_data, t_data, clk_low;
   wire [7:0] status_req;
   
-  localparam INIT = 4'd0, SEND_START = 4'd1, SEND_DATA = 4'd2, STOP = 4'd11;
+  localparam INIT = 4'd0, SEND_REQ = 4'd1, SEND_START = 4'd2, SEND_DATA = 4'd3, STOP = 4'd12;
   
   assign MOUSE_CLOCK = (t_clk) ? m_clk : 1'bz;
   assign MOUSE_DATA = (t_data) ? m_data : 1'bz;
@@ -106,6 +116,7 @@ module ps2_tx(output reg TCP, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst);
     else begin
       state <= next_state; 
       shifter <= next_shift; 
+      hold_clk <= next_hold_clk;
     end
   end
   
@@ -117,18 +128,27 @@ module ps2_tx(output reg TCP, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst);
     next_state = state;
     next_shift = shifter;
     TCP = 1'b0;
+    next_hold_clk = hold_clk;
     case(state)
       INIT: begin
         if(!rst) begin
           next_state = SEND_START;
-          t_clk = 1'b1;
-          m_clk = 1'b0; 
           next_shift = {par, status_req};
+          next_hold_clk = 14'd10000;
         end 
+      end
+      SEND_REQ: begin
+        t_clk = 1'b1;
+        m_clk = 1'b0;
+        next_hold_clk = hold_clk - 14'd1;
+        if(next_hold_clk == 14'd0)
+          next_state = state + 4'd1; 
       end
       SEND_START: begin
          t_data = 1'b1;
          m_data = 1'b0;
+         if(clk_low)
+           next_state = state + 4'd1;
       end 
       STOP: begin
          t_data = 1'b1;
