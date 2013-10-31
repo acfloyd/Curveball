@@ -1,0 +1,12 @@
+D:/Users/John/Documents/GitHub/Curveball/source/ps2/ps2_mouse.v {1 {vlog -work work D:/Users/John/Documents/GitHub/Curveball/source/ps2/ps2_mouse.v
+Model Technology ModelSim PE Student Edition vlog 10.2c Compiler 2013.07 Jul 18 2013
+-- Compiling module ps2_mouse
+-- Compiling module ps2_rx
+-- Compiling module ps2_tx
+
+Top level modules:
+	ps2_mouse
+	ps2_rx
+	ps2_tx
+
+} {} {}}

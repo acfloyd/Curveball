@@ -6,6 +6,7 @@ module ps2_mouse(output [9:0] data_out, output RDA, inout MOUSE_CLOCK, MOUSE_DAT
   assign next_status = (dav) ? data_in[23:16] : 8'd0;
   assign next_x_move = (dav) ? data_in[15:8] : 8'd0;
   assign next_y_move = (dav) ? data_in[7:0] : 8'd0;
+  assign data_out = (addr
   
   always@(posedge clk, posedge rst) begin
     if(rst) begin
