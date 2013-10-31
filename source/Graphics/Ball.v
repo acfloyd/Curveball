@@ -7,7 +7,7 @@ module Ball(
 	input[15:0] z_loc,
 	input[15:0] pixel_x,
 	input[15:0] pixel_y,
-	output[23:0] color
+	output[2:0] color
     );
 	
 endmodule
