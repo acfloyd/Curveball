@@ -1,4 +1,4 @@
-module ps2_mouse(output [9:0] data_out, output RDA, t_clk, inout MOUSE_CLOCK, MOUSE_DATA, input [23:0] data_in, input clk, rst, io_cs, addr, dav);
+module ps2_mouse(output [23:0] data_out, output RDA, t_clk, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, io_cs, addr);
 
   ps2_tx tx(.TCP(TCP), .t_clk(t_clk), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
   ps2_rx rx(.data(data_out), .dav(RDA), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
