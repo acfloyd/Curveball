@@ -1,8 +1,8 @@
-module Decode(clk, rst, InstructIn, DataIn, WrEn, SignExSel, ZeroExtend8, WrMuxSel, DataOut2Sel, 
+module Decode(clk, rst, InstructIn, DataIn, WrRegEn, SignExSel, ZeroExtend8, WrMuxSel, DataOut2Sel, 
 			  NextPCIn, RsForwarding, RtForwarding, ForwardRs, ForwardRt, Branch, NextPCSel, LoadR7,
 			  BranchImmedSel, NextPCOut, CalculatedPC, DataOut1, DataOut2, SignExt, InstructOut);
 
-	input clk, rst, WrEn, DataOut2Sel, ForwardRs, ForwardRt, Branch, NextPCSel, ZeroExtend8;
+	input clk, rst, WrRegEn, DataOut2Sel, ForwardRs, ForwardRt, Branch, NextPCSel, ZeroExtend8;
 	input LoadR7, BranchImmedSel;
 	input [1:0] WrMuxSel, SignExSel;
 	input [15:0] InstructIn, DataIn, NextPCIn, RsForwarding, RtForwarding;
@@ -29,7 +29,7 @@ module Decode(clk, rst, InstructIn, DataIn, WrEn, SignExSel, ZeroExtend8, WrMuxS
 					 (SignExSel == 2'b10) ? SignExt11 :
 					 (SignExSel == 2'b11) ? ZeroExtOut : 16'dz;
 
-	REGMEM REGMEM(.ADDRA(InstructIn[7:5]), .DINA(DataIn), .WEA(WrEn), .CLKA(clk), .ADDRB(InstructIn[7:5]), 
+	REGMEM REGMEM(.ADDRA(InstructIn[7:5]), .DINA(DataIn), .WEA(WrRegEn), .CLKA(clk), .ADDRB(InstructIn[7:5]), 
 				  .DINB(16'd0), .WEB(1'b0), .CLKB(clk), .DOUTA(RegOut1), .DOUTB(RegOut2));
 
 	assign Reg1MuxOut = (ForwardRs) ? RsForwarding : RegOut1;
