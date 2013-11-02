@@ -1,4 +1,71 @@
 `timescale 1ns/1ns
+
+module t_Frame_Score;
+  
+  reg clk, rst;
+  reg[15:0] pixel_x, pixel_y, your_score, their_score, game_state;
+  wire[2:0] color;
+  
+  wire[23:0] rgb;
+  
+  integer file, rc;
+  
+  Frame_Score fs(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .game_state(game_state), .color(color));
+  
+  // clk logic
+  initial begin
+    clk = 0;
+    forever #10 clk = ~clk;
+  end
+  
+  // pixel x/y logic
+  initial begin
+    pixel_x = 0;
+    pixel_y = 0;
+    
+    while(pixel_y <= 479) begin
+      #10
+      pixel_x = pixel_x + 1;
+      if(pixel_x == 640) begin
+        pixel_x = 0;
+        pixel_y = pixel_y + 1;
+      end
+    end
+  end
+  
+  // handle color
+  assign rgb = (color == 1) ? 24'hFF0000 : 24'h000000;
+  
+  // file ouput
+  initial begin
+    file = $fopen("image", "w");
+    if(file == 0)
+      $display("error");
+  end
+  
+  always@(pixel_x)
+    $fwrite(file, "%x\n", rgb);
+  
+  // ending logic
+  always@(pixel_y)
+    if(pixel_y >= 480) begin
+      $fclose(file);
+      $stop;
+    end
+  
+  // init other inputs to nothing
+  initial begin
+    your_score = 0;
+    their_score = 0;
+    game_state = 0;
+  end
+  
+endmodule
+
+
+
+
+/***********************
 module t_Frame_Score();
   //parameters
   parameter N=8;
@@ -32,3 +99,4 @@ module t_Frame_Score();
   end  
  
 endmodule
+*************************/
