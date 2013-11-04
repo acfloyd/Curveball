@@ -1,12 +1,12 @@
 module Decode(clk, rst, InstructIn, DataIn, WrEn, SignExSel, ZeroExtend8, SetFlag, WrMuxSel, DataOut2Sel, 
 			  NextPCIn, RsForwarding, RtForwarding, ForwardRs, ForwardRt, Branch, NextPCSel, LoadR7,
-			  BranchImmedSel, NextPCOut, DataOut1, DataOut2, SignExt, InstructOut, TruePC);
+			  BranchImmedSel, NextPCOut, DataOut1, DataOut2, SignExt, InstructOut, TruePC, Jump);
 
 	input clk, rst, WrEn, DataOut2Sel, ForwardRs, ForwardRt, Branch, NextPCSel, ZeroExtend8;
-	input LoadR7, BranchImmedSel;
+	input LoadR7, BranchImmedSel, Jump;
 	input [1:0] WrMuxSel, SignExSel, SetFlag;
 	input [15:0] InstructIn, DataIn, NextPCIn, RsForwarding, RtForwarding;
-	output [15:0] NextPCOut, CalculatedPC, DataOut1, DataOut2, SignExt, InstructOut;
+	output [15:0] NextPCOut, DataOut1, DataOut2, SignExt, InstructOut, TruePC;
 
 	wire [2:0] wrMuxOut;
 	wire [15:0] SignExt5, SignExt8, SignExt11, ZeroExtOut;
@@ -53,7 +53,7 @@ module Decode(clk, rst, InstructIn, DataIn, WrEn, SignExSel, ZeroExtend8, SetFla
 	assign CalculatedPC = PCAddIn1 + PCAddIn2;
 	assign BranchFlag = Branch & Flag;
 	assign JumpOrBranchFlag = BranchFlag | Jump;
-	assign TruePC = (JumpOrBranchFlag) ? CalculatedPC : NextPC;
+	assign TruePC = (JumpOrBranchFlag) ? CalculatedPC : NextPCIn;
 
 
 

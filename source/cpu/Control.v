@@ -1,13 +1,17 @@
-module Control(Instruct, NotBranchOrJump, WrRegEn, WrMuxSel, SignExtSel, ZeroExtend8, NextPCSel, BranchImmSel, LoadR7, DataOut2Sel, ALUOp, AddMode, ShiftMode, SetFlag, AOp, ZeroB, FlagMux, WrMemEn, MemToReg)
+module Control(clk, rst, Instruct, NotBranchOrJump, WrRegEn, WrMuxSel, SignExtSel, 
+               ZeroExtend8, NextPCSel, BranchImmSel, LoadR7, DataOut2Sel, 
+               ALUOp, AddMode, ShiftMode, SetFlagD, SetFlagE, AOp, ZeroB, FlagMux, WrMemEn, MemToReg);
 
+input clk, rst;
 input[15:0] Instruct;
 
 output NotBranchOrJump, WrRegEn, ZeroExtend8, NextPCSel, BranchImmSel, LoadR7, DataOut2Sel, AddMode, ZeroB, FlagMux, WrMemEn, MemToReg;
-output[1:0] WrMuxSel, SignExtSel, ShiftMode, SetFlag, AOp;
-output[2:0] ALUOp;
+output[1:0] WrMuxSel, SignExtSel, ShiftMode, SetFlagD, SetFlagE, AOp;
+output reg[2:0] ALUOp;
 
 reg [15:0] i1, i2, i3, i4, i5;
 parameter NOP = 16'b1110100000000000;
+assign halt = i1[15] & i1[14] & i1[13] & ~i1[12] & ~i1[11];
 
 always @ (posedge clk, posedge rst) begin
 	if(rst) begin
@@ -54,29 +58,31 @@ assign AddMode = !((i3[15:11] == 5'b00001) | (i3[15:11] == 5'b10000 & i3[1:0] ==
 assign ShiftMode = (i3[15:13] == 3'b010) ? i3[12:11] : i3[1:0];
 assign SetFlagE = i3[1:0];
 assign AOp[0] = ((i3[15:11] == 5'b01100) | (i3[15:12] == 4'b0111) | (i3[15:11] == 5'b10001 & i3[1:0] == 2'b11));
-assign AOp[1] = i3[15:13] = 3'b011;
+assign AOp[1] = i3[15:13] == 3'b011;
 assign ZeroB = ((i3[15:11] == 5'b01100) | (i3[15:13] == 3'b101) | (i3[15:13] == 4'b1101));
 assign FlagMux = i3[15:11] == 5'b10011;
 assign WrMemEn = i4[14:11] == 4'b1110;
 assign MemToReg = i5[14:11] == 4'b1111;
 
-casez({i3[15:11], i3[1:0]})
-	7'b00010zz: assign ALUOp = 3'b010;
-	7'b00011zz: assign ALUOp = 3'b011;
-	7'b00100zz: assign ALUOp = 3'b100;
-	7'b00101zz: assign ALUOp = 3'b101;
-	7'b00110zz: assign ALUOp = 3'b110;
-	7'b010zzzz: assign ALUOp = 3'b001;
-	7'b01101zz: assign ALUOp = 3'b101;
-	7'b1000010: assign ALUOp = 3'b010;
-	7'b1000011: assign ALUOp = 3'b011;
-	7'b1000100: assign ALUOp = 3'b100;
-	7'b1000101: assign ALUOp = 3'b101;
-	7'b1000110: assign ALUOp = 3'b110;
-	7'b1000111: assign ALUOp = 3'b111;
-	7'b10010zz: assign ALUOp = 3'b001;
-	default: assign ALUOp = 3'b000;
-endcase
 
+always @ (i3) begin
+   casez({i3[15:11], i3[1:0]})
+	   7'b00010zz: ALUOp = 3'b010;
+	   7'b00011zz: ALUOp = 3'b011;
+	   7'b00100zz: ALUOp = 3'b100;
+	   7'b00101zz: ALUOp = 3'b101;
+	   7'b00110zz: ALUOp = 3'b110;
+	   7'b010zzzz: ALUOp = 3'b001;
+	   7'b01101zz: ALUOp = 3'b101;
+	   7'b1000010: ALUOp = 3'b010;
+	   7'b1000011: ALUOp = 3'b011;
+	   7'b1000100: ALUOp = 3'b100;
+	   7'b1000101: ALUOp = 3'b101;
+	   7'b1000110: ALUOp = 3'b110;
+	   7'b1000111: ALUOp = 3'b111;
+	   7'b10010zz: ALUOp = 3'b001;
+	   default: ALUOp = 3'b000;
+   endcase
+end
 
 endmodule
