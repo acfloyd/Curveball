@@ -10,7 +10,7 @@ module FetchReg(clk, rst, Stall, NextPCIn, InstructIn, NextPCOut, InstructOut);
 			NextPCOut <= 16'd0;
 			InstructOut <= NOP;
 		end
-		else if (stall) begin
+		else if (Stall) begin
 			NextPCOut <= NextPCOut;
 			InstructOut <= InstructOut;
 		end

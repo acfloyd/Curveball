@@ -1,6 +1,6 @@
 module Memory(clk, rst, Stall, ALUResult, DataIn, MemWr, MemOut, ALUResultOut);
-
-	input MemWr;
+    
+	input clk, rst, Stall, MemWr;
 	input[15:0] ALUResult, DataIn;
 
 	output[15:0] MemOut, ALUResultOut;

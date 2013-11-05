@@ -1,4 +1,4 @@
-module Control(clk, rst, Halt, Stall, Flush, DivStall, Instruct, NotBranchOrJump, WrRegEn, 
+module Control(clk, rst, Stall, DivStall, Instruct, NotBranchOrJump, WrRegEn, 
 				WrMuxSel, SignExtSel, ZeroExtend8, NextPCSel, BranchImmSel, LoadR7, 
 				DataOut2Sel, ALUOp, AddMode, ShiftMode, SetFlagD, SetFlagE, AOp, 
 				ZeroB, FlagMux, WrMemEn, MemToReg);
@@ -7,13 +7,12 @@ input clk, rst, DivStall;
 input[15:0] Instruct;
 
 output NotBranchOrJump, WrRegEn, ZeroExtend8, NextPCSel, BranchImmSel, LoadR7, DataOut2Sel; 
-output AddMode, ZeroB, FlagMux, WrMemEn, MemToReg, Halt, Stall, Flush;
+output AddMode, ZeroB, FlagMux, WrMemEn, MemToReg, Stall;
 output[1:0] WrMuxSel, SignExtSel, ShiftMode, SetFlagD, SetFlagE, AOp;
 output reg[2:0] ALUOp;
 
 reg [15:0] i1, i2, i3, i4, i5;
 parameter NOP = 16'b1110100000000000;
-assign Halt = i1[15] & i1[14] & i1[13] & ~i1[12] & ~i1[11];
 
 always @ (posedge clk, posedge rst) begin
 	if(rst) begin
@@ -23,7 +22,7 @@ always @ (posedge clk, posedge rst) begin
 		i4 <= NOP;
 		i5 <= NOP;
 	end
-	else if (halt) begin
+	else if (Stall) begin
 		i1 <= i1;
 		i2 <= i2;
 		i3 <= i3;
@@ -39,7 +38,6 @@ always @ (posedge clk, posedge rst) begin
 	end
 end
 
-assign Flush = ~NotBranchOrJump;
 assign NotBranchOrJump = !((i2[15] & !i2[14] & i2[13]) | (i2[15] & i2[14] & !i2[13]));
 assign WrRegEn = !((i2[15:11] == 5'b01110) | (i2[15] & !i2[14] & i2[13]) | (i2[15:12] == 4'b1100) | 
 				   (i2[15:12] == 4'b1110) | (i2[15:11] == 5'b11110));

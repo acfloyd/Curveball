@@ -1,5 +1,5 @@
 module Fetch(clk, rst, Stall, TruePC, NotBranchOrJump, NextPC, Instruct);
-    input clk, rst, Halt, Stall, NotBranchOrJump;
+    input clk, rst, Stall, NotBranchOrJump;
     input [15:0] TruePC;
     output [15:0] NextPC, Instruct;
 

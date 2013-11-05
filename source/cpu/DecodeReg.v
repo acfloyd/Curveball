@@ -1,5 +1,5 @@
-module DecodeReg(clk, rst, Stall, DataOut1In, DataOut2In, TruePCIn, 
-				 DataOut1Out, DataOut2Out, TruePCOut);
+module DecodeReg(clk, rst, Stall, DataOut1In, DataOut2In, 
+				 DataOut1Out, DataOut2Out);
 	input clk, rst, Stall;
 	input [15:0] DataOut1In, DataOut2In;
 	output reg [15:0] DataOut1Out, DataOut2Out;
