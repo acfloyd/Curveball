@@ -5,7 +5,7 @@ module ps2_mouse(output [23:0] data_out, output RDA, t_clk, inout MOUSE_CLOCK, M
   
 endmodule 
 
-module ps2_rx(output reg [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
+module ps2_rx(output reg [23:0] data, output dav, init, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
   
   reg [7:0] shifter, next_shift;
   reg [3:0] state, next_state;
@@ -15,6 +15,7 @@ module ps2_rx(output reg [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA,
   localparam INIT = 4'd0, IDLE = 4'd1, START = 4'd2, STOP = 4'd11;
   
   assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
+  assign  
   
   always@(posedge MOUSE_CLOCK, negedge MOUSE_CLOCK) begin
     if(MOUSE_CLOCK)
@@ -34,7 +35,7 @@ module ps2_rx(output reg [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA,
       state <= next_state;
       shifter <= next_shift; 
       count <= next_count;
-      case(count)
+      case(next_count)
         2'd1:
           data[23:16] <= shifter;
         2'd2:
@@ -61,6 +62,8 @@ module ps2_rx(output reg [23:0] data, output dav, inout MOUSE_CLOCK, MOUSE_DATA,
       STOP: begin
         next_state = IDLE; 
         next_count = count + 1'd1;
+        if(shifter == 8'hfe)
+          next_count = 1'd0;
       end
       default: begin
         if(m_clk) begin
