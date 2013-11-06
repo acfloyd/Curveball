@@ -47,7 +47,7 @@ module ps2_rx(output reg [23:0] data, output dav, output reg m_ack, inout MOUSE_
       endcase 
     end
   end
-  
+   
   always@(*) begin
     next_state = state;
     next_shift = shifter;
