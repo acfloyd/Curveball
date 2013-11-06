@@ -1,21 +1,20 @@
-module ps2_mouse(output [23:0] data_out, output RDA, t_clk, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, io_cs, addr);
+module ps2_mouse(output [23:0] data_out, output RDA, t_clk, m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, io_cs, addr);
 
   ps2_tx tx(.TCP(TCP), .t_clk(t_clk), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
-  ps2_rx rx(.data(data_out), .dav(RDA), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
+  ps2_rx rx(.data(data_out), .dav(RDA), .m_ack(m_ack), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
   
 endmodule 
 
-module ps2_rx(output reg [23:0] data, output dav, init, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
+module ps2_rx(output reg [23:0] data, output dav, output reg m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
   
   reg [7:0] shifter, next_shift;
   reg [3:0] state, next_state;
   reg [1:0] count, next_count;
-  reg m_clk;
+  reg m_clk, ack;
   
   localparam INIT = 4'd0, IDLE = 4'd1, START = 4'd2, STOP = 4'd11;
   
   assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
-  assign  
   
   always@(posedge MOUSE_CLOCK, negedge MOUSE_CLOCK) begin
     if(MOUSE_CLOCK)
@@ -30,11 +29,14 @@ module ps2_rx(output reg [23:0] data, output dav, init, inout MOUSE_CLOCK, MOUSE
       shifter <= 8'd0;
       count <= 2'd0;
       data <= 24'd0;
+      m_ack <= 1'b0;
     end
     else begin
       state <= next_state;
       shifter <= next_shift; 
       count <= next_count;
+      if(ack == 1'b1)
+        m_ack <= ack;
       case(next_count)
         2'd1:
           data[23:16] <= shifter;
@@ -50,6 +52,7 @@ module ps2_rx(output reg [23:0] data, output dav, init, inout MOUSE_CLOCK, MOUSE
     next_state = state;
     next_shift = shifter;
     next_count = count;
+    ack = 1'b0;
     case(state)
       INIT: begin
         if(TCP)
@@ -62,8 +65,10 @@ module ps2_rx(output reg [23:0] data, output dav, init, inout MOUSE_CLOCK, MOUSE
       STOP: begin
         next_state = IDLE; 
         next_count = count + 1'd1;
-        if(shifter == 8'hfe)
+        if(shifter == 8'hfe) begin
           next_count = 1'd0;
+          ack = 1'b1;
+        end
       end
       default: begin
         if(m_clk) begin

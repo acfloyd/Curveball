@@ -5,7 +5,7 @@ module t_ps2_mouse();
   wire MOUSE_CLOCK, MOUSE_DATA;
   reg clk, mouse_clk, rst, io_cs, addr;
   
-  ps2_mouse mouse(.data_out(data), .RDA(RDA), .t_clk(t_clk), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .io_cs(io_cs), .addr(addr));
+  ps2_mouse mouse(.data_out(data), .RDA(RDA), .t_clk(t_clk), .m_ack(m_ack), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .io_cs(io_cs), .addr(addr));
   
   assign MOUSE_CLOCK = (t_clk) ? 1'bz : mouse_clk;
   
