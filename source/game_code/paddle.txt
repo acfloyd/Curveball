@@ -1,0 +1,10 @@
+// All of the data and functions for the opponent is stored here.
+class Paddle {
+	int location.x = 256; // where is their paddle
+	int location.y = 192;
+	// update the paddle.
+	void update () {
+		// something about grabbing the player's mouse position...
+	}
+}
+
