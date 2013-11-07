@@ -30,97 +30,140 @@
 // supported by Xilinx, Mentor Graphics and Synplicity synthesis
 // tools. Ensure they are correct for your synthesis tool(s).
 
-// You must compile the wrapper file vga_rom.v when simulating
-// the core, vga_rom. When compiling the wrapper file, be sure to
+// You must compile the wrapper file xclk_fifo.v when simulating
+// the core, xclk_fifo. When compiling the wrapper file, be sure to
 // reference the XilinxCoreLib Verilog simulation library. For detailed
 // instructions, please refer to the "CORE Generator Help".
 
 `timescale 1ns/1ps
 
-module vga_rom(
-	clka,
-	addra,
-	douta);
+module xclk_fifo(
+	din,
+	rd_clk,
+	rd_en,
+	rst,
+	wr_clk,
+	wr_en,
+	dout,
+	empty,
+	full);
 
 
-input clka;
-input [12 : 0] addra;
-output [23 : 0] douta;
+input [23 : 0] din;
+input rd_clk;
+input rd_en;
+input rst;
+input wr_clk;
+input wr_en;
+output [23 : 0] dout;
+output empty;
+output full;
 
 // synthesis translate_off
 
-      BLK_MEM_GEN_V2_8 #(
-		.C_ADDRA_WIDTH(13),
-		.C_ADDRB_WIDTH(13),
-		.C_ALGORITHM(1),
-		.C_BYTE_SIZE(9),
-		.C_COMMON_CLK(0),
-		.C_DEFAULT_DATA("0"),
-		.C_DISABLE_WARN_BHV_COLL(0),
-		.C_DISABLE_WARN_BHV_RANGE(0),
+      FIFO_GENERATOR_V4_4 #(
+		.C_COMMON_CLOCK(0),
+		.C_COUNT_TYPE(0),
+		.C_DATA_COUNT_WIDTH(4),
+		.C_DEFAULT_VALUE("BlankString"),
+		.C_DIN_WIDTH(24),
+		.C_DOUT_RST_VAL("0"),
+		.C_DOUT_WIDTH(24),
+		.C_ENABLE_RLOCS(0),
 		.C_FAMILY("virtex2p"),
-		.C_HAS_ENA(0),
-		.C_HAS_ENB(0),
-		.C_HAS_MEM_OUTPUT_REGS_A(0),
-		.C_HAS_MEM_OUTPUT_REGS_B(0),
-		.C_HAS_MUX_OUTPUT_REGS_A(0),
-		.C_HAS_MUX_OUTPUT_REGS_B(0),
-		.C_HAS_REGCEA(0),
-		.C_HAS_REGCEB(0),
-		.C_HAS_SSRA(0),
-		.C_HAS_SSRB(0),
-		.C_INIT_FILE_NAME("vga_rom.mif"),
-		.C_LOAD_INIT_FILE(1),
-		.C_MEM_TYPE(3),
-		.C_MUX_PIPELINE_STAGES(0),
-		.C_PRIM_TYPE(1),
-		.C_READ_DEPTH_A(4800),
-		.C_READ_DEPTH_B(4800),
-		.C_READ_WIDTH_A(24),
-		.C_READ_WIDTH_B(24),
-		.C_SIM_COLLISION_CHECK("ALL"),
-		.C_SINITA_VAL("0"),
-		.C_SINITB_VAL("0"),
-		.C_USE_BYTE_WEA(0),
-		.C_USE_BYTE_WEB(0),
-		.C_USE_DEFAULT_DATA(0),
+		.C_FULL_FLAGS_RST_VAL(1),
+		.C_HAS_ALMOST_EMPTY(0),
+		.C_HAS_ALMOST_FULL(0),
+		.C_HAS_BACKUP(0),
+		.C_HAS_DATA_COUNT(0),
+		.C_HAS_INT_CLK(0),
+		.C_HAS_MEMINIT_FILE(0),
+		.C_HAS_OVERFLOW(0),
+		.C_HAS_RD_DATA_COUNT(0),
+		.C_HAS_RD_RST(0),
+		.C_HAS_RST(1),
+		.C_HAS_SRST(0),
+		.C_HAS_UNDERFLOW(0),
+		.C_HAS_VALID(0),
+		.C_HAS_WR_ACK(0),
+		.C_HAS_WR_DATA_COUNT(0),
+		.C_HAS_WR_RST(0),
+		.C_IMPLEMENTATION_TYPE(2),
+		.C_INIT_WR_PNTR_VAL(0),
+		.C_MEMORY_TYPE(1),
+		.C_MIF_FILE_NAME("BlankString"),
+		.C_MSGON_VAL(1),
+		.C_OPTIMIZATION_MODE(0),
+		.C_OVERFLOW_LOW(0),
+		.C_PRELOAD_LATENCY(0),
+		.C_PRELOAD_REGS(1),
+		.C_PRIM_FIFO_TYPE("512x36"),
+		.C_PROG_EMPTY_THRESH_ASSERT_VAL(4),
+		.C_PROG_EMPTY_THRESH_NEGATE_VAL(5),
+		.C_PROG_EMPTY_TYPE(0),
+		.C_PROG_FULL_THRESH_ASSERT_VAL(15),
+		.C_PROG_FULL_THRESH_NEGATE_VAL(14),
+		.C_PROG_FULL_TYPE(0),
+		.C_RD_DATA_COUNT_WIDTH(4),
+		.C_RD_DEPTH(16),
+		.C_RD_FREQ(1),
+		.C_RD_PNTR_WIDTH(4),
+		.C_UNDERFLOW_LOW(0),
+		.C_USE_DOUT_RST(1),
 		.C_USE_ECC(0),
-		.C_USE_RAMB16BWER_RST_BHV(0),
-		.C_WEA_WIDTH(1),
-		.C_WEB_WIDTH(1),
-		.C_WRITE_DEPTH_A(4800),
-		.C_WRITE_DEPTH_B(4800),
-		.C_WRITE_MODE_A("WRITE_FIRST"),
-		.C_WRITE_MODE_B("WRITE_FIRST"),
-		.C_WRITE_WIDTH_A(24),
-		.C_WRITE_WIDTH_B(24),
-		.C_XDEVICEFAMILY("virtex2p"))
+		.C_USE_EMBEDDED_REG(0),
+		.C_USE_FIFO16_FLAGS(0),
+		.C_USE_FWFT_DATA_COUNT(0),
+		.C_VALID_LOW(0),
+		.C_WR_ACK_LOW(0),
+		.C_WR_DATA_COUNT_WIDTH(4),
+		.C_WR_DEPTH(16),
+		.C_WR_FREQ(1),
+		.C_WR_PNTR_WIDTH(4),
+		.C_WR_RESPONSE_LATENCY(1))
 	inst (
-		.CLKA(clka),
-		.ADDRA(addra),
-		.DOUTA(douta),
-		.DINA(),
-		.ENA(),
-		.REGCEA(),
-		.WEA(),
-		.SSRA(),
-		.CLKB(),
-		.DINB(),
-		.ADDRB(),
-		.ENB(),
-		.REGCEB(),
-		.WEB(),
-		.SSRB(),
-		.DOUTB(),
-		.DBITERR(),
-		.SBITERR());
+		.DIN(din),
+		.RD_CLK(rd_clk),
+		.RD_EN(rd_en),
+		.RST(rst),
+		.WR_CLK(wr_clk),
+		.WR_EN(wr_en),
+		.DOUT(dout),
+		.EMPTY(empty),
+		.FULL(full),
+		.CLK(),
+		.INT_CLK(),
+		.BACKUP(),
+		.BACKUP_MARKER(),
+		.PROG_EMPTY_THRESH(),
+		.PROG_EMPTY_THRESH_ASSERT(),
+		.PROG_EMPTY_THRESH_NEGATE(),
+		.PROG_FULL_THRESH(),
+		.PROG_FULL_THRESH_ASSERT(),
+		.PROG_FULL_THRESH_NEGATE(),
+		.RD_RST(),
+		.SRST(),
+		.WR_RST(),
+		.ALMOST_EMPTY(),
+		.ALMOST_FULL(),
+		.DATA_COUNT(),
+		.OVERFLOW(),
+		.PROG_EMPTY(),
+		.PROG_FULL(),
+		.VALID(),
+		.RD_DATA_COUNT(),
+		.UNDERFLOW(),
+		.WR_ACK(),
+		.WR_DATA_COUNT(),
+		.SBITERR(),
+		.DBITERR());
 
 
 // synthesis translate_on
 
 // XST black box declaration
 // box_type "black_box"
-// synthesis attribute box_type of vga_rom is "black_box"
+// synthesis attribute box_type of xclk_fifo is "black_box"
 
 endmodule
 

@@ -1,0 +1,44 @@
+SET_ERROR_CODE 0
+SET_ERROR_MSG null
+SET_ERROR_TEXT Generating
+SET_PARAMETER read_data_count false
+SET_PARAMETER performance_options First_Word_Fall_Through
+SET_PARAMETER write_acknowledge_sense Active_High
+SET_PARAMETER output_data_width 24
+SET_PARAMETER almost_empty_flag false
+SET_PARAMETER input_depth 16
+SET_PARAMETER empty_threshold_negate_value 5
+SET_PARAMETER full_flags_reset_value 1
+SET_PARAMETER write_clock_frequency 1
+SET_PARAMETER disable_timing_violations false
+SET_PARAMETER write_data_count false
+SET_PARAMETER write_data_count_width 4
+SET_PARAMETER use_dout_reset true
+SET_PARAMETER programmable_empty_type No_Programmable_Empty_Threshold
+SET_PARAMETER almost_full_flag false
+SET_PARAMETER enable_int_clk false
+SET_PARAMETER read_clock_frequency 1
+SET_PARAMETER data_count false
+SET_PARAMETER data_count_width 4
+SET_PARAMETER empty_threshold_assert_value 4
+SET_PARAMETER input_data_width 24
+SET_PARAMETER underflow_flag false
+SET_PARAMETER output_depth 16
+SET_PARAMETER use_embedded_registers false
+SET_PARAMETER overflow_flag false
+SET_PARAMETER read_data_count_width 4
+SET_PARAMETER fifo_implementation Independent_Clocks_Block_RAM
+SET_PARAMETER dout_reset_value 0
+SET_PARAMETER enable_ecc false
+SET_PARAMETER reset_pin true
+SET_PARAMETER overflow_sense Active_High
+SET_PARAMETER valid_flag false
+SET_PARAMETER full_threshold_negate_value 14
+SET_PARAMETER use_extra_logic false
+SET_PARAMETER write_acknowledge_flag false
+SET_PARAMETER reset_type Asynchronous_Reset
+SET_PARAMETER valid_sense Active_High
+SET_PARAMETER component_name xclk_fifo
+SET_PARAMETER underflow_sense Active_High
+SET_PARAMETER programmable_full_type No_Programmable_Full_Threshold
+SET_PARAMETER full_threshold_assert_value 15

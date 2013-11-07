@@ -26,101 +26,26 @@
 *     (c) Copyright 1995-2007 Xilinx, Inc.                                     *
 *     All rights reserved.                                                     *
 *******************************************************************************/
-// The synthesis directives "translate_off/translate_on" specified below are
-// supported by Xilinx, Mentor Graphics and Synplicity synthesis
-// tools. Ensure they are correct for your synthesis tool(s).
+// The following must be inserted into your Verilog file for this
+// core to be instantiated. Change the instance name and port connections
+// (in parentheses) to your own signal names.
 
-// You must compile the wrapper file checker_rom.v when simulating
-// the core, checker_rom. When compiling the wrapper file, be sure to
+//----------- Begin Cut here for INSTANTIATION Template ---// INST_TAG
+xclk_fifo YourInstanceName (
+	.din(din), // Bus [23 : 0] 
+	.rd_clk(rd_clk),
+	.rd_en(rd_en),
+	.rst(rst),
+	.wr_clk(wr_clk),
+	.wr_en(wr_en),
+	.dout(dout), // Bus [23 : 0] 
+	.empty(empty),
+	.full(full));
+
+// INST_TAG_END ------ End INSTANTIATION Template ---------
+
+// You must compile the wrapper file xclk_fifo.v when simulating
+// the core, xclk_fifo. When compiling the wrapper file, be sure to
 // reference the XilinxCoreLib Verilog simulation library. For detailed
 // instructions, please refer to the "CORE Generator Help".
-
-`timescale 1ns/1ps
-
-module checker_rom(
-	clka,
-	addra,
-	douta);
-
-
-input clka;
-input [12 : 0] addra;
-output [23 : 0] douta;
-
-// synthesis translate_off
-
-      BLK_MEM_GEN_V2_8 #(
-		.C_ADDRA_WIDTH(13),
-		.C_ADDRB_WIDTH(13),
-		.C_ALGORITHM(1),
-		.C_BYTE_SIZE(9),
-		.C_COMMON_CLK(0),
-		.C_DEFAULT_DATA("0"),
-		.C_DISABLE_WARN_BHV_COLL(0),
-		.C_DISABLE_WARN_BHV_RANGE(0),
-		.C_FAMILY("virtex2p"),
-		.C_HAS_ENA(0),
-		.C_HAS_ENB(0),
-		.C_HAS_MEM_OUTPUT_REGS_A(0),
-		.C_HAS_MEM_OUTPUT_REGS_B(0),
-		.C_HAS_MUX_OUTPUT_REGS_A(0),
-		.C_HAS_MUX_OUTPUT_REGS_B(0),
-		.C_HAS_REGCEA(0),
-		.C_HAS_REGCEB(0),
-		.C_HAS_SSRA(0),
-		.C_HAS_SSRB(0),
-		.C_INIT_FILE_NAME("checker_rom.mif"),
-		.C_LOAD_INIT_FILE(1),
-		.C_MEM_TYPE(3),
-		.C_MUX_PIPELINE_STAGES(0),
-		.C_PRIM_TYPE(1),
-		.C_READ_DEPTH_A(4800),
-		.C_READ_DEPTH_B(4800),
-		.C_READ_WIDTH_A(24),
-		.C_READ_WIDTH_B(24),
-		.C_SIM_COLLISION_CHECK("ALL"),
-		.C_SINITA_VAL("0"),
-		.C_SINITB_VAL("0"),
-		.C_USE_BYTE_WEA(0),
-		.C_USE_BYTE_WEB(0),
-		.C_USE_DEFAULT_DATA(0),
-		.C_USE_ECC(0),
-		.C_USE_RAMB16BWER_RST_BHV(0),
-		.C_WEA_WIDTH(1),
-		.C_WEB_WIDTH(1),
-		.C_WRITE_DEPTH_A(4800),
-		.C_WRITE_DEPTH_B(4800),
-		.C_WRITE_MODE_A("WRITE_FIRST"),
-		.C_WRITE_MODE_B("WRITE_FIRST"),
-		.C_WRITE_WIDTH_A(24),
-		.C_WRITE_WIDTH_B(24),
-		.C_XDEVICEFAMILY("virtex2p"))
-	inst (
-		.CLKA(clka),
-		.ADDRA(addra),
-		.DOUTA(douta),
-		.DINA(),
-		.ENA(),
-		.REGCEA(),
-		.WEA(),
-		.SSRA(),
-		.CLKB(),
-		.DINB(),
-		.ADDRB(),
-		.ENB(),
-		.REGCEB(),
-		.WEB(),
-		.SSRB(),
-		.DOUTB(),
-		.DBITERR(),
-		.SBITERR());
-
-
-// synthesis translate_on
-
-// XST black box declaration
-// box_type "black_box"
-// synthesis attribute box_type of checker_rom is "black_box"
-
-endmodule
 
