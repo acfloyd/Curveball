@@ -1,0 +1,13 @@
+# Output products list for <Score_ROM>
+Score_ROM.asy
+Score_ROM.mif
+Score_ROM.ngc
+Score_ROM.sym
+Score_ROM.v
+Score_ROM.veo
+Score_ROM.vhd
+Score_ROM.vho
+Score_ROM.xco
+Score_ROM_blk_mem_gen_v2_8_xst_1.ngc_xst.xrpt
+Score_ROM_flist.txt
+Score_ROM_xmdf.tcl
