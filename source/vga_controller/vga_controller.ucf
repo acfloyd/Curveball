@@ -1,0 +1,65 @@
+# CLOCK
+NET "CLK_100MHZ" LOC = "AJ15";
+NET "CLK_100MHZ" IOSTANDARD = LVCMOS25;
+
+
+# RESET SWITCH
+NET "RST" LOC = "AC11";
+NET "RST" IOSTANDARD = LVCMOS25;
+
+# VGA LOGIC
+NET "VSYNC" LOC = "D11";
+NET "HSYNC" LOC = "B8";
+NET "BLANK" LOC = "A8";
+NET "COMP_SYNC" LOC = "G12";
+NET "VGACLK" LOC = "H12";
+
+NET "VSYNC" IOSTANDARD = LVTTL;
+NET "HSYNC" IOSTANDARD = LVTTL;
+NET "BLANK" IOSTANDARD = LVTTL;
+NET "VGACLK" IOSTANDARD = LVTTL;
+NET "COMP_SYNC" IOSTANDARD = LVTTL;
+
+NET "VSYNC" DRIVE = 12;
+NET "HSYNC" DRIVE = 12;
+NET "BLANK" DRIVE = 6;
+NET "COMP_SYNC" DRIVE = 6;
+NET "VGACLK" DRIVE = 6;
+
+NET "VSYNC" SLEW = SLOW;
+NET "HSYNC" SLEW = SLOW;
+NET "BLANK" SLEW = SLOW;
+NET "COMP_SYNC" SLEW = SLOW;
+NET "VGACLK" SLEW = SLOW;
+
+NET "pixel_r[7]" LOC = "H10";
+NET "pixel_r[6]" LOC = "C7";
+NET "pixel_r[5]" LOC = "D7";
+NET "pixel_r[4]" LOC = "F10";
+NET "pixel_r[3]" LOC = "F9";
+NET "pixel_r[2]" LOC = "G9";
+NET "pixel_r[1]" LOC = "H9";
+NET "pixel_r[0]" LOC = "G8";
+
+NET "pixel_g[7]" LOC = "E11";
+NET "pixel_g[6]" LOC = "G11";
+NET "pixel_g[5]" LOC = "H11";
+NET "pixel_g[4]" LOC = "C8";
+NET "pixel_g[3]" LOC = "D8";
+NET "pixel_g[2]" LOC = "D10";
+NET "pixel_g[1]" LOC = "E10";
+NET "pixel_g[0]" LOC = "G10";
+
+NET "pixel_b[7]" LOC = "E14";
+NET "pixel_b[6]" LOC = "D14";
+NET "pixel_b[5]" LOC = "D13";
+NET "pixel_b[4]" LOC = "C13";
+NET "pixel_b[3]" LOC = "J15";
+NET "pixel_b[2]" LOC = "H15";
+NET "pixel_b[1]" LOC = "E15";
+NET "pixel_b[0]" LOC = "D15";
+
+NET "pixel_*" IOSTANDARD = LVTTL;
+NET "pixel_*" SLEW = SLOW;
+NET "pixel_*" DRIVE = 6;
+

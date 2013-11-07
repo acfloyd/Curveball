@@ -1,0 +1,12 @@
+# Output products list for <xclk_fifo>
+xclk_fifo.asy
+xclk_fifo.ngc
+xclk_fifo.sym
+xclk_fifo.v
+xclk_fifo.veo
+xclk_fifo.vhd
+xclk_fifo.vho
+xclk_fifo.xco
+xclk_fifo_fifo_generator_v4_4_xst_1.ngc_xst.xrpt
+xclk_fifo_flist.txt
+xclk_fifo_xmdf.tcl
