@@ -74,9 +74,8 @@ int main(int argc, char** argv) {
 
   // chop up line into chars
   while(getline(in, line) && row < height) {
-    ss << hex << line;
     uint32_t val;
-    ss >> val;
+    sscanf(line.c_str(), "%x", &val);    
 
     char b1 = static_cast<char>(val & 0xFF);
     char b2 = static_cast<char>((val >> 8) & 0xFF);
