@@ -20,12 +20,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 // TODO: need to rewrite outputs 
 module vga_controller(
-	input clk_100mhz,
+	input clk_100mhz_buf,
 	input rst,
     input[18:0] Waddr,
     input[2:0] Wdata,
     output ready,
-	output vgaclk,
+	input vgaclk,
 	output blank,
 	output comp_sync,
 	output hsync,
@@ -47,7 +47,7 @@ module vga_controller(
 
 	// vga_clk wires
 	wire clkin_ibufg_out;
-	wire clk_100mhz_buf;
+	//wire clk_100mhz_buf;
 	wire locked_dcm;
 	
 	// fifo wires
@@ -81,7 +81,7 @@ module vga_controller(
 	assign g_rst = rst | ~locked_dcm; // only exit reset once 25 mhz clock is locked
 	
 	// modules:
-	vga_clk vga_clk_gen1(clk_100mhz, rst, vgaclk, clkin_ibufg_out, clk_100mhz_buf, locked_dcm);
+	//vga_clk vga_clk_gen1(clk_100mhz, rst, vgaclk, clkin_ibufg_out, clk_100mhz_buf, locked_dcm);
 	
 	vga_logic vgal(vgaclk, g_rst, empty, blank, comp_sync, hsync, vsync);
 	

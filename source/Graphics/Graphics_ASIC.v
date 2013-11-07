@@ -1,14 +1,14 @@
 
 module Graphics_ASIC(
-    input clk,
+   input clk,
 	input rst,
 	input[3:0] chipselect,
 	input[15:0] databus,
 	input[3:0] data_address,
 	input VGA_ready,
-    output[2:0] color,
-    output[18:0] pixel_address
-    );
+   output[2:0] color,
+   output[18:0] pixel_address
+   );
 	reg [15:0] paddle_1_x, paddle_1_x_buffer;
 	reg [15:0] paddle_1_y, paddle_1_y_buffer;
 	reg [15:0] paddle_2_x, paddle_2_x_buffer;
@@ -16,11 +16,16 @@ module Graphics_ASIC(
 	reg [15:0] ball_x, ball_x_buffer;
 	reg [15:0] ball_y, ball_y_buffer;
 	reg [15:0] ball_z, ball_z_buffer;
-	reg [15:0] player_1_score, player_1_score_buffer;
-	reg [15:0] player_2_score, player_2_score_buffer;
+	wire [15:0] player_1_score, player_1_score_buffer;
+	wire [15:0] player_2_score, player_2_score_buffer;
 	reg [15:0] game_state, game_state_buffer;
 	wire[15:0] pixel_x, pixel_y;
 	wire[2:0] paddle_1_color, paddle_2_color, ball_color,  frame_score_color;
+	
+	assign player_1_score_buffer = 16'd1;
+	assign player_2_score_buffer = 16'd2;
+	
+	
 	Paddle_1 paddle_1(.clk(clk),
 					.rst(rst),
 					.x_loc(paddle_1_x_buffer),
@@ -28,7 +33,7 @@ module Graphics_ASIC(
 					.pixel_x(pixel_x),
 					.pixel_y(pixel_y),
 					.color(paddle_1_color));
-	Paddle_1 paddle_2(.clk(clk),
+	Paddle_2 paddle_2(.clk(clk),
 					.rst(rst),
 					.x_loc(paddle_2_x_buffer),
 					.y_loc(paddle_2_y_buffer),
@@ -47,11 +52,9 @@ module Graphics_ASIC(
 							.rst(rst),
 							.your_score(player_1_score_buffer),
 							.their_score(player_2_score_buffer),
-							.games_state(game_state_buffer),
 							.pixel_x(pixel_x),
 							.pixel_y(pixel_y),
-							.color(paddle_2_color));
-							input clk,
+							.color(frame_score_color));
 	Control control(.clk(clk),
 					.rst(rst),
 					.paddle_1(paddle_1_color),
@@ -60,7 +63,7 @@ module Graphics_ASIC(
 					.frame_score(frame_score_color),
 					.VGA_ready(VGA_ready),
 					.pixel_x(pixel_x),
-					.pixel_y(pixel_y)
-					.color(color)
-					.address(frame_address));
+					.pixel_y(pixel_y),
+					.color(color),
+					.address(pixel_address));
 endmodule
