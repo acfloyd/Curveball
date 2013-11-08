@@ -24,8 +24,9 @@ module vga_controller(
 	input rst,
     input[18:0] Waddr,
     input[2:0] Wdata,
-    output ready,
 	input vgaclk,
+    input locked_dcm,
+    output ready,
 	output blank,
 	output comp_sync,
 	output hsync,
@@ -47,8 +48,6 @@ module vga_controller(
 
 	// vga_clk wires
 	wire clkin_ibufg_out;
-	//wire clk_100mhz_buf;
-	wire locked_dcm;
 	
 	// fifo wires
 	wire[23:0] fifo_dout;

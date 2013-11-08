@@ -53,14 +53,15 @@ module display_plane(
     assign ready = |deadFrame;
 
     always @( * ) begin
+        next_deadFrame = deadFrame;
+        next_currFrame = currFrame;
+        next_h_addr = h_addr;
+        next_v_addr = v_addr;
+
         // dead frame logic
         if (state == FILL && h_addr == 10'd639 && v_addr == 19'd306560) begin
             next_deadFrame[currFrame] = 1'b1;
             next_currFrame = ~currFrame;
-        end
-        else begin
-            next_deadFrame = deadFrame;
-            next_currFrame = currFrame;
         end
 
         // combo logic for outputing the correct writting frame address
@@ -90,10 +91,6 @@ module display_plane(
                     next_v_addr = v_addr;
                 end
 
-            end
-            else begin
-                next_h_addr = h_addr;
-                next_v_addr = v_addr;
             end
         end
 
