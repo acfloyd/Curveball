@@ -1,7 +1,63 @@
-module ps2_mouse(output [23:0] data_out, output RDA, t_clk, m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, io_cs, addr);
+module ps2_mouse(output reg [7:0] data, output reg dav, t_clk, m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
 
   ps2_tx tx(.TCP(TCP), .t_clk(t_clk), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
   ps2_rx rx(.data(data_out), .dav(RDA), .m_ack(m_ack), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
+  
+  reg [9:0] pos_x, next_pos_x;
+  reg [8:0] pos_y, next_pos_y;
+  reg [2:0] status, next_status;
+  wire [23:0] data_in;
+  
+  localparam top = 9'd85;
+  localparam bottom = 9'd393;
+  localparam right = 10'd524;
+  localparam left = 10'd114;
+  localparam middle_x = 10'd319;
+  localparam middle_y = 9'd239;
+  
+  assign data_in = data_out;
+  
+  always@(posedge clk, posedge rst) begin
+    if(rst) begin
+      pos_x <= middle_x;
+      pos_y <= middle_y;
+      status <= 3'd0;
+      dav <= 1'b0;
+    end
+    else begin
+      pos_x <= next_pos_x;
+      pos_y <= next_pos_y;
+      status <= next_status;
+      dav <= RDA;
+      if(io_cs) begin
+        if(addr == 2'b00)
+          data <= status;
+        else if(data == 2'b01)
+          data <= pos_x;
+        else
+          data <= pos_y;
+      end
+    end
+  end
+  
+  always@(*) begin
+    next_pos_x = pos_x;
+    next_pos_y = pos_y;
+    next_status = status;
+    if(dav) begin
+      next_status = data_in[18:16];
+      next_pos_x = pos_x + data_in[15:8];
+      next_pos_y = pos_y + data_in[7:0];
+      if(next_pos_x <= left)
+        next_pos_x = left;
+      else if(next_pos_x >= right)
+        next_pos_x = right;
+      if(next_pos_y <= top)
+        next_pos_y = top;
+      else if(next_pos_y >= bottom)
+        next_pos_y = bottom;
+    end
+  end
   
 endmodule 
 
@@ -64,7 +120,7 @@ module ps2_rx(output reg [23:0] data, output dav, output reg m_ack, inout MOUSE_
       STOP: begin
         next_state = IDLE; 
         next_count = count + 1'd1;
-        if(shifter == 8'hfe) begin
+        if(shifter == 8'hfa) begin
           next_count = 1'd0;
           ack = 1'b1;
         end
