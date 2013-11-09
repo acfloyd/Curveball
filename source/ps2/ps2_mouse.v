@@ -1,7 +1,7 @@
-module ps2_mouse(output reg [7:0] data, output reg dav, t_clk, m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
+module ps2_mouse(output [7:0] data, output reg t_clk, m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
 
   ps2_tx tx(.TCP(TCP), .t_clk(t_clk), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
-  ps2_rx rx(.data(data_out), .dav(RDA), .m_ack(m_ack), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
+  ps2_rx rx(.data(data_out), .dav(dav), .m_ack(m_ack), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
   
   reg [9:0] pos_x, next_pos_x;
   reg [8:0] pos_y, next_pos_y;
@@ -16,27 +16,20 @@ module ps2_mouse(output reg [7:0] data, output reg dav, t_clk, m_ack, inout MOUS
   localparam middle_y = 9'd239;
   
   assign data_in = data_out;
+  assign data = (addr == 2'b00) ? status : 
+                ((addr == 2'b01) ? pos_x :
+                ((addr == 2'b10) ? pos_y : 8'd0));
   
   always@(posedge clk, posedge rst) begin
     if(rst) begin
       pos_x <= middle_x;
       pos_y <= middle_y;
       status <= 3'd0;
-      dav <= 1'b0;
     end
     else begin
       pos_x <= next_pos_x;
       pos_y <= next_pos_y;
       status <= next_status;
-      dav <= RDA;
-      if(io_cs) begin
-        if(addr == 2'b00)
-          data <= status;
-        else if(data == 2'b01)
-          data <= pos_x;
-        else
-          data <= pos_y;
-      end
     end
   end
   
