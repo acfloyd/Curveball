@@ -3,17 +3,17 @@ module ps2_mouse(output [7:0] data, output reg t_clk, m_ack, inout MOUSE_CLOCK, 
   ps2_tx tx(.TCP(TCP), .t_clk(t_clk), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
   ps2_rx rx(.data(data_out), .dav(dav), .m_ack(m_ack), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
   
-  reg [9:0] pos_x, next_pos_x;
+  reg [8:0] pos_x, next_pos_x;
   reg [8:0] pos_y, next_pos_y;
   reg [2:0] status, next_status;
   wire [23:0] data_in;
   
-  localparam top = 9'd85;
-  localparam bottom = 9'd393;
-  localparam right = 10'd524;
-  localparam left = 10'd114;
-  localparam middle_x = 10'd319;
-  localparam middle_y = 9'd239;
+  localparam top = 9'd0;
+  localparam bottom = 9'd307;
+  localparam right = 9'd409;
+  localparam left = 9'd0;
+  localparam middle_x = 9'd204;
+  localparam middle_y = 9'd153;
   
   assign data_in = data_out;
   assign data = (addr == 2'b00) ? status : 
