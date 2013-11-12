@@ -1,9 +1,36 @@
-module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:0] addr, input [7:0] data, input clk, rst);
+module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:0] addr, input [7:0] data, input clk, rst, VGA_ready);
 
    reg [7:0] x_loc, next_x_loc, y_loc, next_y_loc, status, next_status;
    reg [1:0] state, next_state;
+   reg [15:0] x, y;
+   wire [15:0] next_x, next_y;
    
    localparam read_status = 2'd0, read_x = 2'd1, read_y = 2'd2;
+   
+   assign wr_addr = x + (y << 7) *5;
+   assign wr_data = ((x == x_loc) && (y == y_loc)) ? 3'd6 : 3'd0;
+   
+   assign next_x = (VGA_ready) ? 
+							(x == 16'd640) ? 
+								16'b0 : x + 1 
+							: x;
+	assign next_y = (VGA_ready) ? 
+							(x == 16'd640) ? 
+								(y == 16'd480) ? 
+									16'b0 : y + 1 
+								: y 
+							: y;
+   
+   always@(posedge clk, posedge rst) begin
+      if(rst) begin
+			x <= 16'b0;
+			y <= 16'b0;
+		end
+		else begin
+			x <= next_x;
+			y <= next_y;
+		end   
+   end
    
    always@(posedge clk, posedge rst) begin
       if(rst) begin
