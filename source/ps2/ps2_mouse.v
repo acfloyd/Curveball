@@ -55,13 +55,13 @@ endmodule
 
 module ps2_rx(output reg [23:0] data_out, output reg dav, output reg m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
   
-  reg [7:0] shifter, next_shift;
+  reg [9:0] shifter, next_shift;
   reg [3:0] state, next_state;
   reg [1:0] count, next_count;
   reg ack, MOUSE_CLOCK_REG;
   wire clk_high;
   
-  localparam INIT = 4'd0, IDLE = 4'd1, START = 4'd2, STOP = 4'd10;
+  localparam INIT = 4'd0, IDLE = 4'd1, START = 4'd2, STOP = 4'd12;
   
   //assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
   assign clk_high = (~MOUSE_CLOCK_REG) & MOUSE_CLOCK;
@@ -86,11 +86,11 @@ module ps2_rx(output reg [23:0] data_out, output reg dav, output reg m_ack, inou
       if(state == STOP) begin
         case(count)
           2'd0:
-            data_out[23:16] <= shifter;
+            data_out[23:16] <= shifter[7:0];
           2'd1:
-            data_out[15:8] <= shifter;
+            data_out[15:8] <= shifter[7:0];
           2'd2:
-            data_out[7:0] <= shifter;
+            data_out[7:0] <= shifter[7:0];
         endcase
       end
       if((state == STOP) && (count == 2'd2))
@@ -117,18 +117,18 @@ module ps2_rx(output reg [23:0] data_out, output reg dav, output reg m_ack, inou
       STOP: begin
         next_state = IDLE;
         if(count == 2'd2) begin
-           next_count = 2'd1;
+           next_count = 2'd0;
         end
         else   
            next_count = count + 1'd1;
-        if(shifter == 8'hfa) begin
+        if(shifter[7:0] == 8'hfa) begin
           next_count = 1'd0;
           ack = 1'b1;
         end
       end
       default: begin
         if(clk_high) begin
-          next_shift = {MOUSE_DATA, shifter[7:1]};
+          next_shift = {MOUSE_DATA, shifter[9:1]};
           next_state = state + 4'd1;  
         end
       end
