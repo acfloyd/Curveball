@@ -40,7 +40,7 @@ module t_ps2_mouse();
     #1
     @(TCP);
     m_data = 1'b0;
-    for(i = 0; i < 7; i = i + 1) begin
+    for(i = 0; i < 8; i = i + 1) begin
         #60
         m_data = data_init[i];
     end
@@ -48,28 +48,28 @@ module t_ps2_mouse();
     m_data = ~(^data_init);
     @(m_ack);
     m_data = 1'b0;
-    for(i = 0; i < 7; i = i + 1) begin
+    for(i = 0; i < 8; i = i + 1) begin
         #60
         m_data = first_data[i];
     end
     #60
-    m_data = ~(^data_init);
+    m_data = ~(^first_data);
     #60
     m_data = 1'b0;
-    for(i = 0; i < 7; i = i + 1) begin
+    for(i = 0; i < 8; i = i + 1) begin
         #60
         m_data = second_data[i];
     end
     #60
-    m_data = ~(^data_init);
+    m_data = ~(^second_data);
     #60
     m_data = 1'b0;
-    for(i = 0; i < 7; i = i + 1) begin
+    for(i = 0; i < 8; i = i + 1) begin
         #60
         m_data = third_data[i];
     end
     #60
-    m_data = ~(^data_init);
+    m_data = ~(^third_data);
     @(dav);
     #10
     addr = 2'b00;
