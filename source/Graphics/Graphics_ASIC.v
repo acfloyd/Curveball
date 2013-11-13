@@ -9,10 +9,10 @@ module Graphics_ASIC(
    output[2:0] color,
    output[18:0] pixel_address
    );
-	reg [15:0] paddle_1_x, paddle_1_x_buffer;
-	reg [15:0] paddle_1_y, paddle_1_y_buffer;
-	reg [15:0] paddle_2_x, paddle_2_x_buffer;
-	reg [15:0] paddle_2_y, paddle_2_y_buffer;
+	wire [15:0] paddle_1_x, paddle_1_x_buffer;
+	wire [15:0] paddle_1_y, paddle_1_y_buffer;
+	wire [15:0] paddle_2_x, paddle_2_x_buffer;
+	wire [15:0] paddle_2_y, paddle_2_y_buffer;
 	reg [15:0] ball_x, ball_x_buffer;
 	reg [15:0] ball_y, ball_y_buffer;
 	reg [15:0] ball_z, ball_z_buffer;
@@ -24,6 +24,12 @@ module Graphics_ASIC(
 	
 	assign player_1_score_buffer = 16'd1;
 	assign player_2_score_buffer = 16'd2;
+	//always@(*) begin
+		assign paddle_1_x_buffer = 16'd100;
+		assign paddle_1_y_buffer = 16'd200;
+		assign paddle_2_x_buffer = 16'd150;
+		assign paddle_2_y_buffer = 16'd230;
+	//end
 	
 	
 	Paddle_1 paddle_1(.clk(clk),

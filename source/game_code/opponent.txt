@@ -5,6 +5,12 @@ class Opponent {
 	// update the opponent.
 	void update () {
 		// something about grabbing the opponents mouse position...
+		tempx = otherGame.getPaddleX();
+		tempy = otherGame.getPaddleY();
+		if (tempx != location.x || tempy != location.y){	// mouse has moved
+			location.x = tempx;
+			location.y = tempy;
+		}
 	}
 }
 
