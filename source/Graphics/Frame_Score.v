@@ -10,15 +10,19 @@ module Frame_Score(
 	output[2:0] color
     );
 	
-	wire[4:0] frame_draw;
+	wire[8:0] frame_draw;
 	wire score_draw;
 	
 	// static square frames
-	Static_Frame_Draw frame0(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[0]));
-	//Static_Frame_Draw frame1(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[1]));
-	//Static_Frame_Draw frame2(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[2]));
-	//Static_Frame_Draw frame3(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[3]));
-	Static_Frame_Draw #(254, 192, 130, 98)  frame4(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[4]));
+	Static_Frame_Draw #( 63,  47, 514, 386) frame0(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[0]));
+	Static_Frame_Draw #( 99,  74, 442, 332) frame1(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[1]));
+	Static_Frame_Draw #(133, 100, 374, 281) frame2(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[2]));
+	Static_Frame_Draw #(163, 122, 314, 236) frame3(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[3]));
+	Static_Frame_Draw #(189, 142, 263, 197) frame4(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[4]));
+	Static_Frame_Draw #(211, 158, 218, 164) frame5(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[5]));
+	Static_Frame_Draw #(229, 172, 182, 137) frame6(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[6]));
+	Static_Frame_Draw #(243, 182, 154, 116) frame7(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[7]));
+	Static_Frame_Draw #(255, 191, 130,  98) frame8(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[8]));
 
 	
 	// Score
