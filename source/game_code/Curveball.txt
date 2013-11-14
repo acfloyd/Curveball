@@ -1,0 +1,42 @@
+Ball ball; // the Ball
+Opponent opponent; // the Opponent
+Paddle paddle;	// the Paddle
+
+/* Game dimensions */
+int height = 512;
+int width = 384;
+int depth = 1000;
+int paddle_width = 102;
+int paddle_height = 76
+
+/* Scores and difficulty */
+int opponentsScore = 0;
+int playerScore = 0;
+int difficulty = 1;
+
+void setup () { 
+	// initialize the ball and opponent
+	ball = new Ball();
+	opponent = new Opponent();
+}
+void play_the_game () { 
+	opponent.update();	// update the opponent, in opponent.txt
+	ball.update();			// update the ball, in ball.txt
+	player.update();		// update player's paddle, in player.txt
+}
+
+// Restart, for when someone scores.
+void restart () {
+	stopped = true;
+	ball = new Ball();
+	first = true;
+}
+
+// For when the player serves
+void mousePressed() {
+	if(stopped) { // make sure the game hasn't started already
+		stopped = false; // tell all the other functions that the game's started
+	}
+}
+
+

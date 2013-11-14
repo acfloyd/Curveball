@@ -1,0 +1,108 @@
+/*
+Ball Class
+Here, all of the ball's data (such as position and direction),
+and all of the functions needed for it to move and collide with stuff.
+*/
+
+/* Game dimensions */
+int height = 512;
+int width = 384;
+int depth = 1000;
+int paddle_width = 102;
+int paddle_height = 76
+
+class Ball {
+	int ballPos.x = 256;		// ball's X position, in the center
+	int ballPos.y = 192;		// ball's Y position, in the center
+	int ballPos.z = radius;	// ball's Z position, next to the player
+	int velocity.x = 1;				// ball's direction and speed; positive is away, negative is towards
+	int velocity.y = 1;
+	int velocity.z = 1;
+
+	int radius = 35;	// the radius.
+	void update () { // Update. We Move the ball, check for collisions, and handle scoring in here.
+		ballPos.x + velocity.x
+		ballPos.y + velocity.y
+		ballPos.z + velocity.z
+
+		// The collision between the ball and the walls.
+		// right wall
+		if (ballPos.x + radius >= width) { // if the ball is too far to the right
+			velocity.x *= -1; // multiply the velocity's x value by -1.
+			ballPos.x = width - radius; // set the ball to the wall's position so it doesn't get stuck
+		}
+		// bottom wall
+		if (ballPos.y + radius >= height) {
+			velocity.y *= -1;
+			ballPos.y = height - radius;
+		}
+		// left wall
+		if (ballPos.x - radius <= 0) {
+			velocity.x *= -1;
+			ballPos.x = 0 + radius;
+		}
+		// top wall
+		if (ballPos.y - radius <= 0) {
+			velocity.y *= -1;
+			ballPos.y = 0 + radius;
+		}
+
+		// now we check for the collision between the ball and the player's/opponent's wall
+		// player's wall
+		if (ballPos.z - radius <= 0) { // The player's wall is at z = 0.
+			// we use the intersect function, found at the bottom of this page,
+			// to detect collision between the paddle and the ball
+			// Intersection is made to be accurate.
+			boolean intersect = intersects(ballPos, mouse);
+			if ((intersect) || (first)) { // if the ball hits the paddle
+				velocity.z += 1.2; // add to the velocity so the ball goes faster and it becomes more difficult.
+				velocity.z *= -1; // reverse the ball's direction.
+				ballPos.z = 0 + radius; // make sure the ball doesn't get stuck.
+				if (intersect) { // if the ball hits the paddle
+					if (first) { // if it's the first hit (the player is serving)
+						velocity.x += (mouseX - pmouseX) * 0.1; // base the velocity off of the paddle speed
+						velocity.y += (mouseY - pmouseY) * 0.1;
+						first = false;
+					}
+					else { // If the player isn't serving
+						velocity.x += (mouseX - pmouseX) * 0.5;
+						velocity.y += (mouseY - pmouseY) * 0.5;     
+					}
+				}
+				// make sure that it isn't first serve everytime the player hits.
+				if (first)
+					first = false;
+			}
+			else {
+				// If the player's paddle doesn't hit the ball
+				// and it isn't the first serve
+				// increase the opponent's score and restart.
+				opponentsScore += 1;
+				restart();
+			}
+		}
+		//their wall
+		if (ballPos.z + radius >= depth) { // their wall is at z = depth
+			if (intersects(ballPos, radius, opponent, opponent)) { // if the ball and their paddle intersects
+				// the opponent hits the ball
+				// velocity is sped up and reversed
+				velocity.z -= 1.2;
+				velocity.z *= -1;
+
+				// move the ball back to their wall, just in case it went through the paddle.
+				ballPos.z = depth - radius;
+			}
+			else { // if the opponent misses
+				playerScore += 1;
+				difficulty += 1; // increase the difficulty
+				restart();
+			} 
+		}
+	}
+}
+boolean intersects(int ballPos, int paddle) {
+	// is the ball striking the paddle?
+	return (ballPos.x >= paddle.x && ballPos.x <= paddle.x + paddle_width && ballPos.y >= paddle.y && ballPos.y <= ballPos.y + paddle_height)
+}
+
+

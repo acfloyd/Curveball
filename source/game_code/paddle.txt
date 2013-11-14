@@ -1,0 +1,17 @@
+// All of the data and functions for the paddle is stored here.
+class Paddle {
+	int location.x = 256; // where is your paddle
+	int location.y = 192;
+	// update the paddle.
+	void update () {
+		// something about grabbing the player's mouse position...
+		tempx = mouse.getX();
+		tempy = mouse.getY();
+		if (tempx != location.x || tempy != location.y){	// mouse has moved
+			//make sure new paddle position won't be out of bounds
+			location.x = tempx;
+			location.y = tempy;
+		}
+	}
+}
+

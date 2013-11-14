@@ -31,8 +31,16 @@ module Control(
 	end
 	
 	// update counters
-	assign next_x = (x == 16'd640) ? 16'b0 : x + 1;
-	assign next_y = (x == 16'd640) ? (y == 16'd480) ? 16'b0 : y + 1 : y;
+	assign next_x = (VGA_ready) ? 
+							(x == 16'd640) ? 
+								16'b0 : x + 1 
+							: x;
+	assign next_y = (VGA_ready) ? 
+							(x == 16'd640) ? 
+								(y == 16'd480) ? 
+									16'b0 : y + 1 
+								: y 
+							: y;
 	
 	// produce outputs
 	assign pixel_x = x;

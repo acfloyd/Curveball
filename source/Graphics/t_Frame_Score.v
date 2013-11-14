@@ -34,7 +34,7 @@ module t_Frame_Score;
   end
   
   // handle color
-  assign rgb = (color == 1) ? 24'hFF0000 : 24'h000000;
+  assign rgb = (color == 1) ? 24'h00FF00 : (color == 4) ? 24'h0000FF : 24'h000000;
   
   // file ouput
   initial begin
@@ -55,8 +55,8 @@ module t_Frame_Score;
   
   // init other inputs to nothing
   initial begin
-    your_score = 0;
-    their_score = 0;
+    your_score = 3;
+    their_score = 4;
     game_state = 0;
   end
   
