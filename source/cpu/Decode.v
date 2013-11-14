@@ -41,11 +41,8 @@ module Decode(clk, rst, Stall, Instruct, DataIn, WrEn, SignExtSel, ZeroExtend8, 
 					 (SignExtSel == 2'b11) ? ZeroExtOut : 16'dz;
 
 	//Register Mem
-	/*REGMEM REGMEM(.ADDRA(Instruct[7:5]), .DINA(Data), .WEA(WrEn), .CLKA(clk), .ADDRB(Instruct[7:5]), 
-				  .DINB(16'd0), .WEB(1'b0), .CLKB(clk), .DOUTA(RegOut1), .DOUTB(RegOut2));*/
-	//TEMP Reg MEM
-	assign RegOut1 = mem[Instruct[10:8]];
-	assign RegOut2 = mem[Instruct[7:5]];
+	Reg_Mem Reg(.clk(clk), .rst(rst), .DataIn(Data), .ReadSelS(Instruct[10:8]),
+	            .ReadSelT(Instruct[7:5]), .WrSel(WrMuxOut), .WrRegEn(WrEn), .Rs(RegOut1), .Rt(RegOut1));
 
 
 	assign DataOut1RegIn = (ForwardRs) ? RsForwarding : RegOut1;

@@ -1,8 +1,8 @@
-module Reg_Mem(clk, rst, AddrS, AddrT, DataIn, ReadSelS, ReadSelT, WrSel, WrRegEn, Rs, Rt);
+module Reg_Mem(clk, rst, DataIn, ReadSelS, ReadSelT, WrSel, WrRegEn, Rs, Rt);
 	input clk, rst;
 	input WrRegEn;
 	input [2:0] ReadSelS, ReadSelT, WrSel;
-	input [15:0] AddrS, AddrT, DataIn;
+	input [15:0] DataIn;
 	output [15:0] Rs, Rt;
 
 	wire [15:0] DataOut0, DataOut1, DataOut2, DataOut3, DataOut4, DataOut5, DataOut6, DataOut7;
@@ -18,9 +18,9 @@ module Reg_Mem(clk, rst, AddrS, AddrT, DataIn, ReadSelS, ReadSelT, WrSel, WrRegE
 	Reg_16_En reg6(.clk(clk), .rst(rst), .WrRegEn(WriteEn[6]), .DataIn(DataIn), .DataOut(DataOut6));
 	Reg_16_En reg7(.clk(clk), .rst(rst), .WrRegEn(WriteEn[7]), .DataIn(DataIn), .DataOut(DataOut7));
 
-	mux_8to1 MUX1(.in7(DataOut7), .in6(DataOut6), .in5(DataOut5), .in4(DataOut4), .in3(DataOut3), .in2(DataOut2), 
+	Mux_8to1 MUX1[15:0](.in7(DataOut7), .in6(DataOut6), .in5(DataOut5), .in4(DataOut4), .in3(DataOut3), .in2(DataOut2), 
 				  .in1(DataOut1), .in0(DataOut0), .sel(ReadSelS), .out(Rs));
-	mux_8to1 MUX2(.in7(DataOut7), .in6(DataOut6), .in5(DataOut5), .in4(DataOut4), .in3(DataOut3), .in2(DataOut2), 
+	Mux_8to1 MUX2[15:0](.in7(DataOut7), .in6(DataOut6), .in5(DataOut5), .in4(DataOut4), .in3(DataOut3), .in2(DataOut2), 
 				  .in1(DataOut1), .in0(DataOut0), .sel(ReadSelT), .out(Rt));
 
 endmodule

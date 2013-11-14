@@ -1,7 +1,7 @@
-module Execute(Branch, Jump, DataOut1, DataOut2, RsForwarding, RtForwarding, 
+module Execute(DataOut1, DataOut2, RsForwarding, RtForwarding, 
                ForwardRs, ForwardRt, ALUOp, SetFlag, AOp, ZeroB, ShiftMode, 
                AddMode, FlagMux, clk, rst, ALUOut, Remainder, DataOut1Out, DivStall, Stall);
-	input clk, rst, Stall, Branch, Jump, ForwardRs, ForwardRt, ZeroB, AddMode, FlagMux;
+	input clk, rst, Stall, ForwardRs, ForwardRt, ZeroB, AddMode, FlagMux;
  	input[1:0] SetFlag, AOp, ShiftMode;
  	input[2:0] ALUOp;
  	input[15:0] DataOut1, DataOut2, RsForwarding, RtForwarding;
