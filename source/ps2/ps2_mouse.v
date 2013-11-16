@@ -65,7 +65,7 @@ module ps2_rx(output reg [23:0] data_out, output dav, output [3:0] stuck_state, 
   
   //assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
   assign clk_high = (~MOUSE_CLOCK_REG) & MOUSE_CLOCK;
-  assign dav = ((state == STOP) && count == 2'd2)) ? 1'b1 : 1'b0;
+  assign dav = ((state == STOP) && (count == 2'd2)) ? 1'b1 : 1'b0;
   assign stuck_state = state;
   
   always@(posedge clk, posedge rst) begin
