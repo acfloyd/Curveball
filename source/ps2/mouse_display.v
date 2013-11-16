@@ -39,6 +39,7 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
          status <= 8'd0;
          x_loc <= 8'd0;
          y_loc <= 8'd0;
+			state <= 2'd0;
       end
       else begin
          x_loc <= next_x_loc;
@@ -49,6 +50,7 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
    end
 
    always@(*) begin
+		 next_state = state;
        next_x_loc = x_loc;
        next_y_loc = y_loc;
        next_status = status;

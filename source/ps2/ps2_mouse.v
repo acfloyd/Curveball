@@ -53,7 +53,7 @@ module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output m_ack, dav
   
 endmodule 
 
-module ps2_rx(output reg [23:0] data_out, output reg dav, output [3:0] stuck_state, output reg m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
+module ps2_rx(output reg [23:0] data_out, output dav, output [3:0] stuck_state, output reg m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
   
   reg [9:0] shifter, next_shift;
   reg [3:0] state, next_state;
@@ -65,6 +65,7 @@ module ps2_rx(output reg [23:0] data_out, output reg dav, output [3:0] stuck_sta
   
   //assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
   assign clk_high = (~MOUSE_CLOCK_REG) & MOUSE_CLOCK;
+  assign dav = ((state == STOP) && count == 2'd2)) ? 1'b1 : 1'b0;
   assign stuck_state = state;
   
   always@(posedge clk, posedge rst) begin
@@ -75,7 +76,7 @@ module ps2_rx(output reg [23:0] data_out, output reg dav, output [3:0] stuck_sta
       data_out <= 24'd0;
       m_ack <= 1'b0;
       MOUSE_CLOCK_REG <= 1'b0;
-      dav <= 1'b0;
+      //dav <= 1'b0;
     end
     else begin
       state <= next_state;
@@ -94,10 +95,10 @@ module ps2_rx(output reg [23:0] data_out, output reg dav, output [3:0] stuck_sta
             data_out[7:0] <= shifter[7:0];
         endcase
       end
-      if((state == STOP) && (count == 2'd2))
+      /*if((state == STOP) && (count == 2'd2))
          dav <= 1'b1;
       else
-         dav <= 1'b0;
+         dav <= 1'b0;*/
     end
   end
    
