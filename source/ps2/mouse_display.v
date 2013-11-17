@@ -1,4 +1,4 @@
-module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:0] addr, input [7:0] data, input clk, rst, VGA_ready);
+module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:0] addr, output [1:0] stuck_state, output status_bit, x_bit, y_bit, input [7:0] data, input dav, clk, rst, VGA_ready);
 
    reg [7:0] x_loc, next_x_loc, y_loc, next_y_loc, status, next_status;
    reg [1:0] state, next_state;
@@ -6,11 +6,15 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
    wire [15:0] next_x, next_y;
    wire [2:0] color;
 	
-   localparam read_status = 2'd0, read_x = 2'd1, read_y = 2'd2;
+   localparam idle = 2'd0, read_status = 2'd1, read_x = 2'd2, read_y = 2'd3;
    
    assign wr_addr = x + (y << 7) * 5;
    assign wr_data = ((x == x_loc) && (y == y_loc)) ? color : 3'd0;
    assign color = ((status[2:0] == 3'b001)) ? 3'd3 : 3'd6;
+	assign stuck_state = state;
+	assign status_bit = status[0];
+	assign x_bit = x_loc[0];
+	assign y_bit = y_loc[0];
 	
    assign next_x = (VGA_ready) ? 
 							(x == 16'd640) ? 
@@ -56,10 +60,15 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
        next_status = status;
        addr = 2'd0;
        case(state)
+			 idle: begin
+				if(dav) begin
+					next_state = read_status;
+				end
+			 end
           read_status: begin
-             addr = 2'd0;
-             next_status = data; 
-             next_state = read_x; 
+				addr = 2'd0;
+				next_status = data; 
+				next_state = read_x; 
           end
           read_x: begin
              addr = 2'd1;
@@ -69,7 +78,7 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
           read_y: begin
              addr = 2'd2;
              next_y_loc = data; 
-             next_state = read_status; 
+             next_state = idle; 
           end
        endcase
    end

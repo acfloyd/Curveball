@@ -1,4 +1,4 @@
-module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output m_ack, dav, stuck_state, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
+module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output m_ack, r_dav, dav, stuck_state, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
   
   reg [8:0] pos_x, next_pos_x;
   reg [8:0] pos_y, next_pos_y;
@@ -6,7 +6,7 @@ module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output m_ack, dav
   wire [23:0] data_in;
   
   ps2_tx tx(.TCP(TCP), .t_clk(t_clk), .t_data(t_data), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
-  ps2_rx rx(.data_out(data_in), .dav(dav), .stuck_state(stuck_state), .m_ack(m_ack), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
+  ps2_rx rx(.data_out(data_in), .dav(dav), .m_ack(m_ack), .r_dav(r_dav), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
 
   localparam top = 9'd0;
   localparam bottom = 9'd307;
@@ -53,32 +53,33 @@ module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output m_ack, dav
   
 endmodule 
 
-module ps2_rx(output reg [23:0] data_out, output dav, output [3:0] stuck_state, output reg m_ack, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
+module ps2_rx(output reg [23:0] data_out, output reg dav, output reg m_ack, r_dav, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
   
   reg [9:0] shifter, next_shift;
   reg [3:0] state, next_state;
-  reg [1:0] count, next_count;
+  reg [2:0] count, next_count;
   reg ack, MOUSE_CLOCK_REG;
-  wire clk_high;
+  wire clk_low;
   
   localparam INIT = 4'd0, IDLE = 4'd1, START = 4'd2, STOP = 4'd12;
   
   //assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
-  assign clk_high = (~MOUSE_CLOCK_REG) & MOUSE_CLOCK;
-  assign dav = ((state == STOP) && (count == 2'd2)) ? 1'b1 : 1'b0;
-  assign stuck_state = state;
+  assign clk_low = (~MOUSE_CLOCK) & MOUSE_CLOCK_REG;
+  //assign dav = ((state == STOP) && (count == 3'd3)) ? 1'b1 : 1'b0;
   
   always@(posedge clk, posedge rst) begin
     if(rst) begin
       state <= INIT;
       shifter <= 8'd0;
-      count <= 2'd0;
+      count <= 3'd0;
       data_out <= 24'd0;
       m_ack <= 1'b0;
       MOUSE_CLOCK_REG <= 1'b0;
-      //dav <= 1'b0;
+      r_dav <= 1'b0;
     end
     else begin
+		if(dav)
+			r_dav <= 1'b1;
       state <= next_state;
       shifter <= next_shift; 
       count <= next_count;
@@ -87,18 +88,18 @@ module ps2_rx(output reg [23:0] data_out, output dav, output [3:0] stuck_state, 
         m_ack <= ack;
       if(state == STOP) begin
         case(count)
-          2'd0:
+          3'd1:
             data_out[23:16] <= shifter[7:0];
-          2'd1:
+          3'd2:
             data_out[15:8] <= shifter[7:0];
-          2'd2:
+          3'd3:
             data_out[7:0] <= shifter[7:0];
         endcase
       end
-      /*if((state == STOP) && (count == 2'd2))
+      if((state == STOP) && (count == 2'd3))
          dav <= 1'b1;
       else
-         dav <= 1'b0;*/
+         dav <= 1'b0;
     end
   end
    
@@ -113,23 +114,25 @@ module ps2_rx(output reg [23:0] data_out, output dav, output [3:0] stuck_state, 
           next_state = IDLE;  
       end
       IDLE: begin
-        if(clk_high && !MOUSE_DATA)
+        if(clk_low && !MOUSE_DATA)
           next_state = state + 4'd1;
       end
       STOP: begin
         next_state = IDLE;
-        if(count == 2'd2) begin
-           next_count = 2'd0;
-        end
-        else   
-           next_count = count + 2'd1;
-        if(shifter[7:0] == 8'hfa) begin
-          next_count = 2'd0;
+		  if(m_ack) begin
+			if(count == 2'd3) begin
+				next_count = 2'd1;
+			end
+			else   
+            next_count = count + 2'd1;
+		  end
+        else if(shifter[7:0] == 8'hfa) begin
+          next_count = 2'd1;
           ack = 1'b1;
         end
       end
       default: begin
-        if(clk_high) begin
+        if(clk_low) begin
           next_shift = {MOUSE_DATA, shifter[9:1]};
           next_state = state + 4'd1;  
         end
