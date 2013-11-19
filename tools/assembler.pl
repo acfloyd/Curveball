@@ -1,57 +1,57 @@
 #!/usr/bin/perl
 
-%MCODE = (	ADDI	=> '00000sssdddiiiii',
-				SUBI	=> '00001sssdddiiiii',
-				MULTI	=> '00010sssdddiiiii',
-				DIVI	=> '00011sssdddiiiii',
-				ANDI	=> '00100sssdddiiiii',
-				ORI	=> '00101sssdddiiiii',
-				XORI	=> '00110sssdddiiiii',
-				ROLI	=> '01000sssdddiiiii',
-				SLLI	=> '01001sssdddiiiii',
-				SRLI	=> '01010sssdddiiiii',
-				SRAI	=> '01011sssdddiiiii',
-				LBI	=> '01100sssdddiiiii',
-				SLBI	=> '01101sssiiiiiiii',
-				STI	=> '01110sssiiiiiiii',
-				LDI	=> '01111sssiiiiiiii',
-				ADD	=> '10000ssstttddd00',
-				SUB	=> '10000ssstttddd01',
-				MULT	=> '10000ssstttddd10',
-				DIV	=> '10000ssstttddd11',
-				AND	=> '10001ssstttddd00',
-				OR		=> '10001ssstttddd01',
-				XOR	=> '10001ssstttddd10',
-				NOT	=> '10001sssxxxddd11',
-				ROL	=> '10010ssstttddd00',
-				SLL	=> '10010ssstttddd01',
-				SRL	=> '10010ssstttddd10',
-				SRA	=> '10010ssstttddd11',
-				SEQ	=> '10011ssstttddd00',
-				SLT	=> '10011ssstttddd01',
-				SLE	=> '10011ssstttddd10',
-				SCO	=> '10011ssstttddd11',
-				BEQZ	=> '10100sssiiiiiiii',
-				BNEZ	=> '10101sssiiiiiiii',
-				BLTZ	=> '10110sssiiiiiiii',
-				BGEZ	=> '10111sssiiiiiiii',
-				J		=> '11000ddddddddddd',
-				JR		=> '11001sssiiiiiiii',
-				JAL	=> '11010ddddddddddd',
-				JALR	=> '11011sssiiiiiiii',
-				HALT	=> '11100xxxxxxxxxxx',
-				NOP	=> '11101xxxxxxxxxxx',
-				ST		=> '11110sssiiiiiiii',
-				LD		=> '11111dddiiiiiiii');
+%MCODE = (	ADDI	=> '00000',
+				SUBI	=> '00001',
+				MULTI	=> '00010',
+				DIVI	=> '00011',
+				ANDI	=> '00100',
+				ORI	=> '00101',
+				XORI	=> '00110',
+				ROLI	=> '01000',
+				SLLI	=> '01001',
+				SRLI	=> '01010',
+				SRAI	=> '01011',
+				LBI	=> '01100',
+				SLBI	=> '01101',
+				STI	=> '01110',
+				LDI	=> '01111',
+				ADD	=> '10000',
+				SUB	=> '10000',
+				MULT	=> '10000',
+				DIV	=> '10000',
+				AND	=> '10001',
+				OR		=> '10001',
+				XOR	=> '10001',
+				NOT	=> '10001',
+				ROL	=> '10010',
+				SLL	=> '10010',
+				SRL	=> '10010',
+				SRA	=> '10010',
+				SEQ	=> '10011',
+				SLT	=> '10011',
+				SLE	=> '10011',
+				SCO	=> '10011',
+				BEQZ	=> '10100',
+				BNEZ	=> '10101',
+				BLTZ	=> '10110',
+				BGEZ	=> '10111',
+				J		=> '11000',
+				JR		=> '11001',
+				JAL	=> '11010',
+				JALR	=> '11011',
+				HALT	=> '1110000000000000',
+				NOP	=> '1110100000000000',
+				ST		=> '11110',
+				LD		=> '11111');
 
 $addr=0;
-while(<>){
+while(<>){						# go through every line in source file 
 	push(@source,$_);
-	if(/(\w+):/){
+	if(/(\w+):/){				# word followed by a colon, meaning label
 		$label{$1}=$addr;
 		s/\w+://;
 	}
-	if(/-?\d+|[A-Z]+/){
+	if(/-?\d+|[A-Z]+/){		# digits or a word
 		$addr++;
 	}
 }
@@ -66,7 +66,81 @@ print "\n*** MACHINE PROGRAM ***\n";
 foreach (@source){
 	$line = $_;
 	s/\w+://;
-	if(/([A-Z]+)/){
+	if(/(ADDI|SUBI|MULTI|DIVI|ANDI|ORI|XORI|ROLI|SLLI|SRLI|SRAI)\s+R(\d),\s+R(\d),\s+#(-?\d+)/){
+		# finds ADDI Rd, Rs, #immediate, etc.
+		if($4 < 0){		# negative immediate
+			$num = 31+$4+1;
+			printf"%03X:%s%03b%03b%5b\t$line",$addr++,$MCODE{$1},$3,$2,$num;
+		}
+		else{
+			printf"%03X:%s%03b%03b%05b\t$line",$addr++,$MCODE{$1},$3,$2,$4;
+		}
+	}
+	elsif(/(LBI|SLBI|STI|LDI)\s+R(\d),\s+#(-?\d+)/){
+		# finds LBI Rs, #immediate, etc.
+		if($3 < 0){		#negative immmediate
+			$num = 255+$3+1;
+			printf"%03X:%s%03b%8b\t$line",$addr++,$MCODE{$1},$2,$num;
+		}
+		else{
+			printf"%03X:%s%03b%08b\t$line",$addr++,$MCODE{$1},$2,$3;
+		}
+	}
+	elsif(/(ADD|AND|ROL|SEQ)\s+R(\d),\s+R(\d),\s+R(\d)/){
+		# finds ADD Rd, Rs, Rt
+		$class = 0;
+		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+	}
+	elsif(/(MULT|XOR|SRL|SLE)\s+R(\d),\s+R(\d),\s+R(\d)/){
+		# finds MULT Rd, Rs, Rt
+		$class = 2;
+		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+	}
+	elsif(/(SUB|OR|SLL|SLT)\s+R(\d),\s+R(\d),\s+R(\d)/){
+		# finds SUB Rd, Rs, Rt
+		$class = 1;
+		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+	}
+	elsif(/(DIV|SRA|SCO)\s+R(\d),\s+R(\d),\s+R(\d)/){
+		# finds DIV Rd, Rs, Rt
+		$class = 3;
+		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+	}
+	elsif(/(NOT)\s+R(\d),\s+R(\d)/){
+		# finds NOT Rd, Rs
+		printf"%03X:%s%03b000%03b11\t$line",$addr++,$MCODE{$1},$3,$2;
+	}
+	elsif(/(BEQZ|BNEZ|BLTZ|BGEZ|JR|JALR|ST|LD)\s+R(\d),\s+#(-?\d+)/){
+		# finds BEQZ Rd, Rs, #immediate
+		if($3 < 0){		# negative immediate
+			$num = 255+$3+1;
+			printf"%03X:%s%03b%8b\t$line",$addr++,$MCODE{$1},$2,$num;
+		}
+		else{
+			printf"%03X:%s%03b%08b\t$line",$addr++,$MCODE{$1},$2,$3;
+		}
+	}
+	elsif(/(J|JAL)\s+#(-?\d+)/){
+		# finds J displacement
+		if($2 < 0){		# negative displacement
+			$num = 2047+$2+1;
+			printf"%03X:%s%11b\t$line",$addr++,$MCODE{$1},$num;
+		}
+		else{
+			printf"%03X:%s%011b\t$line",$addr++,$MCODE{$1},$2;
+		}
+	}
+	elsif(/(ST|LD)\s+R(\d),\s+R(\d),\s+#(-?\d+)/){
+		# finds ADDI Rd, Rs, #immediate, etc.
+		if($4 < 0){		# negative immediate
+			$num = 31+$4+1;
+			printf"%03X:%s%03b%03b%5b\t$line",$addr++,$MCODE{$1},$3,$2,$num;
+		}
+		else{
+			printf"%03X:%s%03b%03b%05b\t$line",$addr++,$MCODE{$1},$3,$2,$4;
+		}
+	}
+	elsif(/([A-Z]+)/){
 		printf"%03X:%04s\t$line",$addr++,$MCODE{$1};
 	} else{
 		print "\t\t$line";
