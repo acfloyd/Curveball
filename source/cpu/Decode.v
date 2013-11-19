@@ -1,11 +1,11 @@
 module Decode(clk, rst, Stall, Instruct, DataIn, WrEn, SignExtSel, ZeroExtend8, SetFlag, WrMuxSel, DataOut2Sel, 
-			  NextPC, RsForwarding, RtForwarding, ForwardRs, ForwardRt, Branch, NextPCSel, LoadR7,
+			  NextPC, RsForwardData, RtForwardData, ForwardRs, ForwardRt, Branch, NextPCSel, LoadR7,
 			  BranchImmedSel, DataOut1, DataOut2, TruePC, Jump);
 
 	input clk, rst, WrEn, DataOut2Sel, ForwardRs, ForwardRt, Branch, NextPCSel, ZeroExtend8;
 	input LoadR7, BranchImmedSel, Jump, Stall;
 	input [1:0] WrMuxSel, SignExtSel, SetFlag;
-	input [15:0] Instruct, DataIn, NextPC, RsForwarding, RtForwarding;
+	input [15:0] Instruct, DataIn, NextPC, RsForwardData, RtForwardData;
 	output [15:0] DataOut1, DataOut2, TruePC;
 	wire [15:0] DataOut1RegIn, DataOut2RegIn;
 
@@ -16,12 +16,6 @@ module Decode(clk, rst, Stall, Instruct, DataIn, WrEn, SignExtSel, ZeroExtend8, 
 	wire [15:0] RegOut1, RegOut2;
 	wire [15:0] Reg2MuxOut;
 	wire BranchFlag, DataZero, Flag, JumpOrBranchFlag;
-
-	//TEMP Reg MEM
-    reg [15:0] mem [0:7];
-    initial begin
-        $readmemh("../text_files/reg_mem.txt", mem);
-    end
 
 	assign Data = (LoadR7) ? NextPC : DataIn;
 
@@ -41,12 +35,12 @@ module Decode(clk, rst, Stall, Instruct, DataIn, WrEn, SignExtSel, ZeroExtend8, 
 					 (SignExtSel == 2'b11) ? ZeroExtOut : 16'dz;
 
 	//Register Mem
-	Reg_Mem Reg(.clk(clk), .rst(rst), .DataIn(Data), .ReadSelS(Instruct[10:8]),
-	            .ReadSelT(Instruct[7:5]), .WrSel(WrMuxOut), .WrRegEn(WrEn), .Rs(RegOut1), .Rt(RegOut1));
+	Reg_Mem Reg(.clk(clk), .rst(rst), .DataIn(Data), .AddrS(Instruct[10:8]),
+	            .AddrT(Instruct[7:5]), .WrSel(WrMuxOut), .WrRegEn(WrEn), .Rs(RegOut1), .Rt(RegOut2));
 
 
-	assign DataOut1RegIn = (ForwardRs) ? RsForwarding : RegOut1;
-	assign Reg2MuxOut = (ForwardRt) ? RtForwarding : RegOut2;
+	assign DataOut1RegIn = (ForwardRs) ? RsForwardData : RegOut1;
+	assign Reg2MuxOut = (ForwardRt) ? RtForwardData : RegOut2;
 
 	assign DataOut2RegIn = (DataOut2Sel) ? SignExt : Reg2MuxOut;
 

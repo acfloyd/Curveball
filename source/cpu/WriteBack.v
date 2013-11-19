@@ -5,9 +5,9 @@ module WriteBack(clk, rst, Stall, MemOut, ALUOut, MemToReg, WriteBack);
 
 	output[15:0] WriteBack;
    
-   wire[15:0] WriteBackRegIn;
+   	wire[15:0] WriteBackRegIn;
    
-	assign WriteBackRegIn = (MemToReg) ? ALUOut : MemOut;
+	assign WriteBackRegIn = (MemToReg) ? MemOut : ALUOut;
 
 	WriteBackReg Reg (.clk(clk), .rst(rst), .stall(Stall),
 	                  .WriteBackIn(WriteBackRegIn), .WriteBackOut(WriteBack));
