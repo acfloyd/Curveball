@@ -1,4 +1,4 @@
-module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:0] addr, output [1:0] stuck_state, output status_bit, x_bit, y_bit, input [7:0] data, input dav, clk, rst, VGA_ready);
+module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:0] addr, input [7:0] data, input dav, clk, rst, VGA_ready);
 
    reg [7:0] x_loc, next_x_loc, y_loc, next_y_loc, status, next_status;
    reg [1:0] state, next_state;
@@ -11,10 +11,6 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
    assign wr_addr = x + (y << 7) * 5;
    assign wr_data = ((x == x_loc) && (y == y_loc)) ? color : 3'd0;
    assign color = ((status[2:0] == 3'b001)) ? 3'd3 : 3'd6;
-	assign stuck_state = state;
-	assign status_bit = status[0];
-	assign x_bit = x_loc[0];
-	assign y_bit = y_loc[0];
 	
    assign next_x = (VGA_ready) ? 
 							(x == 16'd640) ? 

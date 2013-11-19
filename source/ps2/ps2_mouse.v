@@ -1,13 +1,15 @@
-module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output m_ack, r_dav, dav, stuck_state, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
+module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output r_ack, dav, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
   
   reg [8:0] pos_x, next_pos_x;
   reg [8:0] pos_y, next_pos_y;
   reg [2:0] status, next_status;
   wire [23:0] data_in;
+  wire [7:0] byte_rec;
   
   ps2_tx tx(.TCP(TCP), .t_clk(t_clk), .t_data(t_data), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst));
-  ps2_rx rx(.data_out(data_in), .dav(dav), .m_ack(m_ack), .r_dav(r_dav), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
-
+  ps2_rx rx(.byte_rec(byte_rec), .received(rda), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP));
+  ps2_packets packets(.data_out(data_in), .r_dav(dav), .r_ack(r_ack), .data_in(byte_rec), .clk(clk), .rst(rst), .rda(rda));
+  
   localparam top = 9'd0;
   localparam bottom = 9'd307;
   localparam right = 9'd409;
@@ -51,63 +53,102 @@ module ps2_mouse(output [7:0] data, output TCP, t_clk, t_data, output m_ack, r_d
     end
   end
   
-endmodule 
+endmodule
 
-module ps2_rx(output reg [23:0] data_out, output reg dav, output reg m_ack, r_dav, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
+
+module ps2_packets(output reg [23:0] data_out, output reg r_dav, r_ack, input [7:0] data_in, input clk, rst, rda);
+    
+   reg [7:0] button_data, x_data, y_data;
+   reg [1:0] state, next_state;
+   reg ack, dav;
+    
+   localparam ACK = 2'd0, BUTTON = 2'd1, X_MOVE = 2'd2, Y_MOVE = 2'd3;
+    
+   always@(posedge clk, posedge rst) begin
+     if(rst) begin
+        state <= ACK;
+        r_dav <= 1'b0;
+        r_ack <= 1'b0;
+        data_out <= 23'd0; 
+     end
+     else begin
+        state <= next_state;
+        r_dav <= dav;
+        if(ack)
+           r_ack <= ack;
+        data_out <= {button_data, x_data, y_data};
+     end 
+   end
+   
+   always@(*) begin
+      next_state = state;
+      ack = 1'b0;
+      dav = 1'b0;
+      button_data = data_out[23:16];
+      x_data = data_out[15:8];
+      y_data = data_out[7:0];
+      case(state)
+         ACK: begin
+            if(rda) begin
+               if(data_in == 8'hfa) begin
+                   ack = 1'b1;
+                   next_state = BUTTON;
+               end
+            end
+         end
+         BUTTON: begin
+            if(rda) begin
+                button_data = data_in;
+                next_state = X_MOVE;
+            end
+         end
+         X_MOVE: begin
+            if(rda) begin
+                x_data = data_in;
+                next_state = Y_MOVE;
+            end
+         end
+         Y_MOVE: begin
+            if(rda) begin
+                y_data = data_in;
+                next_state = BUTTON;
+                dav = 1'b1;
+            end
+         end
+      endcase    
+   end
+   
+endmodule
+
+module ps2_rx(output reg [7:0] byte_rec, output reg received, inout MOUSE_CLOCK, MOUSE_DATA, input clk, rst, TCP);
   
   reg [9:0] shifter, next_shift;
   reg [3:0] state, next_state;
-  reg [2:0] count, next_count;
-  reg ack, MOUSE_CLOCK_REG;
+  reg MOUSE_CLOCK_REG;
   wire clk_low;
   
   localparam INIT = 4'd0, IDLE = 4'd1, START = 4'd2, STOP = 4'd12;
   
-  //assign dav = (count == 2'd3) ? 1'b1 : 1'b0; 
   assign clk_low = (~MOUSE_CLOCK) & MOUSE_CLOCK_REG;
-  //assign dav = ((state == STOP) && (count == 3'd3)) ? 1'b1 : 1'b0;
   
   always@(posedge clk, posedge rst) begin
     if(rst) begin
       state <= INIT;
       shifter <= 8'd0;
-      count <= 3'd0;
-      data_out <= 24'd0;
-      m_ack <= 1'b0;
       MOUSE_CLOCK_REG <= 1'b0;
-      r_dav <= 1'b0;
     end
     else begin
-		if(dav)
-			r_dav <= 1'b1;
       state <= next_state;
       shifter <= next_shift; 
-      count <= next_count;
       MOUSE_CLOCK_REG <= MOUSE_CLOCK;
-      if(ack == 1'b1)
-        m_ack <= ack;
-      if(state == STOP) begin
-        case(count)
-          3'd1:
-            data_out[23:16] <= shifter[7:0];
-          3'd2:
-            data_out[15:8] <= shifter[7:0];
-          3'd3:
-            data_out[7:0] <= shifter[7:0];
-        endcase
-      end
-      if((state == STOP) && (count == 2'd3))
-         dav <= 1'b1;
-      else
-         dav <= 1'b0;
     end
   end
    
   always@(*) begin
     next_state = state;
     next_shift = shifter;
-    next_count = count;
-    ack = 1'b0;
+    received = 1'b0;
+    byte_rec = 7'd0;
     case(state)
       INIT: begin
         if(TCP)
@@ -118,18 +159,9 @@ module ps2_rx(output reg [23:0] data_out, output reg dav, output reg m_ack, r_da
           next_state = state + 4'd1;
       end
       STOP: begin
+        received = 1'b1;
         next_state = IDLE;
-		  if(m_ack) begin
-			if(count == 2'd3) begin
-				next_count = 2'd1;
-			end
-			else   
-            next_count = count + 2'd1;
-		  end
-        else if(shifter[7:0] == 8'hfa) begin
-          next_count = 2'd1;
-          ack = 1'b1;
-        end
+        byte_rec = shifter[7:0];
       end
       default: begin
         if(clk_low) begin
