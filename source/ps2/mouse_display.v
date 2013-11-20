@@ -1,16 +1,20 @@
-module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:0] addr, input [7:0] data, input dav, clk, rst, VGA_ready);
+module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, status_bits, output reg [1:0] addr, input [8:0] data, input dav, clk, rst, VGA_ready);
 
-   reg [7:0] x_loc, next_x_loc, y_loc, next_y_loc, status, next_status;
+   reg [8:0] x_loc, next_x_loc, y_loc, next_y_loc, status, next_status;
    reg [1:0] state, next_state;
    reg [15:0] x, y;
    wire [15:0] next_x, next_y;
    wire [2:0] color;
+	reg flip;
 	
    localparam idle = 2'd0, read_status = 2'd1, read_x = 2'd2, read_y = 2'd3;
    
    assign wr_addr = x + (y << 7) * 5;
-   assign wr_data = ((x == x_loc) && (y == y_loc)) ? color : 3'd0;
-   assign color = ((status[2:0] == 3'b001)) ? 3'd3 : 3'd6;
+   //assign wr_data = ((next_x == x_loc) && (next_y == y_loc)) ? color : 3'd0;
+	assign wr_data = color;
+	//assign wr_data = (flip) ? 3'h7 : 3'd0;
+   assign color = (status[0]) ? 3'd3 : 3'd6;
+	assign status_bits = status[1:0];
 	
    assign next_x = (VGA_ready) ? 
 							(x == 16'd640) ? 
@@ -27,18 +31,21 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
       if(rst) begin
 			x <= 16'b0;
 			y <= 16'b0;
+			//flip <= 1'b0;
 		end
 		else begin
 			x <= next_x;
 			y <= next_y;
+			/*if((next_x == 16'd0) && (next_y == 16'd0))
+				flip <= ~flip;*/
 		end   
    end
    
    always@(posedge clk, posedge rst) begin
       if(rst) begin
-         status <= 8'd0;
-         x_loc <= 8'd0;
-         y_loc <= 8'd0;
+         status <= 9'd0;
+         x_loc <= 9'd0;
+         y_loc <= 9'd0;
 			state <= 2'd0;
       end
       else begin
@@ -56,25 +63,24 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, output reg [1:
        next_status = status;
        addr = 2'd0;
        case(state)
-			 idle: begin
-				if(dav) begin
-					next_state = read_status;
-				end
-			 end
+          idle: begin
+             if(dav)
+                next_state = read_status; 
+          end
           read_status: begin
 				addr = 2'd0;
 				next_status = data; 
 				next_state = read_x; 
           end
           read_x: begin
-             addr = 2'd1;
-             next_x_loc = data; 
-             next_state = read_y; 
+				addr = 2'd1;
+            next_x_loc = data; 
+            next_state = read_y; 
           end
           read_y: begin
-             addr = 2'd2;
-             next_y_loc = data; 
-             next_state = idle; 
+            addr = 2'd2;
+            next_y_loc = data; 
+            next_state = idle; 
           end
        endcase
    end
