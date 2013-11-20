@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include "curveball.h"
@@ -10,19 +11,19 @@ void main (int argc, char** argv)
 {
     // X is rows, Z is col, value is Y
 
-    if (argc != 4)
+    if (argc != 3)
     {
-        printf("usage: insert ball velocities with format below\n<velX> <velY> <velZ>\n");
+        printf("usage: insert difference in mouse position to define curve used\n"
+                "<x position difference> <y position difference>\n");
         exit(0);
     }
 
     setup();
 
-    ball->velX = atoi(argv[1]);
-    ball->velY = atoi(argv[2]);
-    ball->velZ = atoi(argv[3]);
+    pmouse->posX += atoi(argv[1]);
+    pmouse->posY += atoi(argv[2]);
 
-    printf("ball: velX=%d, velY=%d, velZ=%d\n", ball->velX, ball->velY, ball->velZ);
+    printf("curve X = %d, Y = %d\n", atoi(argv[1]), atoi(argv[2]));
 
     // for testing, the program ends after so many wall hits
     while (TRUE)
@@ -49,15 +50,19 @@ void main (int argc, char** argv)
 
 void setup ()
 {
+    first = TRUE;
+
     // init the ball and the opponent
     pball = NULL;
     ball = (Ball_t*)malloc(sizeof(Ball_t));
     ball->posX = WIDTH / 2;
     ball->posY = HEIGHT / 2;
-    ball->posZ = BALL_RAD;
+    ball->posZ = 0;
     ball->velX = 0;
     ball->velY = 0;
-    ball->velZ = 100;
+    ball->dirX = 1;
+    ball->dirY = 1;
+    ball->velZ = 1;
 
     opponent = (Pad_t*)malloc(sizeof(Pad_t));
     opponent->posX = WIDTH / 2;
@@ -86,7 +91,7 @@ void update_game ()
 
 void restart ()
 {
-    // TODO: temp stop for simulation
+    // TODO: temp stop for simulation, remove when implementing
     FILE *fp;
     int i,j;
     fp=fopen("test.txt", "w");
