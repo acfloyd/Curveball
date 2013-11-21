@@ -26,7 +26,6 @@ void save_ball ()
 void ball_update ()
 {
     int16_t sect, zdiff;
-    // TODO: with any wall collision, reduce the ammount of curve on the ball
 
     // update the ball pos
     if (pball != NULL)
@@ -35,23 +34,29 @@ void ball_update ()
         zdiff = (ball->velZ >= 0) ? (ball->posZ - pball->posZ) :
                     (pball->posZ - ball->posZ);
 
-        if (ball->velX <= 30)
-            ball->posX = pball->posX + EQ_2ND(zdiff, ball->dirX);
-        else if (ball->velX <= 60)
-            ball->posX = pball->posX + EQ_3RD(zdiff, ball->dirX);
-        else if (ball->velX <= 90)
-            ball->posX = pball->posX + EQ_4TH(zdiff, ball->dirX);
-        else
-            ball->posX = pball->posX + EQ_5TH(zdiff, ball->dirX);
+        if (ball->velX != 0)
+        {
+            if (ball->velX <= 30)
+                ball->posX = pball->posX + EQ_2ND(zdiff, ball->dirX);
+            else if (ball->velX <= 60)
+                ball->posX = pball->posX + EQ_3RD(zdiff, ball->dirX);
+            else if (ball->velX <= 90)
+                ball->posX = pball->posX + EQ_4TH(zdiff, ball->dirX);
+            else
+                ball->posX = pball->posX + EQ_5TH(zdiff, ball->dirX);
+        }
 
-        if (ball->velY <= 30)
-            ball->posY = pball->posY + EQ_2ND(zdiff, ball->dirY);
-        else if (ball->velY <= 60)
-            ball->posY = pball->posY + EQ_3RD(zdiff, ball->dirY);
-        else if (ball->velY <= 90)
-            ball->posY = pball->posY + EQ_4TH(zdiff, ball->dirY);
-        else
-            ball->posY = pball->posY + EQ_5TH(zdiff, ball->dirY);
+        if (ball->velY != 0)
+        {
+            if (ball->velY <= 30)
+                ball->posY = pball->posY + EQ_2ND(zdiff, ball->dirY);
+            else if (ball->velY <= 60)
+                ball->posY = pball->posY + EQ_3RD(zdiff, ball->dirY);
+            else if (ball->velY <= 90)
+                ball->posY = pball->posY + EQ_4TH(zdiff, ball->dirY);
+            else
+                ball->posY = pball->posY + EQ_5TH(zdiff, ball->dirY);
+        }
     }
 
     // ball and side wall collision
