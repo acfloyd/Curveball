@@ -1,12 +1,14 @@
 
 #ifndef B_DEFINES
 #define B_DEFINES
+
 #define BALL_RAD 35
 #define VELZ_INC 20
 #define VELXY_FACTOR_FIRST 10
 #define VELXY_FACTOR_HIT 2
 
 #define VEL_FACTOR 2000
+#define CURVE_REDUCE 20
 
 #define T_2ND(Z) ((Z * 11) / 1200)
 #define T_3RD(Z) ((Z * 11) / 800)
