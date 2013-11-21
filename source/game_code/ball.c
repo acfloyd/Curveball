@@ -26,11 +26,11 @@ void save_ball ()
 void ball_update ()
 {
     int16_t sect, zdiff;
+    // TODO: with any wall collision, reduce the ammount of curve on the ball
 
     // update the ball pos
     if (pball != NULL)
     {
-/*        printf("pball != NULL\n");*/
         ball->posZ += ball->velZ; 
         zdiff = (ball->velZ >= 0) ? (ball->posZ - pball->posZ) :
                     (pball->posZ - ball->posZ);
@@ -53,13 +53,6 @@ void ball_update ()
         else
             ball->posY = pball->posY + EQ_5TH(zdiff, ball->dirY);
     }
-    else 
-        printf("pball == NULL\n");
-
-/*
-    if (!first)
-        exit(0);
-*/
 
     // ball and side wall collision
     // right wall
@@ -70,6 +63,12 @@ void ball_update ()
 
         if (ball->dirX == 1)
             ball->dirX = -1;
+
+        if (ball->velX > CURVE_REDUCE)
+            ball->velX -= CURVE_REDUCE;
+
+        if (ball->velY > CURVE_REDUCE)
+            ball->velY -= CURVE_REDUCE;
 
         save_ball();
     }
@@ -82,6 +81,12 @@ void ball_update ()
         if (ball->dirX == -1)
             ball->dirX = 1;
 
+        if (ball->velX > CURVE_REDUCE)
+            ball->velX -= CURVE_REDUCE;
+
+        if (ball->velY > CURVE_REDUCE)
+            ball->velY -= CURVE_REDUCE;
+
         save_ball();
     }
 
@@ -89,13 +94,16 @@ void ball_update ()
     if (ball->posY - BALL_RAD <= 0)
     {
         printf("top wall\n");
-        printf("zdiff=%d\n", zdiff);
-        printf("ball: X=%d, Y=%d, Z=%d, dirX=%d, dirY=%d, velX=%d, velY=%d, velZ=%d, pballZ=%d\n", ball->posX, ball->posY, ball->posZ, ball->dirX, ball->dirY, ball->velX, ball->velY, ball->velZ, pball->posZ);
-        printf("eq_5th: %d\n", EQ_5TH(zdiff, ball->dirY));
         ball->posY = BALL_RAD + 1;
 
         if (ball->dirY == -1)
             ball->dirY = 1;
+
+        if (ball->velX > CURVE_REDUCE)
+            ball->velX -= CURVE_REDUCE;
+
+        if (ball->velY > CURVE_REDUCE)
+            ball->velY -= CURVE_REDUCE;
 
         save_ball();
     }
@@ -108,13 +116,19 @@ void ball_update ()
         if (ball->dirY == 1)
             ball->dirY = -1;
 
+        if (ball->velX > CURVE_REDUCE)
+            ball->velX -= CURVE_REDUCE;
+
+        if (ball->velY > CURVE_REDUCE)
+            ball->velY -= CURVE_REDUCE;
+
         save_ball();
     }
 
     // ball and player wall collision
     if (ball->posZ - BALL_RAD <= 0)
     {
-        printf("player wall first=%d\n", first);
+        printf("player wall\n", first);
         // we use the intersect function, found at the bottom of this page,
         // to detect collision between the paddle and the ball
         sect = intersect(paddle);
