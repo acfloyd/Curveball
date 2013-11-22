@@ -4,16 +4,14 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, status_bits, o
    reg [1:0] state, next_state;
    reg [15:0] x, y;
    wire [15:0] next_x, next_y;
-   wire [2:0] color;
-	reg flip;
+   reg [2:0] color;
 	
    localparam idle = 2'd0, read_status = 2'd1, read_x = 2'd2, read_y = 2'd3;
    
    assign wr_addr = x + (y << 7) * 5;
    //assign wr_data = ((next_x == x_loc) && (next_y == y_loc)) ? color : 3'd0;
 	assign wr_data = color;
-	//assign wr_data = (flip) ? 3'h7 : 3'd0;
-   assign color = (status[0]) ? 3'd3 : 3'd6;
+   //assign color = (status[0]) ? 3'd3 : 3'd6;
 	assign status_bits = status[1:0];
 	
    assign next_x = (VGA_ready) ? 
@@ -31,13 +29,17 @@ module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, status_bits, o
       if(rst) begin
 			x <= 16'b0;
 			y <= 16'b0;
-			//flip <= 1'b0;
+			color <= 3'd0;
 		end
 		else begin
 			x <= next_x;
 			y <= next_y;
-			/*if((next_x == 16'd0) && (next_y == 16'd0))
-				flip <= ~flip;*/
+			if((next_x == 9'd0) && (next_y == 9'd0)) begin
+				if(status[0])
+					color <= 3'd3;
+				else
+					color <= 3'd6;
+			end
 		end   
    end
    

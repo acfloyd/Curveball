@@ -1,13 +1,13 @@
 module ps2_mouse(output [8:0] data, output done, TCP, t_clk, t_data, output r_ack_bit, r_ack, dav, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
   
-  reg [8:0] pos_x, next_pos_x, pos_y, next_pos_y, status, next_status;
+  reg [8:0] status, pos_x, pos_y, next_pos_x, next_pos_y, next_status;
   wire [23:0] data_in;
   wire [7:0] byte_rec;
   
   ps2_clock clock_edge(.clk_high(clk_high), .clk_low(clk_low), .MOUSE_CLOCK(MOUSE_CLOCK), .clk(clk), .rst(rst));
   ps2_tx tx(.TCP(TCP), .r_ack_bit(r_ack_bit), .t_clk(t_clk), .t_data(t_data), .done(done), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .clk_high(clk_high), .clk_low(clk_low));
-  ps2_rx rx(.byte_rec(byte_rec), .received(rda), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP), .clk_low(clk_low));
-  ps2_packets packets(.data_out(data_in), .r_dav(dav), .r_ack(r_ack), .data_in(byte_rec), .clk(clk), .rst(rst), .rda(rda));
+  ps2_rx rx(.byte_rec(byte_rec), .received(received), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP), .clk_low(clk_low));
+  ps2_packets packets(.data_out(data_in), .r_dav(dav), .r_ack(r_ack), .data_in(byte_rec), .clk(clk), .rst(rst), .received(received));
   
   localparam top = 9'd0;
   localparam bottom = 9'd307;
@@ -17,14 +17,15 @@ module ps2_mouse(output [8:0] data, output done, TCP, t_clk, t_data, output r_ac
   localparam middle_y = 9'd153;
   
   assign data = (addr == 2'b00) ? status : 
-                ((addr == 2'b01) ? pos_x :
-                ((addr == 2'b10) ? pos_y : 8'd0));
+                (addr == 2'b01) ? pos_x :
+                (addr == 2'b10) ? pos_y : 8'd0;
+  //assign data_out = {next_status[7:0], next_pos_x[7:0], next_pos_y[7:0]};					 
   
   always@(posedge clk, posedge rst) begin
     if(rst) begin
       pos_x <= middle_x;
       pos_y <= middle_y;
-      status <= 3'd0;
+      status <= 9'd0;
     end
     else begin
       pos_x <= next_pos_x;
@@ -54,8 +55,7 @@ module ps2_mouse(output [8:0] data, output done, TCP, t_clk, t_data, output r_ac
   
 endmodule
 
-
-module ps2_packets(output reg [23:0] data_out, output reg r_dav, r_ack, input [7:0] data_in, input clk, rst, rda);
+module ps2_packets(output reg [23:0] data_out, output reg r_dav, r_ack, input [7:0] data_in, input clk, rst, received);
     
    reg [7:0] button_data, x_data, y_data;
    reg [1:0] state, next_state;
@@ -88,7 +88,7 @@ module ps2_packets(output reg [23:0] data_out, output reg r_dav, r_ack, input [7
       y_data = data_out[7:0];
       case(state)
          ACK: begin
-            if(rda) begin
+            if(received) begin
                if(data_in == 8'hfa) begin
                    ack = 1'b1;
                    next_state = BUTTON;
@@ -96,19 +96,19 @@ module ps2_packets(output reg [23:0] data_out, output reg r_dav, r_ack, input [7
             end
          end
          BUTTON: begin
-            if(rda) begin
+            if(received) begin
                 button_data = data_in;
                 next_state = X_MOVE;
             end
          end
          X_MOVE: begin
-            if(rda) begin
+            if(received) begin
                 x_data = data_in;
                 next_state = Y_MOVE;
             end
          end
          Y_MOVE: begin
-            if(rda) begin
+            if(received) begin
                 y_data = data_in;
                 next_state = BUTTON;
                 dav = 1'b1;
