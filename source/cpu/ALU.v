@@ -1,13 +1,13 @@
-module ALU (A, B, ALUMux, SetFlag, AOp, ZeroB, ShiftMode, AddMode, clk, Flag, divStall, Out, Remainder, rst);
+module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk, divStall, Out, Remainder, rst);
     input [15:0] A, B;
     input [2:0] ALUMux;
     input [1:0] SetFlag, AOp, ShiftMode;
-    input ZeroB, AddMode, clk, rst;
+    input ZeroB, AddMode, clk, rst, FlagMux;
     output [15:0] Out, Remainder;
-    output Flag, divStall;
+    output  divStall;
     
     wire [15:0] Aout, Bout, ShifterOut, AdderOut, MultiplierOut, DividerOut, AndOut, OrOut, XorOut, ALUMuxOut;
-    wire AdderZero, AdderOverflow;
+    wire AdderZero, AdderOverflow, Flag;
     wire divByZero, ready;
     wire divEnable;
     
@@ -48,6 +48,6 @@ module ALU (A, B, ALUMux, SetFlag, AOp, ZeroB, ShiftMode, AddMode, clk, Flag, di
                   (SetFlag == 2'b11) ? AdderOverflow : //SCO
                   1'bz; 
       
-    assign Out = (SetFlag) ? {15'd0,Flag} : ALUMuxOut; 
+    assign Out = (FlagMux) ? {15'd0,Flag} : ALUMuxOut; 
     
 endmodule

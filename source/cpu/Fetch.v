@@ -10,7 +10,7 @@ module Fetch(clk, rst, Stall, TruePC, NotBranchOrJump, NextPC,
     //TEMP INSTRUCT MEM
     reg [15:0] mem [0:34];
     initial begin
-        $readmemh("../text_files/instructions.txt", mem);
+        $readmemb("text_files/instructions.txt", mem);
     end
 
     always @ (posedge clk, posedge rst) begin
