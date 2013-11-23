@@ -1,34 +1,41 @@
-L1:	ADDI R1, R2, #3
-	SUBI R2, R3, #5
+MACRO zero #0
+MACRO one #1
+MACRO aretwo R2
+
+L1:	ADDI R1, aretwo, #3
+	SUBI aretwo, R3, #5
 	MULTI R3, R4, #-12
-	DIVI R4, R5, #0
-	ANDI R5, R6, #1
-	ORI R6, R7, #2
+	DIVI R4, R5, zero
+	ANDI R5, R6, one
+	ORI R6, R7, #2	;comment
 	XORI R7, R0, #-1
 	ROLI R0, R1, #-2
-	SLLI R1, R2, #-3
-	SRLI R2, R3, #-4
+	SLLI R1, aretwo, #-3
+	SRLI aretwo, R3, #-4
 	SRAI R3, R4, #-5
 L2:	LBI R5, #15
 	SLBI R6, #-15
-	STI R7, #0
-	LDI R0, #0
-L3:	ADD R0, R1, R2
-	SUB R0, R1, R2
-	MULT R0, R1, R2
-	DIV R0, R1, R2
-	AND R0, R1, R2
-	OR R0, R1, R2
-	XOR R0, R1, R2
+	STI R7, zero	;comment
+	LDI R0, zero
+L3:	ADD R0, R1, aretwo
+;comment
+;comment
+
+	SUB R0, R1, aretwo
+	MULT R0, R1, aretwo
+	DIV R0, R1, aretwo
+	AND R0, R1, aretwo
+	OR R0, R1, aretwo
+	XOR R0, R1, aretwo
 	NOT R7, R7
-	ROL R0, R1, R2
-	SLL R0, R1, R2
-	SRL R0, R1, R2
-	SRA R0, R1, R2
-	SEQ R0, R1, R2
-	SLT R0, R1, R2
-	SLE R0, R1, R2
-	SCO R0, R1, R2
+	ROL R0, R1, aretwo
+	SLL R0, R1, aretwo
+	SRL R0, R1, aretwo
+	SRA R0, R1, aretwo
+	SEQ R0, R1, aretwo
+	SLT R0, R1, aretwo
+	SLE R0, R1, aretwo
+	SCO R0, R1, aretwo
 L4:	BEQZ R7, #22
 	BNEZ R7, #7
 	BLTZ R7, #7
