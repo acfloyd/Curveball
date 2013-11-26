@@ -133,30 +133,30 @@ foreach (@source){
 		# finds SUB Rd, Rs, Rt
 		$class = 1;
 		printf"%03d:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
-		printf myfile "%s%03b%03b%02b\n",$MCODE{$1},$3,$4,$2,$class;
+		printf myfile "%s%03b%03b%03b%02b\n",$MCODE{$1},$3,$4,$2,$class;
 		
 	}
 	elsif(/(DIV|SRA|SCO)\s+R(\d),\s+R(\d),\s+R(\d)/){
 		# finds DIV Rd, Rs, Rt
 		$class = 3;
 		printf"%03d:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
-		printf myfile "%s%03b%03b%02b\n",$MCODE{$1},$3,$4,$2,$class;
+		printf myfile "%s%03b%03b%03b%02b\n",$MCODE{$1},$3,$4,$2,$class;
 	}
 	elsif(/(NOT)\s+R(\d),\s+R(\d)/){
 		# finds NOT Rd, Rs
 		printf"%03d:%s%03b000%03b11\t$line",$addr++,$MCODE{$1},$3,$2;
-		printf myfile "%s%03b%03b%02b\n",$MCODE{$1},$3,$2;
+		printf myfile "%s%03b000%03b11\n",$MCODE{$1},$3,$2;
 	}
 	elsif(/(BEQZ|BNEZ|BLTZ|BLEZ|JR|JALR|ST|LD)\s+R(\d),\s+#(-?\d+)/){
 		# finds BEQZ Rd, Rs, #immediate
 		if($3 < 0){		# negative immediate
 			$num = 255+$3+1;
 			printf"%03d:%s%03b%8b\t$line",$addr++,$MCODE{$1},$2,$num;
-			printf myfile "%s%03b%03b%02b\n",$MCODE{$1},$2,$num;
+			printf myfile "%s%03b%03b\n",$MCODE{$1},$2,$num;
 		}
 		else{
 			printf"%03d:%s%03b%08b\t$line",$addr++,$MCODE{$1},$2,$3;
-			printf myfile "%s%03b%03b%02b\n",$MCODE{$1},$2,$3;
+			printf myfile "%s%03b%08b\n",$MCODE{$1},$2,$3;
 		}
 	}
 	elsif(/(J|JAL)\s+#(-?\d+)/){
@@ -164,11 +164,11 @@ foreach (@source){
 		if($2 < 0){		# negative displacement
 			$num = 2047+$2+1;
 			printf"%03d:%s%11b\t$line",$addr++,$MCODE{$1},$num;
-			printf myfile "%s%03b%11b\n",$MCODE{$1},$num;
+			printf myfile "%s%11b\n",$MCODE{$1},$num;
 		}
 		else{
 			printf"%03d:%s%011b\t$line",$addr++,$MCODE{$1},$2;
-			printf myfile "%s%03b%11b\n",$MCODE{$1},$2;
+			printf myfile "%s%011b\n",$MCODE{$1},$2;
 		}
 	}
 	elsif(/(ST|LD)\s+R(\d),\s+R(\d),\s+#(-?\d+)/){
@@ -180,11 +180,12 @@ foreach (@source){
 		}
 		else{
 			printf"%03d:%s%03b%03b%05b\t$line",$addr++,$MCODE{$1},$3,$2,$4;
-			printf myfile "%s%03b%03b%5b\n",$MCODE{$1},$3,$2,$4;
+			printf myfile "%s%03b%03b%05b\n",$MCODE{$1},$3,$2,$4;
 		}
 	}
 	elsif(/([A-Z]+)/){
 		printf"%03d:%04s\t$line",$addr++,$MCODE{$1};
+		printf myfile "%04s\n",$MCODE{$1};
 	} else{
 		print "\t\t$line";
 	}
