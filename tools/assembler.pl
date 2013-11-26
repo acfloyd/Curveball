@@ -46,20 +46,30 @@
 
 $addr=0;
 while(<>){						# go through every line in source file 
-	push(@source,$_);
-	if(/(\w+):/){				# word followed by a colon, meaning label
-		$label{$1}=$addr;
-		s/\w+://;
+	#push(@source,$_);
+	if(/(MACRO)\s+(\w+)\s+(#?\w+)/){	# found a macro
+		$macro{$2}=$3;
 	}
-	if(/-?\d+|[A-Z]+/){		# digits or a word
+	#elsif(/(\w+):/){				# word followed by a colon, meaning label
+	#	$label{$1}=$addr;
+	#	s/\w+://;
+	#}
+	elsif(/-?\d+|[A-Z]+/){		# not a macro, found digits or an instruction
+		push(@source,$_);
 		$addr++;
 	}
 }
-
-print"*** LABEL LIST ***\n";
-foreach $l (sort(keys(%label))){
-	printf "%-8s%03X\n",$l,$label{$l};
+print"*** MACROS ***\n";
+foreach $1 (keys(%macro)){
+	printf"MACRO %s = %s\n",$1,$macro{$1};
+	foreach (@source){
+		s/$1/$macro{$1}/;
+	}
 }
+#print"*** LABEL LIST ***\n";
+#foreach $l (sort(keys(%label))){
+#	printf "%-8s%03X\n",$l,$label{$l};
+#}
 
 $addr=0;
 print "\n*** MACHINE PROGRAM ***\n";
