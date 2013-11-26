@@ -1,0 +1,8 @@
+MACRO one #1
+
+L1: ADDI R0, R1, one
+	LBI R0, L2
+	
+L2:
+	LBI R1, L1
+	

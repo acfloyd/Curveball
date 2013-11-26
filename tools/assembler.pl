@@ -47,111 +47,126 @@
 $addr=0;
 while(<>){						# go through every line in source file 
 	#push(@source,$_);
+	# pre-process
+	if(/(;.+)/){				# comments
+		#printf"%s\n",$1;
+		s/;.+//;					# remove comment
+	}
+	if(/(\w+):/){				# word followed by a colon, meaning label
+		$label{$1}=$addr;
+		s/\w+://;				# remove labels
+	}
 	if(/(MACRO)\s+(\w+)\s+(#?\w+)/){	# found a macro
 		$macro{$2}=$3;
 	}
-	#elsif(/(\w+):/){				# word followed by a colon, meaning label
-	#	$label{$1}=$addr;
-	#	s/\w+://;
-	#}
-	elsif(/-?\d+|[A-Z]+/){		# not a macro, found digits or an instruction
+	elsif(/[A-Z]+/){			# not a macro, found digits or an instruction
 		push(@source,$_);
 		$addr++;
 	}
 }
-print"*** MACROS ***\n";
+print"**** MACROS ****\n";
 foreach $1 (keys(%macro)){
-	printf"MACRO %s = %s\n",$1,$macro{$1};
+	printf"%s = %s\n",$1,$macro{$1};
 	foreach (@source){
-		s/$1/$macro{$1}/;
+		#printf"%s",$_;
+		#printf"%s\n",$1;
+		s/$1/$macro{$1}/;			# replace macro label with value
+		#printf"%s",$_;
 	}
 }
-#print"*** LABEL LIST ***\n";
-#foreach $l (sort(keys(%label))){
-#	printf "%-8s%03X\n",$l,$label{$l};
-#}
+print"\n**** LABEL LIST ****\n";
+foreach $1 (keys(%label)){
+	#printf "%s",$1;
+	printf "%-10s%03d\n",$1,$label{$1};
+	foreach (@source){
+		#printf"%s",$_;
+		#printf"%s\n",$1;
+		s/$1/#$label{$1}/;			# replace label with address
+		#printf"%s",$_;
+	}
+}
 
 $addr=0;
-print "\n*** MACHINE PROGRAM ***\n";
+print "\n**** MACHINE PROGRAM ****\n";
 foreach (@source){
 	$line = $_;
-	s/\w+://;
+	#s/\w+://;
 	if(/(ADDI|SUBI|MULTI|DIVI|ANDI|ORI|XORI|ROLI|SLLI|SRLI|SRAI)\s+R(\d),\s+R(\d),\s+#(-?\d+)/){
 		# finds ADDI Rd, Rs, #immediate, etc.
 		if($4 < 0){		# negative immediate
 			$num = 31+$4+1;
-			printf"%03X:%s%03b%03b%5b\t$line",$addr++,$MCODE{$1},$3,$2,$num;
+			printf"%03d:%s%03b%03b%5b\t$line",$addr++,$MCODE{$1},$3,$2,$num;
 		}
 		else{
-			printf"%03X:%s%03b%03b%05b\t$line",$addr++,$MCODE{$1},$3,$2,$4;
+			printf"%03d:%s%03b%03b%05b\t$line",$addr++,$MCODE{$1},$3,$2,$4;
 		}
 	}
 	elsif(/(LBI|SLBI|STI|LDI)\s+R(\d),\s+#(-?\d+)/){
 		# finds LBI Rs, #immediate, etc.
 		if($3 < 0){		#negative immmediate
 			$num = 255+$3+1;
-			printf"%03X:%s%03b%8b\t$line",$addr++,$MCODE{$1},$2,$num;
+			printf"%03d:%s%03b%8b\t$line",$addr++,$MCODE{$1},$2,$num;
 		}
 		else{
-			printf"%03X:%s%03b%08b\t$line",$addr++,$MCODE{$1},$2,$3;
+			printf"%03d:%s%03b%08b\t$line",$addr++,$MCODE{$1},$2,$3;
 		}
 	}
 	elsif(/(ADD|AND|ROL|SEQ)\s+R(\d),\s+R(\d),\s+R(\d)/){
 		# finds ADD Rd, Rs, Rt
 		$class = 0;
-		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+		printf"%03d:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
 	}
 	elsif(/(MULT|XOR|SRL|SLE)\s+R(\d),\s+R(\d),\s+R(\d)/){
 		# finds MULT Rd, Rs, Rt
 		$class = 2;
-		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+		printf"%03d:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
 	}
 	elsif(/(SUB|OR|SLL|SLT)\s+R(\d),\s+R(\d),\s+R(\d)/){
 		# finds SUB Rd, Rs, Rt
 		$class = 1;
-		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+		printf"%03d:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
 	}
 	elsif(/(DIV|SRA|SCO)\s+R(\d),\s+R(\d),\s+R(\d)/){
 		# finds DIV Rd, Rs, Rt
 		$class = 3;
-		printf"%03X:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
+		printf"%03d:%s%03b%03b%03b%02b\t$line",$addr++,$MCODE{$1},$3,$4,$2,$class;
 	}
 	elsif(/(NOT)\s+R(\d),\s+R(\d)/){
 		# finds NOT Rd, Rs
-		printf"%03X:%s%03b000%03b11\t$line",$addr++,$MCODE{$1},$3,$2;
+		printf"%03d:%s%03b000%03b11\t$line",$addr++,$MCODE{$1},$3,$2;
 	}
 	elsif(/(BEQZ|BNEZ|BLTZ|BGEZ|JR|JALR|ST|LD)\s+R(\d),\s+#(-?\d+)/){
 		# finds BEQZ Rd, Rs, #immediate
 		if($3 < 0){		# negative immediate
 			$num = 255+$3+1;
-			printf"%03X:%s%03b%8b\t$line",$addr++,$MCODE{$1},$2,$num;
+			printf"%03d:%s%03b%8b\t$line",$addr++,$MCODE{$1},$2,$num;
 		}
 		else{
-			printf"%03X:%s%03b%08b\t$line",$addr++,$MCODE{$1},$2,$3;
+			printf"%03d:%s%03b%08b\t$line",$addr++,$MCODE{$1},$2,$3;
 		}
 	}
 	elsif(/(J|JAL)\s+#(-?\d+)/){
 		# finds J displacement
 		if($2 < 0){		# negative displacement
 			$num = 2047+$2+1;
-			printf"%03X:%s%11b\t$line",$addr++,$MCODE{$1},$num;
+			printf"%03d:%s%11b\t$line",$addr++,$MCODE{$1},$num;
 		}
 		else{
-			printf"%03X:%s%011b\t$line",$addr++,$MCODE{$1},$2;
+			printf"%03d:%s%011b\t$line",$addr++,$MCODE{$1},$2;
 		}
 	}
 	elsif(/(ST|LD)\s+R(\d),\s+R(\d),\s+#(-?\d+)/){
 		# finds ADDI Rd, Rs, #immediate, etc.
 		if($4 < 0){		# negative immediate
 			$num = 31+$4+1;
-			printf"%03X:%s%03b%03b%5b\t$line",$addr++,$MCODE{$1},$3,$2,$num;
+			printf"%03d:%s%03b%03b%5b\t$line",$addr++,$MCODE{$1},$3,$2,$num;
 		}
 		else{
-			printf"%03X:%s%03b%03b%05b\t$line",$addr++,$MCODE{$1},$3,$2,$4;
+			printf"%03d:%s%03b%03b%05b\t$line",$addr++,$MCODE{$1},$3,$2,$4;
 		}
 	}
 	elsif(/([A-Z]+)/){
-		printf"%03X:%04s\t$line",$addr++,$MCODE{$1};
+		printf"%03d:%04s\t$line",$addr++,$MCODE{$1};
 	} else{
 		print "\t\t$line";
 	}
