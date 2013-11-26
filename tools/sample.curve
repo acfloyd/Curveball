@@ -39,7 +39,7 @@ L3:	ADD R0, R1, aretwo
 L4:	BEQZ R7, #22
 	BNEZ R7, #7
 	BLTZ R7, #7
-	BGEZ R7, #-7
+	BLEZ R7, #-7
 	J #100
 	JR R7, #7
 	JAL #-100
