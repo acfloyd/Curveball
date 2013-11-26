@@ -209,7 +209,7 @@ always @(posedge clk) begin
                 if (rf[currLine[10:8]] < 0)
                     PC_next = PC_next + {{8{currLine[7]}}, currLine[7:0]};
             end
-            // BGEZ TODO: this shit is BOGUS, ask paul and nate
+            // BLEZ
             5'b10111: begin
                 if (rf[currLine[10:8]] <= 0)
                     PC_next = PC_next + {{8{currLine[7]}}, currLine[7:0]};
