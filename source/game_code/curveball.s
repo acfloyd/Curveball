@@ -1,734 +1,694 @@
-	.file	1 "curveball.c"
-	.section .mdebug.abi32
-	.previous
-	.gnu_attribute 4, 1
-	.abicalls
-	.option	pic0
+; assembly file containing the Curveball game code
 
-	.comm	ball,4,4
+; game defines
+MACRO true #1
+MACRO false #0
+MACRO height_low #128
+MACRO height_high #1    ; height = 384
+MACRO half_height #192
+MACRO width_low #0
+MACRO width_high #2     ; width = 512
+MACRO half_width_low #1 ; half_width = 256
+MACRO half_width_high #0
+MACRO depth #1000
 
-	.comm	pball,4,4
+MACRO ball_rad #35
+MACRO curve_reduce #20
+MACRO paddle_width #101
+MACRO paddle_height #75
+MACRO velz_inc #20
 
-	.comm	opponent,4,4
+; global var bases
+MACRO pBallAddr #0
+MACRO ballAddr_low #8
+MACRO ballAddr_high #16
+MACRO ballVelAddr #6
+MACRO paddle2Addr_low #4
+MACRO paddle2Addr_high #16
+MACRO paddle1Addr_low #0
+MACRO paddle1Addr_high #16
+MACRO mouseAddr_low #0
+MACRO mouseAddr_high #64
+MACRO pMouseAddr #14
+MACRO pPaddle2Addr #18
+MACRO scoreAddr_low #14
+MACRO scoreAddr_high #16
+MACRO gameStateAddr_low #18
+MACRO gameStateAddr_high #16
+MACRO difficultyAddr #22
+MACRO firstAddr #24
 
-	.comm	paddle,4,4
+; offset from global var base
+MACRO posX #0
+MACRO posY #2
+MACRO posZ #4
+MACRO velX #0
+MACRO velY #2
+MACRO velZ #4
+MACRO dirX #6
+MACRO dirY #8
+MACRO p1Score #0
+MACRO p2Score #2
 
-	.comm	mouse,4,4
+; extra memory needed to hold mapped global variables
+; addresses are for general purpose mem
+; 0: pBall x, y, z
+; 6: ball vel x, y and dir x, y
+; 14: pMouse x, y
+; 18: pPaddle2 x and y
+; 22: difficulty
+; 24: first
 
-	.comm	pmouse,4,4
+; TODO: maybe use a register as a stack pointer?
 
-	.comm	stopped,2,2
+;void main()
+; start by setting up the initial object positions
+MAIN:   
+        LBI R0, #1                  ; first = TRUE
+        STI R1, firstAddr
+        LBI R0, ballAddr_high       ; setup the ball
+        SLBI R0, ballAddr_low
+        LBI R1, half_width_high     ; ball->posX = WIDTH / 2
+        SLBI R1, half_width_low
+        ST R1, R0, posX
+        LBI R1, half_height         ; ball->posY = HEIGHT / 2
+        ST R1, R0, posY
+        LBI R1, #0                  ; ball->posZ = 0
+        ST R1, R0, posZ
+        LBI R0, ballVelAddr         ; ball->velX = 0
+        ST R1, R0, velX
+        ST R1, R0, velY             ; ball->velY = 0
+        LBI R1, #1                  ; ball->velZ = 1
+        ST R1, R0, velZ
+        ST R1, R0, dirX             ; ball->dirX = 1
+        ST R1, R0, dirY             ; ball->dirY = 1
+        
+        ; setup paddle 2
+        LBI R0, paddle2Addr_high
+        SLBI R0, paddle2Addr_low
+        LBI R1, half_width_high     ; opponent->posX = WIDTH / 2
+        SLBI R1, half_width_low
+        ST R1, R0, posX
+        LBI R1, half_height         ; opponent->posY = HEIGHT / 2
+        ST R1, R0, posY
 
-	.comm	first,2,2
+        ; setup paddle 1
+        LBI R0, paddle1Addr_high
+        SLBI R0, paddle1Addr_low    
+        ST R1, R0, posY             ; paddle->posY = HEIGHT / 2
+        LBI R1, half_width_high     ; paddle->posX = WIDTH / 2
+        SLBI R1, half_width_low
+        ST R1, R0, posX
 
-	.comm	oppScore,2,2
+        ; save off the current mouse location in memory to be compared later
+        LBI R0, mouseAddr_high
+        SLBI R0, mouseAddr_low
+        LD R1, R0, posX
+        LD R2, R0, posY
+        LBI R0, pMouseAddr
+        ST R1, R0, posX             ; pmouse->posX = mouse->posX
+        ST R2, R0, posY             ; pmouse->posY = mouse->posY
 
-	.comm	playerScore,2,2
+        ; set starting scores
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        LBI R1, #0
+        ST R1, R0, p1Score          ; playerScore = 0
+        ST R1, R0, p2Score          ; oppScore = 0
+        LBI R0, difficultyAddr      ; difficulty = 1
+        LBI R1, #1
+        ST R1, R0, #0
 
-	.comm	difficulty,2,2
+; loop runs forever updating the game state
+GLOOP:  
+        JAL P2UPDATE                ; opp_update()
+        JAL P1UPDATE                ; paddle_update()
+        JAL BUPDATE                 ; ball_update()
+        JAL GLOOP
 
-	.comm	grid,40000,4
-	.rdata
-	.align	2
-$LC0:
-	.ascii	"usage: insert difference in mouse position to define cur"
-	.ascii	"ve used\012<x position difference> <y position differenc"
-	.ascii	"e>\000"
-	.align	2
-$LC1:
-	.ascii	"curve X = %d, Y = %d\012\000"
-	.text
-	.align	2
-	.globl	main
-	.set	nomips16
-	.set	nomicromips
-	.ent	main
-	.type	main, @function
-main:
-	.frame	$fp,40,$31		# vars= 0, regs= 4/0, args= 16, gp= 8
-	.mask	0xc0030000,-4
-	.fmask	0x00000000,0
-	.set	noreorder
-	.set	nomacro
-	addiu	$sp,$sp,-40
-	sw	$31,36($sp)
-	sw	$fp,32($sp)
-	sw	$17,28($sp)
-	sw	$16,24($sp)
-	move	$fp,$sp
-	sw	$4,40($fp)
-	sw	$5,44($fp)
-	lw	$3,40($fp)
-	li	$2,3			# 0x3
-	beq	$3,$2,$L2
-	nop
+; save off the current location of the paddle #2
+P2UPDATE: 
+        LBI R0, paddle2Addr_high
+        SLBI R0, paddle2Addr_low
+        LD R1, R0, posX
+        LD R2, R0, posY
+        LBI R0, pPaddle2Addr
+        ST R1, R0, posX             ; pPaddle2 = opp->posX
+        ST R2, R0, posY             ; pPaddle2 = opp->posY
+        JR R7, #0                   ; return
 
-	lui	$2,%hi($LC0)
-	addiu	$4,$2,%lo($LC0)
-	jal	puts
-	nop
+; save off the current location of the paddle #2
+P1UPDATE: 
+        LBI R0, paddle1Addr_high
+        SLBI R0, paddle1Addr_low
+        LD R1, R0, posX
+        LD R2, R0, posY
+        LBI R0, pMouseAddr
+        ST R1, R0, posX             ; pMouse->posX = paddle->posX
+        ST R2, R0, posY             ; pMouse->posY = paddle->posY
+        LBI R3, mouseAddr_high
+        SLBI R3, mouseAddr_low
+        LD R1, R3, posX             
+        LD R2, R3, posY
+        ST R1, R0, posX             ; paddle->posX = mouse->posX
+        ST R2, R0, posY             ; paddle->posY = mouse->posY
+        JR R7, #0                   ; return
 
-	move	$4,$0
-	jal	exit
-	nop
+; update the ball location and calc the curve for the ball
+BUPDATE:    
+        LDI R0, firstAddr           ; if (first) or if (pBall == NULL) in code
+        BNEZ R0, ENDPBN             ; TODO: this could be a problem if the IMM gets too large, check in assembler
+        LBI R1, ballAddr_high       
+        SLBI R1, ballAddr_low       ; r1 <-- ballAddr
+        LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
+        LBI R3, pBallAddr           ; r3 <-- pBallAddr
+        LD R4, R1, posZ             ; r4 <-- ball->posZ
+        LD R5, R2, velZ             ; r5 <-- ball->velZ
+        ADD R4, R4, R5              
+        ST R4, R1, posZ             ; ball->posZ += ball->velZ
 
-$L2:
-	jal	setup
-	nop
+        LD R5, R3, posZ             ; r5 <-- pBall->posZ
+        BLTZ R5, #2                 ; if (ball->velZ >= 0)
+        SUB R6, R5, R4              ; zdiff(r6) = ball->posZ - pball->posZ
+        J #1
+        SUB R6, R4, R5              ; zdiff(r6) = pball->posZ - ball->posZ
+        ; zdiff is now set here in r6
+        
+        LD R4, R2, velX             ; r4 <-- ball->velX
+        BEQZ R4, ENDVX0             ; if (ball->velX != 0) TODO: this could be a problem if the IMM gets too large, check in assembler
+        LD R5, R1, posX             ; r5 <-- ball->posX
+        LBI R0, #30
+        SUB R0, R4, R0              ; r0 <-- 30 - ball->velX
+        BLEZ R0, ENDVX30            ; if (ball->velX <= 30)
 
-	lui	$2,%hi(pmouse)
-	lw	$16,%lo(pmouse)($2)
-	lui	$2,%hi(pmouse)
-	lw	$2,%lo(pmouse)($2)
-	lh	$2,0($2)
-	andi	$17,$2,0xffff
-	lw	$2,44($fp)
-	addiu	$2,$2,4
-	lw	$2,0($2)
-	move	$4,$2
-	jal	atoi
-	nop
+        ; start of calc EQ_2ND(zdiff, ball->dirX)
+        ; EQ_2ND(Z, D) (D * ((54 * T_2ND(Z)) - (5 * T_2ND(Z) * T_2ND(Z))))
+        ; T_2ND(Z) ((Z * 11) / 1200)
+        LBI R3, #11
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #4
+        SLBI R3, #176               ; r3 <-- #1200
+        DIV R0, R0, R3              ; r0 <-- T_2ND(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_2ND(zdiff) * T_2ND(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_2ND(zdiff) * T_2ND(zdiff) * 5
+        LBI R3, #54
+        MULT R3, R3, R0             ; r3 <-- 54 * T_2ND(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (54 * T_2ND(Z)) - (5 * T_2ND(Z) * T_2ND(Z))
+        LD R0, R2, dirX             ; r0 <-- ball->dirX
+        MULT R3, R3, R0             ; r3 <-- EQ_2ND(zdiff, ball->dirX)
+        LBI R0, pBallAddr
+        LD R0, R0 posX              ; r0 <-- pBall-> posX
+        ADD R0, R0, R3
+        ST R0, R1, posX             ; ball->posX = pBall->posX + EQ_2ND(zdiff, ball->dirX)
+        J ENDVX0
+ENDVX30: ; end if (ball->velX <= 30)
 
-	andi	$2,$2,0xffff
-	addu	$2,$17,$2
-	andi	$2,$2,0xffff
-	seh	$2,$2
-	sh	$2,0($16)
-	lui	$2,%hi(pmouse)
-	lw	$16,%lo(pmouse)($2)
-	lui	$2,%hi(pmouse)
-	lw	$2,%lo(pmouse)($2)
-	lh	$2,2($2)
-	andi	$17,$2,0xffff
-	lw	$2,44($fp)
-	addiu	$2,$2,8
-	lw	$2,0($2)
-	move	$4,$2
-	jal	atoi
-	nop
+        LBI R0, #60
+        SUBI R0, R4, R0             ; r0 <-- 60 - ball->velX
+        BLEZ R0, ENDVX60            ; if (ball->velX <= 60)
 
-	andi	$2,$2,0xffff
-	addu	$2,$17,$2
-	andi	$2,$2,0xffff
-	seh	$2,$2
-	sh	$2,2($16)
-	lw	$2,44($fp)
-	addiu	$2,$2,4
-	lw	$2,0($2)
-	move	$4,$2
-	jal	atoi
-	nop
+        ; start of calc EQ_3RD(zdiff, ball->dirX)
+        ; EQ_3RD(Z, D) (D *((54 * T_3RD(Z)) - (5 * T_3RD(Z) * T_3RD(Z))))
+        ; T_3RD(Z) ((Z * 11) / 800)
+        LBI R3, #11
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #3
+        SLBI R3, #32                ; r3 <-- #800
+        DIV R0, R0, R3              ; r0 <-- T_3RD(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_3RD(zdiff) * T_3RD(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_3RD(zdiff) * T_3RD(zdiff) * 5
+        LBI R3, #54
+        MULT R3, R3, R0             ; r3 <-- 54 * T_3RD(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (54 * T_3RD(Z)) - (5 * T_3RD(Z) * T_3RD(Z))
+        LD R0, R2, dirX             ; r0 <-- ball->dirX
+        MULT R3, R3, R0             ; r3 <-- EQ_2ND(zdiff, ball->dirX)
+        LBI R0, pBallAddr
+        LD R0, R0 posX              ; r0 <-- pBall-> posX
+        ADD R0, R0, R3
+        ST R0, R1, posX             ; ball->posX = pBall->posX + EQ_3RD(zdiff, ball->dirX)
+        J ENDVX0
+ENDVX60: ; end if (ball->vel <= 60)
 
-	move	$16,$2
-	lw	$2,44($fp)
-	addiu	$2,$2,8
-	lw	$2,0($2)
-	move	$4,$2
-	jal	atoi
-	nop
+        LBI R0, #90
+        SUBI R0, R4, R0             ; r0 <-- 90 - ball->velX
+        BLEZ R0, ENDVX90            ; if (ball->velX <= 90)
 
-	lui	$3,%hi($LC1)
-	addiu	$4,$3,%lo($LC1)
-	move	$5,$16
-	move	$6,$2
-	jal	printf
-	nop
+        ; start of calc EQ_4TH(zdiff, ball->dirX)
+        ; EQ_4TH(Z, D) (D *((63 * T_4TH(Z)) - (5 * T_4TH(Z) * T_4TH(Z))))
+        ; T_4TH(Z) ((Z * 13) / 600)
+        LBI R3, #13
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #2
+        SLBI R3, #88                ; r3 <-- #600
+        DIV R0, R0, R3              ; r0 <-- T_4TH(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_4TH(zdiff) * T_4TH(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_4TH(zdiff) * T_4TH(zdiff) * 5
+        LBI R3, #63
+        MULT R3, R3, R0             ; r3 <-- 63 * T_4TH(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (63 * T_4TH(Z)) - (5 * T_4TH(Z) * T_4TH(Z))
+        LD R0, R2, dirX             ; r0 <-- ball->dirX
+        MULT R3, R3, R0             ; r3 <-- EQ_4TH(zdiff, ball->dirX)
+        LBI R0, pBallAddr
+        LD R0, R0 posX              ; r0 <-- pBall-> posX
+        ADD R0, R0, R3
+        ST R0, R1, posX             ; ball->posX = pBall->posX + EQ_4TH(zdiff, ball->dirX)
+        J ENDVX0
+ENDVX90: ; end if (ball->velX <= 90)
 
-$L7:
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$3,0($2)
-	li	$2,1717960704			# 0x66660000
-	ori	$2,$2,0x6667
-	mult	$3,$2
-	mfhi	$2
-	sra	$4,$2,1
-	sra	$2,$3,31
-	subu	$4,$4,$2
-	move	$2,$4
-	sll	$2,$2,2
-	addu	$2,$2,$4
-	subu	$2,$3,$2
-	seh	$2,$2
-	slt	$2,$2,3
-	beq	$2,$0,$L3
-	nop
+        ; start of calc EQ_5TH(zdiff, ball->dirX)
+        ; EQ_5TH(Z, D) (D * ((77 * T_5TH(Z)) - (5 * T_5TH(Z) * T_5TH(Z))))
+        ; T_5TH(Z) ((Z * 16) / 400)
+        LBI R3, #16
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #1
+        SLBI R3, #144               ; r3 <-- #400
+        DIV R0, R0, R3              ; r0 <-- T_5TH(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_5TH(zdiff) * T_5TH(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_5TH(zdiff) * T_5TH(zdiff) * 5
+        LBI R3, #77
+        MULT R3, R3, R0             ; r3 <-- 77 * T_5TH(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (77 * T_5TH(Z)) - (5 * T_5TH(Z) * T_5TH(Z))
+        LD R0, R2, dirX             ; r0 <-- ball->dirX
+        MULT R3, R3, R0             ; r3 <-- EQ_5TH(zdiff, ball->dirX)
+        LBI R0, pBallAddr
+        LD R0, R0 posX              ; r0 <-- pBall-> posX
+        ADD R0, R0, R3
+        ST R0, R1, posX             ; ball->posX = pBall->posX + EQ_5TH(zdiff, ball->dirX)
+ENDVX0:
 
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$3,4($2)
-	li	$2,1717960704			# 0x66660000
-	ori	$2,$2,0x6667
-	mult	$3,$2
-	mfhi	$2
-	sra	$4,$2,2
-	sra	$2,$3,31
-	subu	$2,$4,$2
-	sll	$2,$2,1
-	sll	$4,$2,2
-	addu	$2,$2,$4
-	subu	$2,$3,$2
-	seh	$2,$2
-	slt	$2,$2,5
-	beq	$2,$0,$L4
-	nop
+        LD R4, R2, velY             ; r4 <-- ball->velY
+        BEQZ R4, ENDVY0             ; if (ball->velY != 0) TODO: this could be a problem if the IMM gets too large, check in assembler
+        LD R5, R1, posY             ; r5 <-- ball->posY
+        LBI R0, #30
+        SUB R0, R4, R0              ; r0 <-- 30 - ball->velY
+        BLEZ R0, ENDVY30            ; if (ball->velY <= 30)
 
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,0($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,1
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	move	$6,$2
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,4($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,2
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	move	$4,$2
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,2($2)
-	move	$3,$2
-	lui	$5,%hi(grid)
-	move	$2,$6
-	sll	$2,$2,2
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	addu	$2,$2,$4
-	sll	$4,$2,2
-	addiu	$2,$5,%lo(grid)
-	addu	$2,$4,$2
-	sw	$3,0($2)
-	b	$L5
-	nop
+        ; start of calc EQ_2ND(zdiff, ball->dirY)
+        ; EQ_2ND(Z, D) (D * ((54 * T_2ND(Z)) - (5 * T_2ND(Z) * T_2ND(Z))))
+        ; T_2ND(Z) ((Z * 11) / 1200)
+        LBI R3, #11
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #4
+        SLBI R3, #176               ; r3 <-- #1200
+        DIV R0, R0, R3              ; r0 <-- T_2ND(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_2ND(zdiff) * T_2ND(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_2ND(zdiff) * T_2ND(zdiff) * 5
+        LBI R3, #54
+        MULT R3, R3, R0             ; r3 <-- 54 * T_2ND(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (54 * T_2ND(Z)) - (5 * T_2ND(Z) * T_2ND(Z))
+        LD R0, R2, dirY             ; r0 <-- ball->dirY
+        MULT R3, R3, R0             ; r3 <-- EQ_2ND(zdiff, ball->dirY)
+        LBI R0, pBallAddr
+        LD R0, R0 posY              ; r0 <-- pBall-> posY
+        ADD R0, R0, R3
+        ST R0, R1, posY             ; ball->posY = pBall->posY + EQ_2ND(zdiff, ball->dirY)
+        J ENDVY0
+ENDVY30: ; end if (ball->velY <= 30)
 
-$L4:
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,0($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,1
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	move	$6,$2
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,4($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,2
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	addiu	$4,$2,1
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,2($2)
-	move	$3,$2
-	lui	$5,%hi(grid)
-	move	$2,$6
-	sll	$2,$2,2
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	addu	$2,$2,$4
-	sll	$4,$2,2
-	addiu	$2,$5,%lo(grid)
-	addu	$2,$4,$2
-	sw	$3,0($2)
-	b	$L5
-	nop
+        LBI R0, #60
+        SUBI R0, R4, R0             ; r0 <-- 60 - ball->velY
+        BLEZ R0, ENDVY60            ; if (ball->velY <= 60)
 
-$L3:
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$3,4($2)
-	li	$2,1717960704			# 0x66660000
-	ori	$2,$2,0x6667
-	mult	$3,$2
-	mfhi	$2
-	sra	$4,$2,2
-	sra	$2,$3,31
-	subu	$2,$4,$2
-	sll	$2,$2,1
-	sll	$4,$2,2
-	addu	$2,$2,$4
-	subu	$2,$3,$2
-	seh	$2,$2
-	slt	$2,$2,5
-	beq	$2,$0,$L6
-	nop
+        ; start of calc EQ_3RD(zdiff, ball->dirY)
+        ; EQ_3RD(Z, D) (D *((54 * T_3RD(Z)) - (5 * T_3RD(Z) * T_3RD(Z))))
+        ; T_3RD(Z) ((Z * 11) / 800)
+        LBI R3, #11
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #3
+        SLBI R3, #32                ; r3 <-- #800
+        DIV R0, R0, R3              ; r0 <-- T_3RD(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_3RD(zdiff) * T_3RD(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_3RD(zdiff) * T_3RD(zdiff) * 5
+        LBI R3, #54
+        MULT R3, R3, R0             ; r3 <-- 54 * T_3RD(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (54 * T_3RD(Z)) - (5 * T_3RD(Z) * T_3RD(Z))
+        LD R0, R2, dirY             ; r0 <-- ball->dirY
+        MULT R3, R3, R0             ; r3 <-- EQ_2ND(zdiff, ball->dirY)
+        LBI R0, pBallAddr
+        LD R0, R0 posY              ; r0 <-- pBall-> posY
+        ADD R0, R0, R3
+        ST R0, R1, posY             ; ball->posY = pBall->posY + EQ_3RD(zdiff, ball->dirY)
+        J ENDVY0
+ENDVY60: ; end if (ball->vel <= 60)
 
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,0($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,1
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	addiu	$6,$2,1
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,4($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,2
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	move	$4,$2
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,2($2)
-	move	$3,$2
-	lui	$5,%hi(grid)
-	move	$2,$6
-	sll	$2,$2,2
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	addu	$2,$2,$4
-	sll	$4,$2,2
-	addiu	$2,$5,%lo(grid)
-	addu	$2,$4,$2
-	sw	$3,0($2)
-	b	$L5
-	nop
+        LBI R0, #90
+        SUBI R0, R4, R0             ; r0 <-- 90 - ball->velY
+        BLEZ R0, ENDVY90            ; if (ball->velY <= 90)
 
-$L6:
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,0($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,1
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	addiu	$6,$2,1
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,4($2)
-	li	$3,1717960704			# 0x66660000
-	ori	$3,$3,0x6667
-	mult	$2,$3
-	mfhi	$3
-	sra	$3,$3,2
-	sra	$2,$2,31
-	subu	$2,$3,$2
-	seh	$2,$2
-	addiu	$4,$2,1
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	lh	$2,2($2)
-	move	$3,$2
-	lui	$5,%hi(grid)
-	move	$2,$6
-	sll	$2,$2,2
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	sll	$6,$2,2
-	addu	$2,$2,$6
-	addu	$2,$2,$4
-	sll	$4,$2,2
-	addiu	$2,$5,%lo(grid)
-	addu	$2,$4,$2
-	sw	$3,0($2)
-$L5:
-	jal	update_game
-	nop
+        ; start of calc EQ_4TH(zdiff, ball->dirY)
+        ; EQ_4TH(Z, D) (D *((63 * T_4TH(Z)) - (5 * T_4TH(Z) * T_4TH(Z))))
+        ; T_4TH(Z) ((Z * 13) / 600)
+        LBI R3, #13
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #2
+        SLBI R3, #88                ; r3 <-- #600
+        DIV R0, R0, R3              ; r0 <-- T_4TH(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_4TH(zdiff) * T_4TH(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_4TH(zdiff) * T_4TH(zdiff) * 5
+        LBI R3, #63
+        MULT R3, R3, R0             ; r3 <-- 63 * T_4TH(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (63 * T_4TH(Z)) - (5 * T_4TH(Z) * T_4TH(Z))
+        LD R0, R2, dirY             ; r0 <-- ball->dirY
+        MULT R3, R3, R0             ; r3 <-- EQ_4TH(zdiff, ball->dirY)
+        LBI R0, pBallAddr
+        LD R0, R0 posY              ; r0 <-- pBall-> posY
+        ADD R0, R0, R3
+        ST R0, R1, posY             ; ball->posY = pBall->posY + EQ_4TH(zdiff, ball->dirY)
+        J ENDVY0
+ENDVY90: ; end if (ball->velY <= 90)
 
-	b	$L7
-	nop
+        ; start of calc EQ_5TH(zdiff, ball->dirY)
+        ; EQ_5TH(Z, D) (D * ((77 * T_5TH(Z)) - (5 * T_5TH(Z) * T_5TH(Z))))
+        ; T_5TH(Z) ((Z * 16) / 400)
+        LBI R3, #16
+        MULT R0, R6, R3             ; r0 <-- zdiff * 11
+        LBI R3, #1
+        SLBI R3, #144               ; r3 <-- #400
+        DIV R0, R0, R3              ; r0 <-- T_5TH(zdiff)
+        MULT R5, R0, R0             ; r5 <-- T_5TH(zdiff) * T_5TH(zdiff)
+        LBI R3, #5
+        MULT R5, R0, R3             ; r5 <-- T_5TH(zdiff) * T_5TH(zdiff) * 5
+        LBI R3, #77
+        MULT R3, R3, R0             ; r3 <-- 77 * T_5TH(zdiff)
+        SUB R3, R5, R3              ; r3 <-- (77 * T_5TH(Z)) - (5 * T_5TH(Z) * T_5TH(Z))
+        LD R0, R2, dirY             ; r0 <-- ball->dirY
+        MULT R3, R3, R0             ; r3 <-- EQ_5TH(zdiff, ball->dirY)
+        LBI R0, pBallAddr
+        LD R0, R0 posY              ; r0 <-- pBall-> posY
+        ADD R0, R0, R3
+        ST R0, R1, posY             ; ball->posY = pBall->posY + EQ_5TH(zdiff, ball->dirY)
+ENDVY0:
+ENDPBN: ; end if (pball == NULL)
 
-	.set	macro
-	.set	reorder
-	.end	main
-	.size	main, .-main
-	.align	2
-	.globl	setup
-	.set	nomips16
-	.set	nomicromips
-	.ent	setup
-	.type	setup, @function
-setup:
-	.frame	$fp,32,$31		# vars= 0, regs= 2/0, args= 16, gp= 8
-	.mask	0xc0000000,-4
-	.fmask	0x00000000,0
-	.set	noreorder
-	.set	nomacro
-	addiu	$sp,$sp,-32
-	sw	$31,28($sp)
-	sw	$fp,24($sp)
-	move	$fp,$sp
-	lui	$2,%hi(first)
-	li	$3,1			# 0x1
-	sh	$3,%lo(first)($2)
-	lui	$2,%hi(pball)
-	sw	$0,%lo(pball)($2)
-	li	$4,16			# 0x10
-	jal	malloc
-	nop
+        ; start of ball and sidewall collisions
+        ; expected register contents at this point:
+        ; r1 <-- ballAddr 
+        ; r2 <-- ballVelAddr
 
-	move	$3,$2
-	lui	$2,%hi(ball)
-	sw	$3,%lo(ball)($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	li	$3,256			# 0x100
-	sh	$3,0($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	li	$3,192			# 0xc0
-	sh	$3,2($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	sh	$0,4($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	sh	$0,6($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	sh	$0,8($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	li	$3,1			# 0x1
-	sh	$3,12($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	li	$3,1			# 0x1
-	sh	$3,14($2)
-	lui	$2,%hi(ball)
-	lw	$2,%lo(ball)($2)
-	li	$3,1			# 0x1
-	sh	$3,10($2)
-	li	$4,4			# 0x4
-	jal	malloc
-	nop
+        LBI R6, #-1                 ; r6 <-- -1 so we don't have to load it everytime
 
-	move	$3,$2
-	lui	$2,%hi(opponent)
-	sw	$3,%lo(opponent)($2)
-	lui	$2,%hi(opponent)
-	lw	$2,%lo(opponent)($2)
-	li	$3,256			# 0x100
-	sh	$3,0($2)
-	lui	$2,%hi(opponent)
-	lw	$2,%lo(opponent)($2)
-	li	$3,192			# 0xc0
-	sh	$3,2($2)
-	li	$4,4			# 0x4
-	jal	malloc
-	nop
+        ; right wall
+        LD R0, R1, posX             ; r0 <-- ball->posX
+        ADDI R0, R0, ball_rad       ; r0 <-- ball->posX + BALL_RAD
+        LBI R3, width_high
+        SLBI R3, width_low          ; r3 <-- WIDTH
+        SUB R0, R3, R0              ; r0 <-- (ball->posX + BALL_RAD) - WIDTH 
+        BLTZ R0, ENDRW              ; if (ball->posX + BALL_RAD >= WIDTH)
+        LD R0, R1, posX             ; r0 <-- ball->posX
+        SUBI R3, R3, ball_rad       
+        SUBI R3, R3, #1             ; r3 <-- WIDTH - BALL_RAD - 1
+        ST R3, R1, posX             ; ball->posX = WIDTH - BALL_RAD - 1
+           
+        LD R3, R2, dirX             ; r3 <-- ball->dirX
+        SUBI R4, R3, #1
+        BNEZ R4, #1                 ; if (ball->dirX == 1)
+        ST R6, R2, dirX             ; ball->dirX = -1
 
-	move	$3,$2
-	lui	$2,%hi(paddle)
-	sw	$3,%lo(paddle)($2)
-	lui	$2,%hi(paddle)
-	lw	$2,%lo(paddle)($2)
-	li	$3,256			# 0x100
-	sh	$3,0($2)
-	lui	$2,%hi(paddle)
-	lw	$2,%lo(paddle)($2)
-	li	$3,256			# 0x100
-	sh	$3,2($2)
-	li	$4,4			# 0x4
-	jal	malloc
-	nop
+        LD R3, R2, velX             ; r3 <-- ball->velX
+        SUBI R0, R3, curve_reduce   
+        BLEZ R0, #2                 ; if (ball->velX > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velX             ; ball->velX -= CURVE_REDUCE
 
-	move	$3,$2
-	lui	$2,%hi(mouse)
-	sw	$3,%lo(mouse)($2)
-	lui	$2,%hi(mouse)
-	lw	$2,%lo(mouse)($2)
-	li	$3,256			# 0x100
-	sh	$3,0($2)
-	lui	$2,%hi(mouse)
-	lw	$2,%lo(mouse)($2)
-	li	$3,192			# 0xc0
-	sh	$3,2($2)
-	li	$4,4			# 0x4
-	jal	malloc
-	nop
+        LD R3, R2, velY             ; r3 <-- ball->velY
+        SUBI R0, R3, curve_reduce
+        BLEZ R0, #2                 ; if (ball->velY > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velY             ; ball->velY -= CURVE_REDUCE
 
-	move	$3,$2
-	lui	$2,%hi(pmouse)
-	sw	$3,%lo(pmouse)($2)
-	lui	$2,%hi(pmouse)
-	lw	$2,%lo(pmouse)($2)
-	li	$3,256			# 0x100
-	sh	$3,0($2)
-	lui	$2,%hi(pmouse)
-	lw	$2,%lo(pmouse)($2)
-	li	$3,192			# 0xc0
-	sh	$3,2($2)
-	lui	$2,%hi(oppScore)
-	sh	$0,%lo(oppScore)($2)
-	lui	$2,%hi(playerScore)
-	sh	$0,%lo(playerScore)($2)
-	lui	$2,%hi(difficulty)
-	li	$3,1			# 0x1
-	sh	$3,%lo(difficulty)($2)
-	move	$sp,$fp
-	lw	$31,28($sp)
-	lw	$fp,24($sp)
-	addiu	$sp,$sp,32
-	j	$31
-	nop
+        LBI R0, SAVEBALL_HIGH
+        SLBI R0, SAVEBALL_LOW
+        JALR R0, #0                 ; save_ball()
+        
+        J ENDCOLRL
+ENDRW: ; end if (ball->posX + BALL_RAD >= WIDTH)
 
-	.set	macro
-	.set	reorder
-	.end	setup
-	.size	setup, .-setup
-	.align	2
-	.globl	update_game
-	.set	nomips16
-	.set	nomicromips
-	.ent	update_game
-	.type	update_game, @function
-update_game:
-	.frame	$fp,32,$31		# vars= 0, regs= 2/0, args= 16, gp= 8
-	.mask	0xc0000000,-4
-	.fmask	0x00000000,0
-	.set	noreorder
-	.set	nomacro
-	addiu	$sp,$sp,-32
-	sw	$31,28($sp)
-	sw	$fp,24($sp)
-	move	$fp,$sp
-	jal	opp_update
-	nop
+        ; left wall
+        LD R0, R1, posX             ; r0 <-- ball->posX
+        SUBI R0, R0, ball_rad       ; r0 <-- ball->posX - BALL_RAD
+        LBI R3, #0
+        SUB R0, R0, R3              ; r0 <-- 0 - (ball->posX - BALL_RAD)
+        BLTZ R0, ENDCOLRL           ; if (ball->posX - BALL_RAD <= 0)
+        LBI R3, ball_rad
+        ADDI R3, R3, #1             ; r3 <-- BALL_RAD + 1
+        ST R3, R1, posX             ; ball->posX = BALL_RAD + 1
+           
+        LD R3, R2, dirX             ; r3 <-- ball->dirX
+        SUBI R4, R3, #-1
+        BNEZ R4, #2                 ; if (ball->dirX == -1)
+        LBI R3, #1
+        ST R3, R2, dirX             ; ball->dirX = 1
 
-	jal	ball_update
-	nop
+        LD R3, R2, velX             ; r3 <-- ball->velX
+        SUBI R0, R3, curve_reduce   
+        BLEZ R0, #2                 ; if (ball->velX > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velX             ; ball->velX -= CURVE_REDUCE
 
-	jal	paddle_update
-	nop
+        LD R3, R2, velY             ; r3 <-- ball->velY
+        SUBI R0, R3, curve_reduce
+        BLEZ R0, #2                 ; if (ball->velY > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velY             ; ball->velY -= CURVE_REDUCE
 
-	move	$sp,$fp
-	lw	$31,28($sp)
-	lw	$fp,24($sp)
-	addiu	$sp,$sp,32
-	j	$31
-	nop
+        LBI R0, SAVEBALL_HIGH
+        SLBI R0, SAVEBALL_LOW
+        JALR R0, #0                 ; save_ball()
 
-	.set	macro
-	.set	reorder
-	.end	update_game
-	.size	update_game, .-update_game
-	.rdata
-	.align	2
-$LC2:
-	.ascii	"test.txt\000"
-	.align	2
-$LC3:
-	.ascii	"w\000"
-	.align	2
-$LC4:
-	.ascii	"0\011\000"
-	.align	2
-$LC5:
-	.ascii	"%d\011\000"
-	.text
-	.align	2
-	.globl	restart
-	.set	nomips16
-	.set	nomicromips
-	.ent	restart
-	.type	restart, @function
-restart:
-	.frame	$fp,48,$31		# vars= 16, regs= 2/0, args= 16, gp= 8
-	.mask	0xc0000000,-4
-	.fmask	0x00000000,0
-	.set	noreorder
-	.set	nomacro
-	addiu	$sp,$sp,-48
-	sw	$31,44($sp)
-	sw	$fp,40($sp)
-	move	$fp,$sp
-	lui	$2,%hi($LC2)
-	addiu	$4,$2,%lo($LC2)
-	lui	$2,%hi($LC3)
-	addiu	$5,$2,%lo($LC3)
-	jal	fopen
-	nop
+ENDCOLRL: ; end if (ball->posX + BALL_RAD <= 0)
 
-	sw	$2,32($fp)
-	lui	$2,%hi($LC4)
-	addiu	$4,$2,%lo($LC4)
-	li	$5,1			# 0x1
-	li	$6,2			# 0x2
-	lw	$7,32($fp)
-	jal	fwrite
-	nop
+        ; top wall
+        LD R0, R1, posY             ; r0 <-- ball->posY
+        SUBI R0, R0, ball_rad       ; r0 <-- ball->posY - BALL_RAD
+        LBI R3, #0
+        SUB R0, R0, R3              ; r0 <-- 0 - (ball->posY - BALL_RAD)
+        BLTZ R0, ENDTW              ; if (ball->posX - BALL_RAD <= 0)
+        LBI R3, ball_rad
+        ADDI R3, R3, #1             ; r3 <-- BALL_RAD + 1
+        ST R3, R1, posY             ; ball->posY = BALL_RAD + 1
+           
+        LD R3, R2, dirY             ; r3 <-- ball->dirY
+        SUBI R4, R3, #-1
+        BNEZ R4, #2                 ; if (ball->dirY == -1)
+        LBI R3, #1
+        ST R3, R2, dirY             ; ball->dirY = 1
 
-	sw	$0,24($fp)
-	b	$L11
-	nop
+        LD R3, R2, velX             ; r3 <-- ball->velX
+        SUBI R0, R3, curve_reduce   
+        BLEZ R0, #2                 ; if (ball->velX > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velX             ; ball->velX -= CURVE_REDUCE
 
-$L12:
-	lw	$2,24($fp)
-	sll	$2,$2,1
-	sll	$3,$2,2
-	addu	$2,$2,$3
-	lw	$4,32($fp)
-	lui	$3,%hi($LC5)
-	addiu	$5,$3,%lo($LC5)
-	move	$6,$2
-	jal	fprintf
-	nop
+        LD R3, R2, velY             ; r3 <-- ball->velY
+        SUBI R0, R3, curve_reduce
+        BLEZ R0, #2                 ; if (ball->velY > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velY             ; ball->velY -= CURVE_REDUCE
 
-	lw	$2,24($fp)
-	addiu	$2,$2,1
-	sw	$2,24($fp)
-$L11:
-	lw	$2,24($fp)
-	slt	$2,$2,100
-	bne	$2,$0,$L12
-	nop
+        LBI R0, SAVEBALL_HIGH
+        SLBI R0, SAVEBALL_LOW
+        JALR R0, #0                 ; save_ball()
 
-	li	$4,10			# 0xa
-	lw	$5,32($fp)
-	jal	fputc
-	nop
+        J ENDCOLTB
+ENDTW:
 
-	sw	$0,24($fp)
-	b	$L13
-	nop
+        ; bottom wall
+        LD R0, R1, posY             ; r0 <-- ball->posY
+        ADDI R0, R0, ball_rad       ; r0 <-- ball->posY + BALL_RAD
+        LBI R3, height_high
+        SLBI R3, height_low         ; r3 <-- HEIGHT
+        SUB R0, R3, R0              ; r0 <-- (ball->posX + BALL_RAD) - HEIGHT
+        BLTZ R0, ENDCOLTB           ; if (ball->posX + BALL_RAD >= HEIGHT)
+        LD R0, R1, posY             ; r0 <-- ball->posY
+        SUBI R3, R3, ball_rad       
+        SUBI R3, R3, #1             ; r3 <-- HEIGHT - BALL_RAD - 1
+        ST R3, R1, posY             ; ball->posY = HEIGHT - BALL_RAD - 1
+           
+        LD R3, R2, dirY             ; r3 <-- ball->dirY
+        SUBI R4, R3, #1
+        BNEZ R4, #1                 ; if (ball->dirY == 1)
+        ST R6, R2, dirY             ; ball->dirY = -1
 
-$L16:
-	lw	$3,24($fp)
-	move	$2,$3
-	sll	$2,$2,2
-	addu	$2,$2,$3
-	lw	$4,32($fp)
-	lui	$3,%hi($LC5)
-	addiu	$5,$3,%lo($LC5)
-	move	$6,$2
-	jal	fprintf
-	nop
+        LD R3, R2, velX             ; r3 <-- ball->velX
+        SUBI R0, R3, curve_reduce   
+        BLEZ R0, #2                 ; if (ball->velX > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velX             ; ball->velX -= CURVE_REDUCE
 
-	sw	$0,28($fp)
-	b	$L14
-	nop
+        LD R3, R2, velY             ; r3 <-- ball->velY
+        SUBI R0, R3, curve_reduce
+        BLEZ R0, #2                 ; if (ball->velY > CURVE_REDUCE)
+        SUBI R0, R3, curve_reduce
+        ST R0, R2, velY             ; ball->velY -= CURVE_REDUCE
 
-$L15:
-	lui	$4,%hi(grid)
-	lw	$2,24($fp)
-	sll	$2,$2,2
-	sll	$3,$2,2
-	addu	$2,$2,$3
-	sll	$3,$2,2
-	addu	$2,$2,$3
-	lw	$3,28($fp)
-	addu	$2,$2,$3
-	sll	$3,$2,2
-	addiu	$2,$4,%lo(grid)
-	addu	$2,$3,$2
-	lw	$2,0($2)
-	lw	$4,32($fp)
-	lui	$3,%hi($LC5)
-	addiu	$5,$3,%lo($LC5)
-	move	$6,$2
-	jal	fprintf
-	nop
+        LBI R0, SAVEBALL_HIGH
+        SLBI R0, SAVEBALL_LOW
+        JALR R0, #0                 ; save_ball()
 
-	lw	$2,28($fp)
-	addiu	$2,$2,1
-	sw	$2,28($fp)
-$L14:
-	lw	$2,28($fp)
-	slt	$2,$2,100
-	bne	$2,$0,$L15
-	nop
+ENDCOLTB: ; end if (ball->posX + BALL_RAD <= 0)
 
-	li	$4,10			# 0xa
-	lw	$5,32($fp)
-	jal	fputc
-	nop
+        ; start of ball and player/opp wall collisions
+        ; expected register contents at this point:
+        ; r1 <-- ballAddr 
+        ; r2 <-- ballVelAddr
 
-	lw	$2,24($fp)
-	addiu	$2,$2,1
-	sw	$2,24($fp)
-$L13:
-	lw	$2,24($fp)
-	slt	$2,$2,100
-	bne	$2,$0,$L16
-	nop
+        ; ball and player wall collision
+        LD R0, R1, posZ             ; r0 <-- ball->posZ
+        SUBI R0, R0, ball_rad       ; r0 <-- ball->posZ - BALL_RAD
+        LBI R3, #0
+        SUB R0, R0, R3              ; r0 <-- 0 - (ball->posZ - BALL_RAD)
+        BLTZ R0, ENDPW              ; if (ball->posZ - BALL_RAD <= 0)
 
-	lw	$4,32($fp)
-	jal	fclose
-	nop
+        LBI R0, paddle1Addr_high
+        SLBI R0, paddle1Addr_low    ; r0 <-- paddle1Addr
+        LBI R3, INTERSECT_HIGH
+        SLBI R3, INTERSECT_LOW
+        JALR R3, #0                 ; r0 <-- intersect(paddle)
+        ; r0 <-- sect at this point
 
-	move	$4,$0
-	jal	exit
-	nop
+        LBI R3, firstAddr           ; r3 <-- first
+        OR R4, R3, R0               ; r4 <-- sect || first
+        BEQZ R4, NOINTRP            ; if (sect || first)
+        LBI R4, ball_rad
+        ST R4, R1, posZ             ; ball->posZ = BALL_RAD
 
-	.set	macro
-	.set	reorder
-	.end	restart
-	.size	restart, .-restart
-	.align	2
-	.globl	mousePressed
-	.set	nomips16
-	.set	nomicromips
-	.ent	mousePressed
-	.type	mousePressed, @function
-mousePressed:
-	.frame	$fp,8,$31		# vars= 0, regs= 1/0, args= 0, gp= 0
-	.mask	0x40000000,-4
-	.fmask	0x00000000,0
-	.set	noreorder
-	.set	nomacro
-	addiu	$sp,$sp,-8
-	sw	$fp,4($sp)
-	move	$fp,$sp
-	lui	$2,%hi(stopped)
-	lhu	$2,%lo(stopped)($2)
-	beq	$2,$0,$L17
-	nop
+        LBI R4, mouseAddr_high
+        SLBI R4, mouseAddr_low      ; r4 <-- mouseAddr
+        LBI R5, pMouseAddr          ; r5 <-- pMouseAddr
 
-	lui	$2,%hi(stopped)
-	sh	$0,%lo(stopped)($2)
-$L17:
-	move	$sp,$fp
-	lw	$fp,4($sp)
-	addiu	$sp,$sp,8
-	j	$31
-	nop
+        BEQZ R3, INTRPNF            ; if (first)
+        LD R3, R4, posX             ; r3 <-- mouse->posX
+        LD R6, R5, posX             ; r6 <-- pmouse->posX
+        SUB R6, R6, R3
+        ST R6, R2, velX             ; ball->velX = mouse->posX - pmouse->posX
 
-	.set	macro
-	.set	reorder
-	.end	mousePressed
-	.size	mousePressed, .-mousePressed
-	.ident	"GCC: (Sourcery CodeBench Lite 2013.05-66) 4.7.3"
+        LD R3, R4, posY             ; r3 <-- mouse->posY
+        LD R6, R5, posY             ; r6 <-- pmouse->posY
+        SUB R6, R6, R3
+        ST R6, R2, velY             ; ball->velY = mouse->posY - pmouse->posY
+        LBI R0, firstAddr
+        LBI R3, #0
+        ST R3, R0, #0               ; first = FALSE
+        J INTRPN_ELSE
+
+INTRPNF: ; end if (first)
+        LD R0, R2, velZ             ; r0 <-- ball->velZ
+        MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
+        ADDI R0, R0, velz_inc
+        ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + VELZ_INC
+
+        LD R0, R5, posX             ; r0 <-- pmouse->posX
+        LD R3, R4, posX             ; r3 <-- mouse->posX
+        SUB R3, R0, R3              ; r3 <-- mouse->posX - pmouse->posX
+        LD R0, R2, velX             ; r0 <-- ball->velX
+        SUB R3, R0, R3              ; r3 <-- (mouse->posX - pmouse->posX) - ball->velX 
+        ST R3, R2, velX             ; ball->velX = (mouse->posX - pmouse->posX) - ball->velX 
+
+        LD R0, R5, posY             ; r0 <-- pmouse->posY
+        LD R3, R4, posY             ; r3 <-- mouse->posY
+        SUB R3, R0, R3              ; r3 <-- mouse->posY - pmouse->posY
+        LD R0, R2, velY             ; r0 <-- ball->velY
+        SUB R3, R0, R3              ; r3 <-- (mouse->posY - pmouse->posY) - ball->velY 
+        ST R3, R2, velY             ; ball->velY = (mouse->posY - pmouse->posY) - ball->velY
+
+INTRPN_ELSE: ; end_else if (first)
+
+        LD R0, R2, velX             ; r0 <-- ball->velX
+        SUBI R3, R0, #0             ; r3 <-- ball->velX - 0
+        BLTZ R3, #3                 ; if (ball->velX >= 0)
+        LBI R3, #1
+        ST R3, R2, dirX             ; ball->dirX = 1
+        J #4
+        MULTI R3, R0, #-1
+        ST R3, R2, velX             ; ball->velX *= -1
+        LBI R3, #-1
+        ST R3, R2, dirX             ; ball->dirX = -1
+
+        LD R0, R2, velY             ; r0 <-- ball->velY
+        SUBI R3, R0, #0             ; r3 <-- ball->velY - 0
+        BLTZ R3, #3                 ; if (ball->velY >= 0)
+        LBI R3, #1
+        ST R3, R2, dirY             ; ball->dirY = 1
+        J #4
+        MULTI R3, R0, #-1
+        ST R3, R2, velY             ; ball->velY *= -1
+        LBI R3, #-1
+        ST R3, R2, dirY             ; ball->dirY = -1
+
+        LBI R0, SAVEBALL_HIGH
+        SLBI R0, SAVEBALL_LOW
+        JALR R0, #0                 ; save_ball()
+
+NOINTRP: ; end if (sect || first)
+        
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        LD R3, R0, p2Score
+        ADDI R3, R3, #1
+        ST R3, R0, p2Score          ; oppScore++
+
+        ; TODO: should i call restart here, or should we just reloop??
+    
+        J ENDOW
+ENDPW: ; end if (ball->posZ - BALL_RAD <= 0)
+
+        ///////////////////////////
+        THIS IS WHERE I LEFT OFF!!
+        ball.c line :  191
+        ///////////////////////////
+
+ENDOW: ; end if (ball->posZ + BALL_RAD >= DEPTH)
+
+SAVEBALL: ; save_ball() function: this modifies r3, r4, r5
+        LBI R3, ballAddr_high
+        SLBI R3, ballAddr_low
+        LBI R4, pBallAddr
+        LD R5, R3, posX
+        ST R5, R4, posX             ; pBall->posX = ball->posX
+        LD R5, R3, posY
+        ST R5, R4, posY             ; pBall->posY = ball->posY
+        LD R5, R3, posZ
+        ST R5, R4, posZ             ; pBall->posZ = ball->posZ
+        JR R7, #0                   ; return
+
+; intersect(PAD_t * p) 
+; p is passed through R0, and true/false is returned through R0
+; R1 and R2 are not modified by this function and are assumed as follows
+; r1 <-- ballAddr
+; r2 <-- ballVelAddr
+; TODO: could use set less than instructions here? maybe more efficent
+INTERSECT: 
+        LD R3, R1, posX             ; r3 <-- ball->posX
+        ADDI R4, R3, ball_rad       ; r4 <-- ball->posX + BALL_RAD
+        LD R5, R0, posX             ; r5 <-- p->posX
+        SUB R6, R5, R4              ; r6 <-- ball->posX + BALL_RAD - p->posX
+        BLTZ R6, RETINTRF           ; if (ball->posX + BALL_RAD >= p->posX)
+
+        SUBI R4, R3, ball_rad       ; r4 <-- ball->posX - BALL_RAD
+        ADDI R6, R5, paddle_width   ; r6 <-- p->posX + PAD_WIDTH
+        SUB R6, R4, R6              ; r6 <-- (ball->posX - BALL_RAD) - (p->posX + PAD_WIDTH)
+        BLTZ R6, RETINTRF           ; if (ball->posX - BALL_RAD <= p->posX + PAD_WIDTH)
+
+        LD R3, R1, posY             ; r3 <-- ball->posY
+        ADDI R4, R3, ball_rad       ; r4 <-- ball->posY + BALL_RAD
+        LD R5, R0, posY             ; r5 <-- p->posY
+        SUB R6, R5, R4              ; r6 <-- ball->posY + BALL_RAD - p->posY
+        BLTZ R6, RETINTRF           ; if (ball->posY + BALL_RAD >= p->posY)
+
+        SUBI R4, R3, ball_rad       ; r4 <-- ball->posY - BALL_RAD
+        ADDI R6, R5, paddle_height  ; r6 <-- p->posY + PAD_HEIGHT
+        SUB R6, R4, R6              ; r6 <-- (ball->posY - BALL_RAD) - (p->posY + PAD_HEIGHT)
+        BLTZ R6, RETINTRF           ; if (ball->posX - BALL_RAD <= p->posY + PAD_HEIGHT)
+
+        LBI R0, #1                  ; return TRUE
+        JR R7, #0
+RETINTRF:        
+        LBI R0, #0
+        JR R7, #0

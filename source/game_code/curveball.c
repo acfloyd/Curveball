@@ -69,7 +69,7 @@ void setup ()
     opponent->posY = HEIGHT / 2;
     paddle = (Pad_t*)malloc(sizeof(Pad_t));
     paddle->posX = WIDTH / 2;
-    paddle->posY = WIDTH / 2;
+    paddle->posY = HEIGHT / 2;
     mouse = (Pad_t*)malloc(sizeof(Pad_t));
     mouse->posX = WIDTH / 2;
     mouse->posY = HEIGHT / 2;
