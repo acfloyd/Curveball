@@ -51,7 +51,6 @@ while(<>){						# go through every line in source file
 	#push(@source,$_);
 	# pre-process
 	if(/(;.+)/){				# comments
-		#printf"%s\n",$1;
 		s/;.+//;					# remove comment
 	}
 	if(/(\w+):/){				# word followed by a colon, meaning label
@@ -80,10 +79,19 @@ print"\n**** LABEL LIST ****\n";
 foreach $1 (keys(%label)){
 	#printf "%s",$1;
 	printf "%-10s%03d\n",$1,$label{$1};
+	$addr=0;
 	foreach (@source){
+		$addr++;
 		#printf"%s",$_;
 		#printf"%s\n",$1;
-		s/$1/#$label{$1}/;			# replace label with address
+		if(/JR|LBI|SLBI/){
+			s/$1/#$label{$1}/;			# replace label with address
+		}
+		else {
+			$offset = $label{$1}-$addr;
+			printf"Label: %s, Address: %s, Offset: %s\n",$label{$1},$addr,$offset;
+			s/$1/#$offset/;	# replace label with pc offset
+		}
 		#printf"%s",$_;
 	}
 }
