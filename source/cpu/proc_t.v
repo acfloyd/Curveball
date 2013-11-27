@@ -2,6 +2,14 @@ module proc_t();
 	
 	reg clk, rst;
    reg [10:0] count;
+   integer i;
+
+    reg [15:0] mem [0:31];
+    initial begin
+        $readmemh("text_files/individual_test_arithmetic_results", mem);
+    end
+
+
 	proc PROC(.clk(clk), .rst(rst));
 	initial begin
 		clk = 0;
@@ -28,7 +36,22 @@ module proc_t();
 			PROC.DECODE.Reg.reg5.DataOut,
 			PROC.DECODE.Reg.reg6.DataOut,
 			PROC.DECODE.Reg.reg7.DataOut);
-		#200;
-		$stop;
+
+		i = 0;
 	end
+
+	always @ (posedge clk) begin
+		if (PROC.CONTROL.i6 == 16'he000) begin
+			$stop;
+		end
+	end
+
+	/*always @ (posedge clk) begin
+	    if (PROC.DECODE.Reg.reg2.WrRegEn) begin
+		   if (PROC.DECODE.Reg.reg2.DataIn != mem[i]) begin
+			   $display("ERROR Line %d: \nExpected value: %b \nActual Value: %b", i, mem[i], PROC.DECODE.Reg.reg2.DataIn);
+		   end
+		   i = i + 1;
+		end
+	end*/
 endmodule;

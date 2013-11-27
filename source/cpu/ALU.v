@@ -1,14 +1,14 @@
-module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk, divStall, Out, Remainder, rst);
+module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk, Out, Remainder, rst, ready);
     input [15:0] A, B;
     input [2:0] ALUMux;
     input [1:0] SetFlag, AOp, ShiftMode;
     input ZeroB, AddMode, clk, rst, FlagMux;
     output [15:0] Out, Remainder;
-    output  divStall;
+    output  ready;
     
     wire [15:0] Aout, Bout, ShifterOut, AdderOut, MultiplierOut, DividerOut, AndOut, OrOut, XorOut, ALUMuxOut;
     wire AdderZero, AdderOverflow, Flag;
-    wire divByZero, ready;
+    wire divByZero;
     wire divEnable;
     
     assign Aout = (AOp == 2'b00) ? A : (AOp == 2'b01) ? ~A : (AOp == 2'b10) ? {A[7:0], 8'd0} : 16'd0;
@@ -23,8 +23,6 @@ module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk,
     shifter shift (.In(Aout), .Cnt(Bout[3:0]), .Op(ShiftMode), .Out(ShifterOut));
     
     assign divEnable = ALUMux[0] && ALUMux[1] && ~ALUMux[2];
-    
-    assign divStall = ~ready;
     
     assign AndOut = Aout & Bout;
     
@@ -43,8 +41,8 @@ module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk,
                         16'bzzzzzzzzzzzzzzzz;
     
     assign Flag = (SetFlag == 2'b00) ? AdderZero : //SEQ
-                  (SetFlag == 2'b01) ? ~AdderOut[15] : //SLT (if MSB of AdderOut is 0, Rs is less)
-                  (SetFlag == 2'b10) ? ~AdderOut[15] | AdderZero : //SLE
+                  (SetFlag == 2'b01) ? AdderOut[15] : //SLT (if MSB of AdderOut is 0, Rs is less)
+                  (SetFlag == 2'b10) ? AdderOut[15] | AdderZero : //SLE
                   (SetFlag == 2'b11) ? AdderOverflow : //SCO
                   1'bz; 
       

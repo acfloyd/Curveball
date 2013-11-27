@@ -1,14 +1,16 @@
 module Decode(clk, rst, Stall, Instruct, DataIn, WrEn, SignExtSel, ZeroExtend8, SetFlag, WrRegAddr, DataOut2Sel, 
 			  NextPC, Branch, NextPCSel, LoadR7,
-			  BranchImmedSel, DataOut1, DataOut2, TruePC, Jump);
+			  BranchImmedSel, DataOut1, DataOut2, TruePC, Jump,
+			  ALUForward, MemData2, WriteBackData, BJForwardSel);
 
 	input clk, rst, WrEn, DataOut2Sel, Branch, NextPCSel, ZeroExtend8;
 	input LoadR7, BranchImmedSel, Jump, Stall;
-	input [1:0] SignExtSel, SetFlag;
+	input [1:0] SignExtSel, SetFlag, BJForwardSel;
 	input [2:0] WrRegAddr;
 	input [15:0] Instruct, DataIn, NextPC;
+	input [15:0] ALUForward, MemData2, WriteBackData;
 	output [15:0] DataOut1, DataOut2, TruePC;
-	wire [15:0] DataOut1RegIn, DataOut2RegIn;
+	wire [15:0] DataOut1Temp, DataOut1RegIn, DataOut2RegIn;
 
 	wire [15:0] SignExt, SignExt5, SignExt8, SignExt11, ZeroExtOut;
 	wire [15:0] PCAddIn1, PCAddIn2, CalculatedPC;
@@ -35,18 +37,23 @@ module Decode(clk, rst, Stall, Instruct, DataIn, WrEn, SignExtSel, ZeroExtend8, 
 	assign RegOut1 = (WrEn & (WrRegAddr == Instruct[10:8])) ? DataIn : RegOut1Wire;
 	assign RegOut2 = (WrEn & (WrRegAddr == Instruct[7:5])) ? DataIn : RegOut2Wire; 
 
-	assign DataOut1RegIn = (LoadR7) ? NextPC : RegOut1;
+	assign DataOut1Temp = (LoadR7) ? NextPC : RegOut1;
 
 	assign DataOut2RegIn = (DataOut2Sel) ? SignExt : RegOut2;
+
+	assign DataOut1RegIn = (BJForwardSel == 2'b00) ? ALUForward: 
+					  (BJForwardSel == 2'b01) ? MemData2:
+					  (BJForwardSel == 2'b10) ? WriteBackData:
+					  DataOut1Temp;
 
 	assign PCAddIn1 = (NextPCSel) ? NextPC : RegOut1;
 	assign PCAddIn2 = (BranchImmedSel) ? SignExt11 : SignExt8;
 
-	assign DataZero = ~|DataOut1;
+	assign DataZero = ~|DataOut1RegIn;
 	assign Flag = (SetFlag == 2'b00) ? DataZero : //BEQZ
                   (SetFlag == 2'b01) ? ~DataZero : //BNEZ
-                  (SetFlag == 2'b10) ? ~DataOut1[15] : //BLTZ
-                  (SetFlag == 2'b11) ? (~DataOut1[15] | DataZero) : //BGEZ
+                  (SetFlag == 2'b10) ? DataOut1RegIn[15] : //BLTZ
+                  (SetFlag == 2'b11) ? (DataOut1RegIn[15] | DataZero) : //BlEZ
                   1'bz; 
 
 	assign CalculatedPC = PCAddIn1 + PCAddIn2;

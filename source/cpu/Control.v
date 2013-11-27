@@ -1,23 +1,26 @@
-module Control(clk, rst, Stall, DivStall, Instruct, NotBranchOrJump, WrRegEn, 
+module Control(clk, rst, Stall, divReady, Instruct, NotBranchOrJump, WrRegEn, 
 				WrRegAddr, SignExtSel, ZeroExtend8, NextPCSel, BranchImmedSel, LoadR7, 
 				DataOut2Sel, ALUOp, AddMode, ShiftMode, SetFlagD, Branch, Jump,
 				SetFlagE, AOp, ZeroB, FlagMux, WrMemEn, MemToReg, RsForwardSel, RtForwardSel,
-				ForwardRs, ForwardRt);
+				ForwardRs, ForwardRt, FetchStall, BJForwardSel, Halt);
 //ForwardRsDecode, ForwardRtDecode
-input clk, rst, DivStall;
+input clk, rst, divReady;
 input[15:0] Instruct;
 
 output NotBranchOrJump, WrRegEn, ZeroExtend8, NextPCSel, BranchImmedSel, LoadR7, DataOut2Sel; 
 output AddMode, ZeroB, FlagMux, WrMemEn, MemToReg, Stall, Branch, Jump;
-output ForwardRs, ForwardRt;
+output ForwardRs, ForwardRt, FetchStall, Halt;
 output [1:0] SignExtSel, ShiftMode, SetFlagD, SetFlagE, AOp;
 output [1:0] RsForwardSel, RtForwardSel;
 output [2:0] WrRegAddr;
+output [1:0] BJForwardSel;
 output reg[2:0] ALUOp;
 
-wire MemLoadDetect;
+wire MemLoadDetect, tempDivStall, divStall, changeDivStall;
 wire [1:0] WrMuxSel;
-reg StallReg;
+reg StallReg, divStallCount;
+wire BranchOrJumpRegForwardRsEnable, BranchOrJumpRegForwardRs, BranchOrJumpRegForwardRsWithStall;
+assign FetchStall = BranchOrJumpRegForwardRsWithStall;
 
 
 //i6 is for timing of register writes
@@ -32,12 +35,26 @@ always @ (posedge clk, posedge rst) begin
 		i5 <= NOP;
 		i6 <= NOP;
 	end
+	else if(Halt) begin
+		i2 <= i2;
+		i3 <= i2;
+		i4 <= i3;
+		i5 <= i4;
+		i6 <= i5;
+	end
 	else if (Stall) begin
 		i2 <= i2;
 		i3 <= i3;
 		i4 <= i4;
 		i5 <= i5;
 		i6 <= i6;
+	end
+	else if(BranchOrJumpRegForwardRsWithStall) begin
+		i2 <= i2;
+		i3 <= NOP;
+		i4 <= i3;
+		i5 <= i4;
+		i6 <= i5;
 	end
 	else begin
 		i2 <= Instruct;
@@ -47,6 +64,8 @@ always @ (posedge clk, posedge rst) begin
 		i6 <= i5;
 	end
 end
+
+assign Halt = i2 == 16'he000;
 
 wire ValidDest;
 wire [2:0] Dest;
@@ -89,7 +108,22 @@ always @(posedge clk or posedge rst) begin
 		StallReg <= Stall;
 	end
 end
-assign Stall = MemLoadDetect ^ StallReg;
+assign Stall = (MemLoadDetect ^ StallReg) | divStall;
+
+always @(posedge clk or posedge rst) begin
+	if (rst) begin
+		divStallCount <= 1'b0;		
+	end
+	else if ((tempDivStall & divReady) | changeDivStall) begin
+		divStallCount <= ~divStallCount;
+	end
+	else begin
+		divStallCount <= divStallCount;
+	end
+end
+assign changeDivStall = divStallCount & divReady;
+assign divStall = tempDivStall ^ changeDivStall;
+
 
 assign NotBranchOrJump = !((i2[15] & !i2[14] & i2[13]) | (i2[15] & i2[14] & !i2[13]));
 assign SignExtSel[0] = (i2[15:13] == 3'b011) | (i2[15:13] == 3'b101) | (i2[15] & i2[14] & !i2[13] & i2[11]) | 
@@ -109,8 +143,9 @@ assign ShiftMode = (i3[15:13] == 3'b010) ? i3[12:11] : i3[1:0];
 assign SetFlagE = i3[1:0];
 assign AOp[0] = ((i3[15:11] == 5'b01100) | (i3[15:12] == 4'b0111) | (i3[15:11] == 5'b10001 & i3[1:0] == 2'b11));
 assign AOp[1] = i3[15:13] == 3'b011;
-assign ZeroB = (i3[15:13] == 3'b101) | (i3[15:13] == 4'b1101);
+assign ZeroB = (i3[15:13] == 3'b101) | (i3[15:12] == 4'b1101);
 assign FlagMux = i3[15:11] == 5'b10011;
+assign tempDivStall = ((i3[15:11] == 5'b00011) | ({i3[15:11], i3[1:0]} == 7'b1000011)); 
 assign WrMemEn = i4[14:11] == 4'b1110;
 assign MemLoadDetect = i4[14] & i4[13] & i4[12] & i4[11];
 assign MemToReg = i5[14:11] == 4'b1111;
@@ -125,6 +160,19 @@ assign WrRegAddr = (WrMuxSel == 2'b00) ? i6[7:5] :
 					  (WrMuxSel == 2'b10) ? i6[10:8] :
 					  (WrMuxSel == 2'b11) ? 3'd7 : 3'bzzz;
 
+assign BranchOrJumpRegForwardRsEnable = (i2[15:13] == 3'b101) | ((i2[15:13] == 3'b110) & i2[11]);
+
+assign BranchOrJumpRegForwardRsWithStall = BranchOrJumpRegForwardRsEnable &
+										((Dest == i2[10:8]) & ValidDest);
+
+assign BranchOrJumpRegForwardRs = BranchOrJumpRegForwardRsEnable &
+										((ValidDest4 & (i2[10:8] == Dest4)) | 
+									  	(ValidDest5 & (i2[10:8] == Dest5)));
+
+assign BJForwardSel = (BranchOrJumpRegForwardRs & ValidDest4 & (i2[10:8] == Dest4) & (&i4[14:11]) ) ? 2'b01:
+					  (BranchOrJumpRegForwardRs & ValidDest4 & (i2[10:8] == Dest4)) ? 2'b00 :
+					  (BranchOrJumpRegForwardRs & ValidDest5 & (i2[10:8] == Dest5)) ? 2'b10 :
+					  2'b11;
 
 assign ValidDest = !((i3[15:11] == 5'b01110) | (i3[15] & !i3[14] & i3[13]) | (i3[15:12] == 4'b1100) | 
 					   (i3[15:12] == 4'b1110) | (i3[15:11] == 5'b11110));
@@ -139,7 +187,7 @@ assign Dest = (ChooseDest == 2'b00) ? i3[7:5] :
 
 assign RsForwardEnable = (i3[15:11] != 5'b01100) & (i3[15:11] != 5'b01111) &
 						 (i3[15:11] != 5'b11000) & (i3[15:11] != 5'b11010) &
-						 (i3[15:12] != 4'b1110);
+						 (i3[15:12] != 4'b1110) & (i3[15:13] != 3'b101);
 assign RtForwardEnable = i3[15] & !i3[14] & !i3[13];
 
 assign ForwardRs = RsForwardEnable & ((ValidDest4 & (i3[10:8] == Dest4)) | 

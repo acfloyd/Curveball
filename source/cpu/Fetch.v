@@ -1,6 +1,6 @@
-module Fetch(clk, rst, Stall, TruePC, NotBranchOrJump, NextPC, 
-             Instruct, InstructToControl);
-    input clk, rst, Stall, NotBranchOrJump;
+module Fetch(clk, rst, Stall, FetchStall, TruePC, NotBranchOrJump, NextPC, 
+             Instruct, InstructToControl, Halt);
+    input clk, rst, Stall, NotBranchOrJump, FetchStall, Halt;
     input [15:0] TruePC;
     output [15:0] NextPC, InstructToControl, Instruct;
 
@@ -8,15 +8,15 @@ module Fetch(clk, rst, Stall, TruePC, NotBranchOrJump, NextPC,
     wire [15:0] MuxOut, NextPCRegIn, InstructRegIn;
     
     //TEMP INSTRUCT MEM
-    reg [15:0] mem [0:34];
+    reg [15:0] mem [0:127];
     initial begin
         $readmemb("text_files/instructions.txt", mem);
     end
 
     always @ (posedge clk, posedge rst) begin
-        if(rst)
+        if(rst | Halt)
             PC <= 16'd0;
-        else if (Stall) 
+        else if (Stall | FetchStall) 
             PC <= PC;
         else begin
             PC <= NextPCRegIn;
@@ -33,7 +33,7 @@ module Fetch(clk, rst, Stall, TruePC, NotBranchOrJump, NextPC,
     assign InstructRegIn = mem[MuxOut];
     assign InstructToControl = InstructRegIn;
     
-    FetchReg FETCHREG(.clk(clk), .rst(rst), .Stall(Stall), .NextPCIn(NextPCRegIn), 
+    FetchReg FETCHREG(.clk(clk), .rst(rst), .Stall(Stall | FetchStall | Halt), .NextPCIn(NextPCRegIn), 
                       .InstructIn(InstructRegIn), .NextPCOut(NextPC), .InstructOut(Instruct));
 
 endmodule
