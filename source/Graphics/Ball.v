@@ -42,7 +42,7 @@ module Ball(output[2:0] color, output [3:0] zone_copy, input [15:0] x_loc, y_loc
                   (z_loc <= 10'd799) ? 4'd7 :
                   (z_loc <= 10'd899) ? 4'd8 : 4'd9; 
 						
-	 assign zone_copy = zone;
+    assign zone_copy = zone;
                   
     assign x_bound = (zone == 4'd0) ? x_loc + STAGE_0 :
                      (zone == 4'd1) ? x_loc + STAGE_1 :
@@ -64,8 +64,8 @@ module Ball(output[2:0] color, output [3:0] zone_copy, input [15:0] x_loc, y_loc
                      (zone == 4'd7) ? y_loc + STAGE_7 :
                      (zone == 4'd8) ? y_loc + STAGE_8 : y_loc + STAGE_9;
 							
-	 assign stage_add = (zone == 4'd0) ? STAGE_0 + 13'd1 :
-							  (zone == 4'd1) ? STAGE_1 + 13'd1 :
+    assign stage_add = (zone == 4'd0) ? STAGE_0 + 13'd1 :
+		       (zone == 4'd1) ? STAGE_1 + 13'd1 :
                        (zone == 4'd2) ? STAGE_2 + 13'd1 :
                        (zone == 4'd3) ? STAGE_3 + 13'd1 :
                        (zone == 4'd4) ? STAGE_4 + 13'd1 :
@@ -78,7 +78,7 @@ module Ball(output[2:0] color, output [3:0] zone_copy, input [15:0] x_loc, y_loc
     
     assign active = ((pixel_x >= x_loc) && (pixel_x <= x_bound)) && ((pixel_y >= y_loc) && (pixel_y <= y_bound)) ? 1'b1 : 1'b0;         
       
-	 assign rom_data = (zone == 4'd0) ? data_0 :
+    assign rom_data = (zone == 4'd0) ? data_0 :
                       (zone == 4'd1) ? data_1 :
                       (zone == 4'd2) ? data_2 :
                       (zone == 4'd3) ? data_3 :
@@ -90,19 +90,19 @@ module Ball(output[2:0] color, output [3:0] zone_copy, input [15:0] x_loc, y_loc
                       
     assign color = (active) ? rom_data : 3'd0;
 	 
-	 assign next_offset = (pixel_y < y_loc) ? 13'd0 :
-	                      ((pixel_y >= y_loc) && (pixel_y <= y_bound)) ? offset + stage_add : 13'd0;
+    assign next_offset = (pixel_y < y_loc) ? 13'd0 :
+	                 ((pixel_y >= y_loc) && (pixel_y <= y_bound)) ? offset + stage_add : 13'd0;
 	 
-	 always@(posedge clk, posedge rst) begin
-	    if(rst) begin
-	       offset <= 13'd0;
-	       r_pixel_y <= 16'd0;
-	    end
-	    else begin
-	       if(r_pixel_y != pixel_y)
-	          offset <= next_offset;
-	       r_pixel_y <= pixel_y;
-	    end   
-	 end
+    always@(posedge clk, posedge rst) begin
+    	if(rst) begin
+		offset <= 13'd0;
+	        r_pixel_y <= 16'd0;
+	end
+	else begin
+	        if(r_pixel_y != pixel_y)
+	        	offset <= next_offset;
+	       	r_pixel_y <= pixel_y;
+	end   
+    end
 	 
 endmodule
