@@ -82,14 +82,29 @@ foreach $1 (keys(%label)){
 	$addr=0;
 	foreach (@source){
 		$addr++;
-		#printf"%s",$_;
+		#printf"s: %s",$_;
 		#printf"%s\n",$1;
-		if(/JR|LBI|SLBI/){
-			s/$1/#$label{$1}/;			# replace label with address
+		if($_ =~ /JR|LBI|SLBI/){
+            $tstH = join "", $1, "_HIGH";
+            $tstL = join "", $1, "_LOW";
+            #printf"tstH: %s, tstL: %s\n",$tstH, $tstL;
+            if ($_ =~ /$tstH/) {
+                $val = $label{$1} >> 8;
+                #printf"tstH val: %s\n",$val;
+                s/$tstH/#$val/;			# replace label with address
+            }
+            elsif ($_ =~ /$tstL/) {
+                $val = $label{$1} & (255);
+                #printf"tstL val: %s\n",$val;
+                s/$tstL/#$val/;			# replace label with address
+            }
+            else {
+                s/$1/#$label{$1}/;			# replace label with address
+            }    
 		}
 		else {
 			$offset = $label{$1}-$addr;
-			printf"Label: %s, Address: %s, Offset: %s\n",$label{$1},$addr,$offset;
+			#printf"Label: %s, Address: %s, Offset: %s\n",$label{$1},$addr,$offset;
 			s/$1/#$offset/;	# replace label with pc offset
 		}
 		#printf"%s",$_;
