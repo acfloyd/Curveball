@@ -22,7 +22,7 @@
 module vga_controller(
 	input clk_100mhz_buf,
 	input rst,
-    input[2:0] Wdata,
+    input[23:0] Wdata,
 	input vgaclk,
     input locked_dcm,
     output reg state,
@@ -58,13 +58,13 @@ module vga_controller(
 	wire wr_en, empty, full; 
 	
 	// ram wires
-    reg[23:0] color_val;
+    wire[23:0] color_val;
 
 	// global reset
 	wire g_rst;
 
     // color value decode
-    always @(*) begin
+    /*always @(*) begin
         case(Wdata)
             3'd0: color_val = BLACK;
             3'd1: color_val = GREEN;
@@ -75,7 +75,8 @@ module vga_controller(
             3'd6: color_val = WHITE;
             3'd7: color_val = GWHITE;
         endcase
-    end
+    end*/
+	 assign color_val = Wdata;
 
 	// state transition logic
 	always@(*) begin

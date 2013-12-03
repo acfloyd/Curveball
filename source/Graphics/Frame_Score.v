@@ -7,8 +7,17 @@ module Frame_Score(
 	input[15:0] game_state,
 	input[15:0] pixel_x,
 	input[15:0] pixel_y,
-	output[2:0] color
+	output[23:0] color
     );
+	// colors
+	localparam[23:0] BLACK = 24'h000000;
+	localparam[23:0] GREEN = 24'h00FF00;
+	localparam[23:0] BLUE = 24'h0000FF;
+	localparam[23:0] RED = 24'hFF0000;
+	localparam[23:0] TEAL = 24'h66FFFF;
+	localparam[23:0] GRAY = 24'hD3D3D3;
+	localparam[23:0] WHITE = 24'hFFFFFF;
+	localparam[23:0] GWHITE = 24'hCCFF99;
 	
 	wire[8:0] frame_draw;
 	wire score_draw;
@@ -28,7 +37,7 @@ module Frame_Score(
 	// Score
 	Score_Draw score(.clk(clk), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .draw(score_draw)); 
 	
-	assign color = (frame_draw) ? 3'b1 : (score_draw) ? 3'd4: 3'b0;
+	assign color = (frame_draw) ? GREEN : (score_draw) ? TEAL: BLACK;
 	
 endmodule
 

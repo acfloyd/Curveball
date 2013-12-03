@@ -6,7 +6,7 @@ module Graphics_ASIC(
 	input[15:0] databus,
 	input[3:0] data_address,
 	input VGA_ready,
-   output[2:0] color,
+   output[23:0] color,
    output[18:0] pixel_address
    );
 	wire [15:0] paddle_1_x, next_pad1_x;
@@ -21,7 +21,7 @@ module Graphics_ASIC(
 	wire [15:0] player_2_score, player_2_score_buffer;
 	reg [15:0] game_state, game_state_buffer;
 	wire[15:0] pixel_x, pixel_y;
-	wire[2:0] paddle_1_color, paddle_2_color, ball_color,  frame_score_color;
+	wire[23:0] paddle_1_color, paddle_2_color, ball_color,  frame_score_color;
 	
 	assign player_1_score_buffer = 16'd1;
 	assign player_2_score_buffer = 16'd2;
@@ -78,7 +78,6 @@ module Graphics_ASIC(
 							.pixel_x(pixel_x),
 							.pixel_y(pixel_y),
 							.color(frame_score_color));
-
 	Control control(.clk(clk),
 					.rst(rst),
 					.paddle_1(paddle_1_color),
