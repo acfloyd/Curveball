@@ -2,6 +2,11 @@
 `define EOF 32'hFFFF_FFFF 
 `define NULL 0 
 
+`define BALLADDR 4104
+`define POSX 0
+`define POSY 1
+`define POSZ 2
+
 module emulator;
 
 integer file_in, file_out, i, PC, PC_next;
@@ -9,14 +14,15 @@ integer scan_file;
 
 reg rst, clk;
 
-reg[15:0] currLine;
+reg[15:0] currLine, tmpAddr;
+reg signed [15:0] tmpVal;
 reg eof;
 
 // TODO: need functionality for registers (ie. game state, position, etc.)
 
 // memories
 reg[15:0] outGrid[99:0][99:0]; // output grid for displaying to excel
-reg[7:0] Dmem[16386:0];
+reg[15:0] Dmem[16386:0];
 // the Imeme must be resized to fit the # of instructions in the input file
 reg[15:0] Imem[1023:0];
 reg[15:0] rf[7:0];
@@ -51,11 +57,19 @@ initial begin
     i = 0;
     while(scan_file != `EOF) begin
         // get the next instruction
-        $display("%d: 0x%x\n", i, currLine);
         Imem[i] = currLine;
         i = i + 1;
         scan_file = $fscanf(file_in, "%b\n", currLine);
     end
+
+    // prefill the register values to zero
+    for (i = 0; i < 8; i = i + 1)
+        rf[i] = 16'd0;
+
+    // init values for testing
+    // set mouse addr
+    Dmem[16384] = 250; // posX
+    Dmem[16385] = 193; // posY
 
     // after the while loop, i reflects the number of instructions
     PC = 0;
@@ -66,6 +80,7 @@ end
 always @(posedge clk) begin
     if (!rst) begin
         PC = PC_next;
+        //$display("PC: %d, %b\n", PC, currLine);
         PC_next = PC_next + 1;
         currLine = Imem[PC];
 
@@ -106,10 +121,10 @@ always @(posedge clk) begin
                 rf[currLine[7:5]] = rf[currLine[10:8]] >>> {{12{1'b0}}, currLine[3:0]};
             // LBI
             5'b01100: 
-                rf[currLine[7:5]] = {{8{currLine[7]}}, currLine[7:0]};
+                rf[currLine[10:8]] = {{8{currLine[7]}}, currLine[7:0]};
             // SLBI
             5'b01101: 
-                rf[currLine[7:5]] = (rf[currLine[10:8]] << 8) | {{8{currLine[7]}}, currLine[7:0]};
+                rf[currLine[10:8]] = (rf[currLine[10:8]] << 8) | {{8{1'b0}}, currLine[7:0]};
             // STI
             5'b01110: 
                 Dmem[{{8{1'b0}}, currLine[7:0]}] = rf[currLine[10:8]];
@@ -166,6 +181,7 @@ always @(posedge clk) begin
                 endcase
             end
             5'b10011: begin
+                // these don't work because they are not signed
                 case(currLine[1:0])
                     // SEQ
                     2'b00: begin
@@ -193,7 +209,7 @@ always @(posedge clk) begin
                         // not implemented
                     end
                 endcase
-            end
+            end 
             // BEQZ
             5'b10100: begin
                 if (rf[currLine[10:8]] == 0)
@@ -206,12 +222,14 @@ always @(posedge clk) begin
             end
             // BLTZ
             5'b10110: begin
-                if (rf[currLine[10:8]] < 0)
+                tmpVal = rf[currLine[10:8]];
+                if (tmpVal < 0)
                     PC_next = PC_next + {{8{currLine[7]}}, currLine[7:0]};
             end
             // BLEZ
             5'b10111: begin
-                if (rf[currLine[10:8]] <= 0)
+                tmpVal = rf[currLine[10:8]];
+                if (tmpVal <= 0)
                     PC_next = PC_next + {{8{currLine[7]}}, currLine[7:0]};
             end
             // J
@@ -241,7 +259,7 @@ always @(posedge clk) begin
 
                 // print the data memory and its contents
                 file_out = $fopen("Dmem.dat");
-                for (i = 0; i < 1024; i = i + 1) begin
+                for (i = 0; i < 16386; i = i + 1) begin
                     $fwrite(file_out, "%d: 0x%x\n", i, Dmem[i]);
                 end
                 $fclose(file_out);
@@ -252,8 +270,10 @@ always @(posedge clk) begin
                 // this does nothing
             end
             // ST
-            5'b11110:
-                Dmem[rf[currLine[10:8]] + {{12{currLine[4]}}, currLine[4:0]}] = rf[currLine[7:5]];
+            5'b11110: begin
+                tmpAddr = rf[currLine[10:8]] + {{12{currLine[4]}}, currLine[4:0]};
+                Dmem[tmpAddr] = rf[currLine[7:5]];
+            end
             // LD
             5'b11111:
                 rf[currLine[7:5]] = Dmem[rf[currLine[10:8]] + {{12{currLine[4]}}, currLine[4:0]}];

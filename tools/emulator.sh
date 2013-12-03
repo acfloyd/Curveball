@@ -1,5 +1,5 @@
 #!/bin/bash
-rm -rf work game_code.bin
+rm -rf work game_code.bin *.wlf 
 
 ./assembler.pl $1
 #./assembler_to_file.pl $1
