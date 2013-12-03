@@ -90,8 +90,8 @@ module vga_controller(
 			endcase
 	end
 	
-	always@(posedge clk_100mhz_buf) begin
-		if(rst) 
+	always @(posedge clk_100mhz_buf) begin
+		if(g_rst) 
 			state <= READ;
 		else 
 			state <= next_state;
@@ -103,7 +103,6 @@ module vga_controller(
 	assign g_rst = rst | ~locked_dcm; // only exit reset once 25 mhz clock is locked
 	
 	// modules
-    // TODO: use . connections
 	vga_logic vgal(vgaclk, g_rst, empty, blank, comp_sync, hsync, vsync);
 	
 	xclk_fifo fifo(color_val, vgaclk, blank, g_rst, clk_100mhz_buf, wr_en, fifo_dout, empty, full);
