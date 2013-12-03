@@ -25,25 +25,14 @@ module top_level(
 			output SDATA_OUT, 
 			output SYNC, 
 			output BEEP_TONE_IN, 
-			output AUDIO_RESET_Z,
-			output LED_0,
-			output LED_1,
-			output LED_2,
-			output LED_3
+			output AUDIO_RESET_Z
     );		
 	
 	 assign BEEP_TONE_IN = 1'b0;
     
 	 wire cs, rw;
 	 wire[15:0] data;
-	 assign cs = 1'd0;
-	 assign rw = 1'd0;
+    Driver d(.clk(clk), .rst(rst), .cs(cs), .rw(rw), .data(data));
     Audio_Controller ac(.clk(clk), .rst(rst), .cs(cs), .rw(rw), .data(data), .BIT_CLK(BIT_CLK), .SDATA_OUT(SDATA_OUT), .SYNC(SYNC), .AUDIO_RESET_Z(AUDIO_RESET_Z));
-	 
-	 //debug LEDs
-	 assign LED_0 = SYNC;
-	 assign LED_1 = ~AUDIO_RESET_Z;
-	 assign LED_2 = ~rst;
-	 assign LED_3 = ~BIT_CLK;
 						  
 endmodule

@@ -5,7 +5,7 @@ module Audio_Reset(input clk, input rst, output AUDIO_RESET_Z, output audio_read
 	parameter HOLD = 2'd2;
 	
 	reg[1:0] state, next_state;
-	reg[22:0] wait_count;
+	reg[23:0] wait_count;
 	
 	assign AUDIO_RESET_Z = (state != RESET);
 	assign audio_ready = (state == HOLD);
@@ -13,7 +13,7 @@ module Audio_Reset(input clk, input rst, output AUDIO_RESET_Z, output audio_read
 	always@(posedge clk) begin
 		if(rst) begin
 			state <= START;
-			wait_count <= 23'd1;
+			wait_count <= 24'd1;
 		end else begin
 			state <= next_state;
 			wait_count <= wait_count + 1;
