@@ -1,6 +1,7 @@
 module ps2_mouse(output [8:0] data, output done, TCP, t_clk, t_data, output r_ack_bit, r_ack, dav, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
   
-  reg [8:0] status, pos_x, pos_y, next_pos_x, next_pos_y, next_status;
+  reg [9:0] next_pos_x, next_pos_y;
+  reg [8:0] status, pos_x, pos_y, next_status;
   wire [23:0] data_in;
   wire [7:0] byte_rec;
   
@@ -18,8 +19,7 @@ module ps2_mouse(output [8:0] data, output done, TCP, t_clk, t_data, output r_ac
   
   assign data = (addr == 2'b00) ? status : 
                 (addr == 2'b01) ? pos_x :
-                (addr == 2'b10) ? pos_y : 8'd0;
-  //assign data_out = {next_status[7:0], next_pos_x[7:0], next_pos_y[7:0]};					 
+                (addr == 2'b10) ? pos_y : 8'd0;					 
   
   always@(posedge clk, posedge rst) begin
     if(rst) begin
@@ -28,8 +28,8 @@ module ps2_mouse(output [8:0] data, output done, TCP, t_clk, t_data, output r_ac
       status <= 9'd0;
     end
     else begin
-      pos_x <= next_pos_x;
-      pos_y <= next_pos_y;
+      pos_x <= next_pos_x[8:0];
+      pos_y <= next_pos_y[8:0];
       status <= next_status;
     end
   end
@@ -40,16 +40,16 @@ module ps2_mouse(output [8:0] data, output done, TCP, t_clk, t_data, output r_ac
     next_status = status;
     if(dav) begin
       next_status = {1'b0, data_in[23:16]};
-      next_pos_x = pos_x + {data_in[20], data_in[15:8]};
-      next_pos_y = pos_y + {data_in[21], data_in[7:0]};
-      if(next_pos_x <= left)
-        next_pos_x = left;
-      else if(next_pos_x >= right)
-        next_pos_x = right;
-      if(next_pos_y <= top)
-        next_pos_y = top;
-      else if(next_pos_y >= bottom)
-        next_pos_y = bottom;
+      next_pos_x = {1'b0, pos_x} + {data_in[20], data_in[20], data_in[15:8]};
+      next_pos_y = {1'b0, pos_y} - {data_in[21], data_in[21], data_in[7:0]};
+      if(data_in[20] && next_pos_x[9])
+        next_pos_x = {1'b0, left};
+      else if(next_pos_x[8:0] >= right)
+        next_pos_x = {1'b0, right};
+      if(!data_in[21] && next_pos_y[9])
+        next_pos_y = {1'b0, top};
+      else if(next_pos_y[8:0] >= bottom)
+        next_pos_y = {1'b0, bottom};
     end
   end
   
