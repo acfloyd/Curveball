@@ -4,13 +4,16 @@ module Graphics_ASIC(
 	input rst,
 	input[3:0] chipselect,
 	input[15:0] databus,
-	input[3:0] data_address,
+	inout[3:0] data_address,
+    input read,
 	input VGA_ready,
    output[23:0] color,
    output[18:0] pixel_address
    );
+
+    reg[15:0] next_databus;
 	reg[15:0] paddle_1_x, next_paddle_1_x;
-	reg[15:0] paddle_1_x_buffer;
+	reg[15:0] paddle_1_x_buffer, next_paddle_1_x_buffer;
 	wire [15:0] paddle_1_y, paddle_1_y_buffer;
 	wire [15:0] paddle_2_x, paddle_2_x_buffer;
 	wire [15:0] paddle_2_y, paddle_2_y_buffer;
@@ -38,23 +41,42 @@ module Graphics_ASIC(
 								
 	assign paddle_1_y_buffer = 16'd200;
 
+    assign databus = databus_reg;
+
     always @(*) begin
-        next_paddle_1_x = paddle_1_x_buffer;
+        next_paddle_1_x_buffer = paddle_1_x_buffer;
+        next_paddle_1_x = paddle_1_x;
+        next_databus = 16'hzzzz;
+
+        if (chipselect) begin
+            if (read) begin
+                case (data_address) 
+                    4'h0: next_databus = paddle_1_x;
+                endcase
+            end
+            else begin
+                case (data_address)
+                    4'h0: next_paddle_1_x = databus;
+                endcase
+            end
+        end
 
         if (VGA_ready && pixel_address == 19'h4AFFF) begin
-            if (paddle_1_x_buffer <= 16'd400)
-                next_paddle_1_x = paddle_1_x_buffer + 1;
-            else
-                next_paddle_1_x = 16'd100;
+            next_paddle_1_x_buffer = paddle_1_x;
         end
+
     end
 	
 	always @(posedge clk) begin
 		if (rst) begin
-			paddle_1_x_buffer <= 16'd100;
+            databus_reg <= 16'hzzzz;
+			paddle_1_x_buffer <= 16'd320;
+            paddle_1_x <= 16'd320;
 		end
 		else begin
-			paddle_1_x_buffer <= next_paddle_1_x;
+            databus_reg <= next_databus;
+			paddle_1_x <= next_paddle_1_x;
+            paddle_1_x_buffer <= next_paddle_1_x_buffer;
 		end
 	end
 
@@ -104,3 +126,4 @@ module Graphics_ASIC(
 					.color(color),
 					.address(pixel_address));
 endmodule
+
