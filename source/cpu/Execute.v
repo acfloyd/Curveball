@@ -1,17 +1,17 @@
 module Execute(DataOut1, DataOut2, ForwardRs, ForwardRt, ALUOp, SetFlag, AOp, ZeroB, ShiftMode, 
-               AddMode, FlagMux, clk, rst, ALUOut, Remainder, DataOut1Out, 
+               AddMode, FlagMux, clk, rst, ALUOut, Remainder, 
                Stall, MemData2, WriteBackData, WriteBack2Data, 
-               RsForwardSel, RtForwardSel, divReady);
+               RsForwardSel, RtForwardSel, divReady, WriteDataIn, WriteDataOut);
 	input clk, rst, Stall, ForwardRs, ForwardRt, ZeroB, AddMode, FlagMux;
  	input[1:0] SetFlag, AOp, ShiftMode;
  	input[2:0] ALUOp;
- 	input[15:0] DataOut1, DataOut2;
+ 	input[15:0] DataOut1, DataOut2, WriteDataIn;
  	//Forwarding
  	input[15:0] MemData2, WriteBackData, WriteBack2Data;
  	input[1:0] RsForwardSel, RtForwardSel;
 
  	output divReady;
- 	output[15:0] Remainder, ALUOut, DataOut1Out;
+ 	output[15:0] Remainder, ALUOut, WriteDataOut;
 
 
  	wire Flag;
@@ -34,8 +34,8 @@ module Execute(DataOut1, DataOut2, ForwardRs, ForwardRt, ALUOp, SetFlag, AOp, Ze
  	         .ZeroB(ZeroB), .ShiftMode(ShiftMode), .AddMode(AddMode), .clk(clk), 
  	         .FlagMux(FlagMux), .Out(ALUOutRegIn), .Remainder(RemainderRegIn), .rst(rst), .ready(divReady));
 
- 	ExecuteReg Reg (.clk(clk), .rst(rst), .Stall(Stall), .RemainderIn(RemainderRegIn),
- 					.ALUOutIn(ALUOutRegIn), .DataOut1In(DataOut1), .RemainderOut(Remainder),
- 					.ALUOutOut(ALUOut), .DataOut1Out(DataOut1Out));
+ 	ExecuteReg Reg (.clk(clk), .rst(rst), .Stall(Stall), .RemainderIn(RemainderRegIn), .WriteDataIn(WriteDataIn),
+ 					.ALUOutIn(ALUOutRegIn), .RemainderOut(Remainder),
+ 					.ALUOutOut(ALUOut), .WriteDataOut(WriteDataOut));
 
 endmodule

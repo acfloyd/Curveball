@@ -8,19 +8,16 @@ module Fetch(clk, rst, Stall, FetchStall, TruePC, NotBranchOrJump, NextPC,
     wire [15:0] MuxOut, NextPCRegIn, InstructRegIn;
     
     //TEMP INSTRUCT MEM
-    reg [15:0] mem [0:127];
+    reg [15:0] mem [0:19];
     initial begin
-        $readmemb("text_files/instructions.txt", mem);
+        $readmemb("instructions.txt", mem);
     end
 
     always @ (posedge clk, posedge rst) begin
-        if(rst | Halt)
-            PC <= 16'd0;
-        else if (Stall | FetchStall) 
-            PC <= PC;
-        else begin
-            PC <= NextPCRegIn;
-        end
+        if(rst) PC <= 16'd0;
+        else if (Halt) PC <= 16'd0;
+        else if (Stall | FetchStall) PC <= PC;
+        else PC <= NextPCRegIn;
     end
 
     assign MuxOut = (NotBranchOrJump) ? PC : TruePC;

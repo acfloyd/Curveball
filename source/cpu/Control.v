@@ -1,15 +1,17 @@
-module Control(clk, rst, Stall, divReady, Instruct, NotBranchOrJump, WrRegEn, 
+module CPU_Control(clk, rst, Stall, divReady, Instruct, NotBranchOrJump, WrRegEn, 
 				WrRegAddr, SignExtSel, ZeroExtend8, NextPCSel, BranchImmedSel, LoadR7, 
 				DataOut2Sel, ALUOp, AddMode, ShiftMode, SetFlagD, Branch, Jump,
 				SetFlagE, AOp, ZeroB, FlagMux, WrMemEn, MemToReg, RsForwardSel, RtForwardSel,
-				ForwardRs, ForwardRt, FetchStall, BJForwardSel, Halt);
+				ForwardRs, ForwardRt, FetchStall, BJForwardSel, Halt, StoreDataForward, 
+				StoreDataForwardSel, BranchOrJumpRegForwardRs, StoreImmed, ReadMem);
 //ForwardRsDecode, ForwardRtDecode
 input clk, rst, divReady;
 input[15:0] Instruct;
 
 output NotBranchOrJump, WrRegEn, ZeroExtend8, NextPCSel, BranchImmedSel, LoadR7, DataOut2Sel; 
-output AddMode, ZeroB, FlagMux, WrMemEn, MemToReg, Stall, Branch, Jump;
-output ForwardRs, ForwardRt, FetchStall, Halt;
+output AddMode, ZeroB, FlagMux, WrMemEn, MemToReg, Stall, Branch, Jump, StoreImmed;
+output ForwardRs, ForwardRt, FetchStall, Halt, StoreDataForwardSel, StoreDataForward, BranchOrJumpRegForwardRs;
+output ReadMem;
 output [1:0] SignExtSel, ShiftMode, SetFlagD, SetFlagE, AOp;
 output [1:0] RsForwardSel, RtForwardSel;
 output [2:0] WrRegAddr;
@@ -35,19 +37,19 @@ always @ (posedge clk, posedge rst) begin
 		i5 <= NOP;
 		i6 <= NOP;
 	end
-	else if(Halt) begin
-		i2 <= i2;
-		i3 <= i2;
-		i4 <= i3;
-		i5 <= i4;
-		i6 <= i5;
-	end
 	else if (Stall) begin
 		i2 <= i2;
 		i3 <= i3;
 		i4 <= i4;
 		i5 <= i5;
 		i6 <= i6;
+	end
+	else if(Halt) begin
+		i2 <= i2;
+		i3 <= i2;
+		i4 <= i3;
+		i5 <= i4;
+		i6 <= i5;
 	end
 	else if(BranchOrJumpRegForwardRsWithStall) begin
 		i2 <= i2;
@@ -108,7 +110,8 @@ always @(posedge clk or posedge rst) begin
 		StallReg <= Stall;
 	end
 end
-assign Stall = (MemLoadDetect ^ StallReg) | divStall;
+assign ReadMem = MemLoadDetect ^ StallReg;
+assign Stall = ReadMem | divStall;
 
 always @(posedge clk or posedge rst) begin
 	if (rst) begin
@@ -126,10 +129,9 @@ assign divStall = tempDivStall ^ changeDivStall;
 
 
 assign NotBranchOrJump = !((i2[15] & !i2[14] & i2[13]) | (i2[15] & i2[14] & !i2[13]));
-assign SignExtSel[0] = (i2[15:13] == 3'b011) | (i2[15:13] == 3'b101) | (i2[15] & i2[14] & !i2[13] & i2[11]) | 
-						(i2[15:12] == 4'b1111);
-assign SignExtSel[1] = (i2[15:12] == 4'b0111) | (i2[15] & i2[14] & !i2[13] & !i2[11]);
-assign ZeroExtend8 = i2[15:12] == 4'b0111;
+assign SignExtSel[0] = (i2[15:13] == 3'b011) | (i2[15:13] == 3'b101) | (i2[15] & i2[14] & !i2[13] & i2[11]);
+assign SignExtSel[1] = (i2[15:12] == 4'b0111) | (i2[15:11] == 5'b01101) | (i2[15] & i2[14] & !i2[13] & !i2[11]);
+assign ZeroExtend8 = i2[15:13] == 3'b011;
 assign NextPCSel = !(i2[15] & i2[14] & !i2[13] & i2[11]);
 assign BranchImmedSel = i2[15] & i2[14] & !i2[13] & !i2[11];
 assign LoadR7 = i2[15:12] == 4'b1101;
@@ -137,6 +139,7 @@ assign DataOut2Sel = !(i2[15:13] == 4'b100);
 assign SetFlagD = i2[12:11];
 assign Branch = i2[15:13] == 3'b101;
 assign Jump = i2[15:13] == 3'b110;
+assign StoreImmed = i2[15:11] == 5'b01110;
 assign AddMode = !((i3[15:11] == 5'b00001) | (i3[15:11] == 5'b10000 & i3[1:0] == 2'b01) |
 				 (i3[15:11] == 5'b10011 & !(i3[1:0] == 2'b11)) );
 assign ShiftMode = (i3[15:13] == 3'b010) ? i3[12:11] : i3[1:0];
@@ -186,7 +189,7 @@ assign Dest = (ChooseDest == 2'b00) ? i3[7:5] :
 					  3'd7;
 
 assign RsForwardEnable = (i3[15:11] != 5'b01100) & (i3[15:11] != 5'b01111) &
-						 (i3[15:11] != 5'b11000) & (i3[15:11] != 5'b11010) &
+						 (i3[15:13] != 5'b110) &
 						 (i3[15:12] != 4'b1110) & (i3[15:13] != 3'b101);
 assign RtForwardEnable = i3[15] & !i3[14] & !i3[13];
 
@@ -205,6 +208,16 @@ assign RtForwardSel = (ValidDest4 & (i3[7:5] == Dest4) & (&i4[14:11])) ? 2'b01:
 					  (ValidDest4 & (i3[7:5] == Dest4)) ? 2'b00 :
 					  (ValidDest5 & (i3[7:5] == Dest5)) ? 2'b10 :
 					  (ValidDest6 & (i3[7:5] == Dest6)) ? 2'b11 : 2'b00;
+
+
+assign StoreDataForwardEnable = i4[14:11] == 4'b1110;
+assign StoreDataForward = StoreDataForwardEnable & (i4[15] ? ((ValidDest5 & (i4[7:5] == Dest5)) |
+									(ValidDest6 & (i4[7:5] == Dest6))) :
+								   ((ValidDest5 & (i4[10:8] == Dest5)) |
+									(ValidDest6 & (i4[10:8] == Dest6))));
+assign StoreDataForwardSel = ValidDest5 & ((i4[15] & (i4[7:5] == Dest5)) | (!i4[15] & (i4[10:8] == Dest5)));
+
+
 always @ (i3) begin
    casez({i3[15:11], i3[1:0]})
 	   7'b00010zz: ALUOp = 3'b010;

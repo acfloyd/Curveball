@@ -1,28 +1,25 @@
-module ExecuteReg(clk, rst, stall, DivStallIn, RemainderIn, ALUOutIn, DataOut1In, DivStallOut, RemainderOut, ALUOutOut, DataOut1Out);
-input clk, rst, stall, DivStallIn;
-input[15:0] RemainderIn, ALUOutIn, DataOut1In;
+module ExecuteReg(clk, rst, Stall, RemainderIn, ALUOutIn, RemainderOut, 
+				  ALUOutOut, WriteDataIn, WriteDataOut);
+input clk, rst, Stall;
+input[15:0] RemainderIn, ALUOutIn, WriteDataIn;
 
-output reg DivStallOut;
-output reg[15:0] RemainderOut, ALUOutOut, DataOut1Out;
+output reg[15:0] RemainderOut, ALUOutOut, WriteDataOut;
 
 always @(posedge clk, posedge rst) begin
 	if (rst) begin
-		DivStallOut <= 1'b0;
 		RemainderOut <= 1'd0;
 		ALUOutOut <= 16'd0;
-		DataOut1Out <= 16'd0;
+		WriteDataOut <= 16'd0;
 	end
-	else if (stall) begin
-		DivStallOut <= DivStallOut;
+	else if (Stall) begin
 		RemainderOut <= RemainderOut;
 		ALUOutOut <= ALUOutOut;
-		DataOut1Out <= DataOut1Out;
+		WriteDataOut <= WriteDataOut;
 	end
 	else begin
-		DivStallOut <= DivStallIn;
 		RemainderOut <= RemainderIn;
 		ALUOutOut <= ALUOutIn;
-		DataOut1Out <= DataOut1In;
+		WriteDataOut <= WriteDataIn;
 	end
 end
 

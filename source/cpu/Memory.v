@@ -1,29 +1,22 @@
-module Memory(clk, rst, Stall, ALUResult, DataIn, MemWr, MemOut, ALUResultOut,
-			  MemDataForward);
+module Memory(clk, rst, Stall, ALUResult, DataIn, MemOut, ALUResultOut,
+			  MemDataForward, StoreDataForward, StoreDataForwardSel, WriteBackData, WriteBack2Data,
+              ExternalWriteData, ExternalReadData);
     
-	input clk, rst, Stall, MemWr;
-	input[15:0] ALUResult, DataIn;
+	input clk, rst, Stall, StoreDataForward, StoreDataForwardSel;
+	input[15:0] ALUResult, DataIn, WriteBackData, WriteBack2Data, ExternalReadData;
 
 	output[15:0] MemOut, ALUResultOut, MemDataForward;
 
-	wire[15:0] MemOutRegIn;
+    output [15:0] ExternalWriteData;
 
-	//MEM mem(.ADDRA(ALUResult), .DINA(DataIn), .WEA(MemWr), .CLKA(clk), .DOUTA(MemOutRegIn));
-	//Temp Mem
-	reg [15:0] mem [0:31];
-    initial begin
-        $readmemh("text_files/mem_initialize.txt", mem);
-    end
+	wire[15:0] DataForwarded;
 
-    assign MemOutRegIn = mem[ALUResult];
-    always @ (posedge clk) begin
-    	if(MemWr) begin
-    		mem[ALUResult] <= DataIn;
-    	end
-    end
-    assign MemDataForward = MemOutRegIn;
 
-	MemoryReg Reg (.clk(clk), .rst(rst), .stall(Stall), .MemOutIn(MemOutRegIn),
+    assign DataForwarded = StoreDataForwardSel ? WriteBackData : WriteBack2Data;
+    assign ExternalWriteData = StoreDataForward ? DataForwarded : DataIn;
+	assign MemDataForward = ExternalReadData;
+
+	MemoryReg Reg (.clk(clk), .rst(rst), .stall(Stall), .MemOutIn(ExternalReadData),
 				   .ALUResultOutIn(ALUResult), .MemOutOut(MemOut), .ALUResultOutOut(ALUResultOut));
 
 endmodule
