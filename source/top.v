@@ -37,7 +37,7 @@ module top(input clk_100mhz,
 	wire graphics_VGA_ready;
     wire locked_dcm;
     wire clk_100mhz_buf;
-	wire[23:0] graphics_color;
+	wire[24:0] graphics_color;
 	wire[18:0] graphics_pixel_address;
 	
 	
@@ -68,3 +68,4 @@ module top(input clk_100mhz,
 							 
 	vga_clk vga_clk_gen1(clk_100mhz, rst, vgaclk, clkin_ibufg_out, clk_100mhz_buf, locked_dcm);
 endmodule
+
