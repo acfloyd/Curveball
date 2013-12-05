@@ -26,13 +26,13 @@ module Frame_Score(
 	
 	// static square frames
 	Static_Frame_Draw #( 63,  47, 514, 386) frame0(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[0]));
-	Static_Frame_Draw #( 99,  74, 442, 332) frame1(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[1]));
-	Static_Frame_Draw #(133, 100, 374, 281) frame2(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[2]));
-	Static_Frame_Draw #(163, 122, 314, 236) frame3(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[3]));
-	Static_Frame_Draw #(189, 142, 263, 197) frame4(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[4]));
-	Static_Frame_Draw #(211, 158, 218, 164) frame5(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[5]));
-	Static_Frame_Draw #(229, 172, 182, 137) frame6(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[6]));
-	Static_Frame_Draw #(243, 182, 154, 116) frame7(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[7]));
+	Static_Frame_Draw #(132,  99, 376, 283) frame1(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[1]));
+	Static_Frame_Draw #(171, 128, 297, 223) frame2(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[2]));
+	Static_Frame_Draw #(197, 148, 245, 185) frame3(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[3]));
+	Static_Frame_Draw #(215, 161, 209, 157) frame4(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[4]));
+	Static_Frame_Draw #(229, 171, 182, 137) frame5(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[5]));
+	Static_Frame_Draw #(239, 179, 162, 122) frame6(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[6]));
+	Static_Frame_Draw #(247, 185, 145, 109) frame7(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[7]));
 	Static_Frame_Draw #(255, 191, 130,  98) frame8(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[8]));
 
 	Diagonal_Draw #(63, 47, 255, 191) d1(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[0]));
