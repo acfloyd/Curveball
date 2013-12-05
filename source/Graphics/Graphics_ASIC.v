@@ -87,6 +87,7 @@ module Graphics_ASIC(
 
 	Frame_Score frame_score(.clk(clk),
 							.rst(rst),
+							.VGA_Ready(VGA_ready),
 							.your_score(player_1_score_buffer),
 							.their_score(player_2_score_buffer),
 							.pixel_x(pixel_x),
