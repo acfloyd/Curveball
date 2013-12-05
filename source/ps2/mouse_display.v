@@ -1,4 +1,4 @@
-module mouse_display(output [18:0] wr_addr, output [2:0] wr_data, status_bits, output reg [1:0] addr, input [8:0] data, input dav, clk, rst, VGA_ready);
+module mouse_display(output [9:0] x_pos, y_pos, output [2:0] status_bits, output reg [1:0] addr, input [8:0] data, input dav, clk, rst, VGA_ready);
 
    reg [8:0] x_loc, next_x_loc, y_loc, next_y_loc, status, next_status;
    reg [1:0] state, next_state;
