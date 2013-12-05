@@ -2,6 +2,7 @@
 module Frame_Score(
 	input clk,
 	input rst,
+	input VGA_Ready,
 	input[15:0] your_score,
 	input[15:0] their_score,
 	input[15:0] game_state,
@@ -21,6 +22,7 @@ module Frame_Score(
 	
 	wire[8:0] frame_draw;
 	wire score_draw;
+	wire[3:0] diag_draw;
 	
 	// static square frames
 	Static_Frame_Draw #( 63,  47, 514, 386) frame0(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[0]));
@@ -33,11 +35,95 @@ module Frame_Score(
 	Static_Frame_Draw #(243, 182, 154, 116) frame7(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[7]));
 	Static_Frame_Draw #(255, 191, 130,  98) frame8(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[8]));
 
+	Diagonal_Draw #(63, 47, 255, 191) d1(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[0]));
+	Diagonal_Draw #(384, 288, 576, 432) d2(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[1]));
+	Diagonal_Draw_R #(255, 288, 63, 432) d3(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[2]));
+	Diagonal_Draw_R #(576, 47, 384, 191) d4(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[3]));
 	
 	// Score
 	Score_Draw score(.clk(clk), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .draw(score_draw)); 
 	
-	assign color = (frame_draw) ? GREEN : (score_draw) ? TEAL: BLACK;
+	assign color = (frame_draw) ? GREEN : (diag_draw) ? GREEN : (score_draw) ? TEAL: BLACK;
+	
+endmodule
+
+module Diagonal_Draw (
+	input clk,
+	input rst,
+	input en,
+	input[15:0] pixel_x,
+	input[15:0] pixel_y,
+	output draw);
+	
+	parameter x1 = 63;
+	parameter y1 = 47;
+	parameter x2 = 255;
+	parameter y2 = 191;
+	
+	reg[1:0] cnt3;
+	reg[15:0] x_start;
+	
+	always@(posedge clk) begin
+		if(rst) begin
+			x_start <= x1;
+			cnt3 <= 0;
+		end else if(en && pixel_y + 1 == y1) begin
+			x_start <= x1;
+			cnt3 <= 0;
+		end else if(en && pixel_x == 639 && pixel_y >= y1 && pixel_y <= y2) begin
+			if(cnt3 == 2) begin
+				cnt3 <= 0;
+				x_start <= x_start + 2;
+			end else begin
+				cnt3 <= cnt3 + 1;
+				x_start <= x_start + 1;
+			end
+		end
+	end
+	
+	assign draw = ~(pixel_y >= y1 && pixel_y <= y2 && pixel_x >= x1 && pixel_x <= x2) ? 1'd0 : 
+						(cnt3 == 2) ? (pixel_x >= x_start && pixel_x <= x_start + 2) :
+										  (pixel_x >= x_start && pixel_x <= x_start + 1);
+	
+endmodule
+
+module Diagonal_Draw_R (
+	input clk,
+	input rst,
+	input en,
+	input[15:0] pixel_x,
+	input[15:0] pixel_y,
+	output draw);
+	
+	parameter x1 = 63;
+	parameter y1 = 47;
+	parameter x2 = 255;
+	parameter y2 = 191;
+	
+	reg[1:0] cnt3;
+	reg[15:0] x_start;
+	
+	always@(posedge clk) begin
+		if(rst) begin
+			x_start <= x1;
+			cnt3 <= 0;
+		end else if(en && pixel_y + 1 == y1) begin
+			x_start <= x1;
+			cnt3 <= 0;
+		end else if(en && pixel_x == 639 && pixel_y >= y1 && pixel_y <= y2) begin
+			if(cnt3 == 2) begin
+				cnt3 <= 0;
+				x_start <= x_start - 2;
+			end else begin
+				cnt3 <= cnt3 + 1;
+				x_start <= x_start - 1;
+			end
+		end
+	end
+	
+	assign draw = ~(pixel_y >= y1 && pixel_y <= y2 && pixel_x >= x2 && pixel_x <= x1) ? 1'd0 : 
+						(cnt3 == 2) ? (pixel_x >= x_start - 2 && pixel_x <= x_start) :
+										  (pixel_x >= x_start - 1 && pixel_x <= x_start);
 	
 endmodule
 
