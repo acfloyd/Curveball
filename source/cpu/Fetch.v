@@ -8,10 +8,13 @@ module Fetch(clk, rst, Stall, FetchStall, TruePC, NotBranchOrJump, NextPC,
     wire [15:0] MuxOut, NextPCRegIn, InstructRegIn;
     
     //TEMP INSTRUCT MEM
-    reg [15:0] mem [0:19];
+
+    simple_rom #(16,"instructions.txt") mem(MuxOut, InstructRegIn);
+
+    /*reg [15:0] mem [0:19];
     initial begin
         $readmemb("instructions.txt", mem);
-    end
+    end*/
 
     always @ (posedge clk, posedge rst) begin
         if(rst) PC <= 16'd0;
@@ -27,7 +30,7 @@ module Fetch(clk, rst, Stall, FetchStall, TruePC, NotBranchOrJump, NextPC,
     //IMEM IMEM(.ADDRA(MuxOut), .CLKA(clk), .DOUTA(InstructRegIn));
     
     //TEMP INSTRUCT MEM
-    assign InstructRegIn = mem[MuxOut];
+    //assign InstructRegIn = mem[MuxOut];
     assign InstructToControl = InstructRegIn;
     
     FetchReg FETCHREG(.clk(clk), .rst(rst), .Stall(Stall | FetchStall | Halt), .NextPCIn(NextPCRegIn), 
