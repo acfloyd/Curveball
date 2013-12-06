@@ -44,7 +44,7 @@ module Graphics_ASIC(
     end
 	
 	assign next_ball_z = (VGA_ready && pixel_address == 19'h4AFFF) ?
-								(ball_z_buffer < 16'd999) ? ball_z_buffer + 16'd010 : 16'd000 : ball_z_buffer;
+								(ball_z_buffer < 16'd999) ? ball_z_buffer + 16'd10 : 16'd000 : ball_z_buffer;
 	
 	assign ball_x_buffer = 16'd200;
 	assign ball_y_buffer = 16'd100;
@@ -84,12 +84,9 @@ module Graphics_ASIC(
 				.pixel_x(pixel_x),
 				.pixel_y(pixel_y),
 				.color(ball_color));
-	
-	assign ball_color = 0;
-
+				
 	Frame_Score frame_score(.clk(clk),
 							.rst(rst),
-							.VGA_Ready(VGA_ready),
 							.your_score(player_1_score_buffer),
 							.their_score(player_2_score_buffer),
 							.pixel_x(pixel_x),
