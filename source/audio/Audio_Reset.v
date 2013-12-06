@@ -13,7 +13,7 @@ module Audio_Reset(input clk, input rst, output AUDIO_RESET_Z, output audio_read
 	always@(posedge clk) begin
 		if(rst) begin
 			state <= START;
-			wait_count <= 24'd1;
+			wait_count <= 1;
 		end else begin
 			state <= next_state;
 			wait_count <= wait_count + 1;

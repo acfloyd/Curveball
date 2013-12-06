@@ -20,7 +20,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 module top(input clk_100mhz,
 			  input rst,
-			  input up,
 			  output blank,
 			  output comp_sync,
 			  output hsync,
@@ -31,25 +30,27 @@ module top(input clk_100mhz,
 			  output vgaclk
     );
 	
-	wire graphics_chipselect;
+	wire graphics_chipselect, graphics_read;
 	wire[15:0] graphics_databus;
 	wire[3:0] graphics_data_address;
 	wire graphics_VGA_ready;
     wire locked_dcm;
     wire clk_100mhz_buf;
-	wire[24:0] graphics_color;
-	wire[18:0] graphics_pixel_address;
+	wire[23:0] graphics_color;
 	
-	
+	assign graphics_chipselect = 1'b0;
+	assign graphics_read = 1'b0;
+	assign graphics_databus = 16'hz;
+	assign graphics_data_address = 4'd0;
 
     Graphics_ASIC graphics(.clk(clk_100mhz_buf),
 					.rst(rst),
+					.read(graphics_read),
 					.chipselect(graphics_chipselect),
 					.databus(graphics_databus),
 					.data_address(graphics_data_address),
 					.VGA_ready(graphics_VGA_ready),
-					.color(graphics_color),
-					.pixel_address(graphics_pixel_address));
+					.color(graphics_color));
 	
 	
 	vga_controller vga(.clk_100mhz_buf(clk_100mhz_buf),

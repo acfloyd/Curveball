@@ -14,9 +14,10 @@ module Graphics_ASIC(
 	wire [15:0] paddle_1_y, paddle_1_y_buffer;
 	wire [15:0] paddle_2_x, paddle_2_x_buffer;
 	wire [15:0] paddle_2_y, paddle_2_y_buffer;
-	reg [15:0] ball_x, ball_x_buffer;
-	reg [15:0] ball_y, ball_y_buffer;
+	wire [15:0] ball_x, ball_x_buffer;
+	wire [15:0] ball_y, ball_y_buffer;
 	reg [15:0] ball_z, ball_z_buffer;
+	wire [15:0] next_ball_z;
 	wire [15:0] player_1_score, player_1_score_buffer;
 	wire [15:0] player_2_score, player_2_score_buffer;
 	reg [15:0] game_state, game_state_buffer;
@@ -28,13 +29,6 @@ module Graphics_ASIC(
 	
 	assign paddle_2_x_buffer = 16'd350;
 	assign paddle_2_y_buffer = 16'd250;
-/*	
-	assign next_pad1_x = (VGA_ready && pixel_address == 19'h4AFFF) ?
-									(paddle_1_x_buffer <= 16'd400) ?
-										paddle_1_x_buffer + 16'd1
-									: 16'd100
-								:paddle_1_x_buffer;
-*/
 								
 	assign paddle_1_y_buffer = 16'd200;
 
@@ -49,12 +43,20 @@ module Graphics_ASIC(
         end
     end
 	
+	assign next_ball_z = (VGA_ready && pixel_address == 19'h4AFFF) ?
+								(ball_z_buffer < 16'd999) ? ball_z_buffer + 16'd10 : 16'd000 : ball_z_buffer;
+	
+	assign ball_x_buffer = 16'd200;
+	assign ball_y_buffer = 16'd100;
+	
 	always @(posedge clk) begin
 		if (rst) begin
 			paddle_1_x_buffer <= 16'd100;
+			ball_z_buffer <= 16'd000;
 		end
 		else begin
 			paddle_1_x_buffer <= next_paddle_1_x;
+			ball_z_buffer <= next_ball_z;
 		end
 	end
 
@@ -73,7 +75,7 @@ module Graphics_ASIC(
 					.pixel_x(pixel_x),
 					.pixel_y(pixel_y),
 					.color(paddle_2_color));
-	/*				
+				
 	Ball ball(.clk(clk),
 				.rst(rst),
 				.x_loc(ball_x_buffer),
@@ -82,9 +84,7 @@ module Graphics_ASIC(
 				.pixel_x(pixel_x),
 				.pixel_y(pixel_y),
 				.color(ball_color));
-	*/
-	assign ball_color = 0;
-
+				
 	Frame_Score frame_score(.clk(clk),
 							.rst(rst),
 							.your_score(player_1_score_buffer),

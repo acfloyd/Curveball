@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
   // read in data file
   in.seekg(0, in.end);
   unsigned int length = in.tellg();
+  cout << length << endl;
   in.seekg(0, in.beg);
 
   unsigned char* buffer = new unsigned char[length];

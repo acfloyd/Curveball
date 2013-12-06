@@ -67,7 +67,7 @@ module Audio_Cntrl(
 	assign next_wait_count = (state == WAIT)? wait_count + 1: 0;
 
 	// sequential logic
-	always@(posedge clk) begin
+	always@(posedge clk, posedge rst) begin
 		if(rst) begin
 			state <= IDLE;
 			data_addr <= 0;
