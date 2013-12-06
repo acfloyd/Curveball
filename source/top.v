@@ -27,33 +27,53 @@ module top(input clk_100mhz,
 			  output[7:0] pixel_r,
 			  output[7:0] pixel_g,
 			  output[7:0] pixel_b,
-			  output vgaclk
+			  output vgaclk,
+			  output LED_0,
+			  inout MOUSE_CLOCK,
+			  inout MOUSE_DATA
     );
 	
-	wire graphics_chipselect, graphics_read;
-	wire[15:0] graphics_databus;
-	wire[3:0] graphics_data_address;
 	wire graphics_VGA_ready;
-    wire locked_dcm;
-    wire clk_100mhz_buf;
+    wire locked_dcm, cpu_locked_dcm, clkin_ibufg_out;
+    wire clk_100mhz_buf, clk_100mhz_buf2;
 	wire[23:0] graphics_color;
+	wire cpuclk;
+	wire ack;
+	wire Read, Write, CS_RAM, CS_Audio, CS_Graphics, CS_Spart, CS_PS2;
+	wire [15:0] Addr, WriteData, DataToCPU, DataBus, Instruct, NextPC;
 	
-	assign graphics_chipselect = 1'b0;
-	assign graphics_read = 1'b0;
-	assign graphics_databus = 16'hz;
-	assign graphics_data_address = 4'd0;
+	assign LED_0 = ~ack;
 
-    Graphics_ASIC graphics(.clk(clk_100mhz_buf),
-					.rst(rst),
-					.read(graphics_read),
-					.chipselect(graphics_chipselect),
-					.databus(graphics_databus),
-					.data_address(graphics_data_address),
+	proc PROC(.clk(cpuclk), .rst(rst | ~cpu_locked_dcm), .WriteMem(Write), .ReadMem(Read), .ExternalAddr(Addr),
+			  .ExternalWriteData(WriteData), .ExternalReadData(DataToCPU), .Instruct(Instruct), .NextPC(NextPC));
+
+	External_Mem MEM(.Addr(Addr[15:12]), .WriteData(WriteData), .Read(Read), .Write(Write),
+					 .DataToCPU(DataToCPU), .DataBus(DataBus), .CS_RAM(CS_RAM), 
+					 .CS_Audio(CS_Audio), .CS_Graphics(CS_Graphics), .CS_Spart(CS_Spart),
+					 .CS_PS2(CS_PS2));
+
+
+    Graphics_ASIC graphics(.clk(cpuclk),
+					.rst(rst | ~cpu_locked_dcm),
+					.read(Read),
+					.chipselect(CS_Graphics),
+					.databus(DataBus),
+					.data_address(Addr[3:0]),
 					.VGA_ready(graphics_VGA_ready),
 					.color(graphics_color));
+					
+	ps2_mouse mouse(.r_ack(ack),
+						 .databus(DataBus), 
+						 .MOUSE_CLOCK(MOUSE_CLOCK), 
+						 .MOUSE_DATA(MOUSE_DATA), 
+						 .addr(Addr[1:0]), 
+						 .clk(cpuclk), 
+						 .rst(rst), 
+						 .io_cs(CS_PS2), 
+						 .read(Read));
 	
 	
-	vga_controller vga(.clk_100mhz_buf(clk_100mhz_buf),
+	vga_controller vga(.clk_100mhz_buf(cpuclk),
 							 .rst(rst),
 							 .Wdata(graphics_color),
 							 .vgaclk(vgaclk),
@@ -67,6 +87,7 @@ module top(input clk_100mhz,
 							 .pixel_g(pixel_g),
 							 .pixel_b(pixel_b));
 							 
-	vga_clk vga_clk_gen1(clk_100mhz, rst, vgaclk, clkin_ibufg_out, clk_100mhz_buf, locked_dcm);
+	vga_clk vga_clk_gen1(clk_100mhz, rst, vgaclk, clk_100mhz_buf, locked_dcm);
+	cpu_clk cpu_clk_gen1(clk_100mhz, rst, cpuclk, clk_100mhz_buf2, cpu_locked_dcm);
 endmodule
 

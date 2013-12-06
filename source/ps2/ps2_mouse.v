@@ -1,8 +1,9 @@
-module ps2_mouse(output [15:0] data, output done, TCP, t_clk, t_data, output r_ack_bit, r_ack, dav, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs);
+module ps2_mouse(output r_ack, inout [15:0] databus, inout MOUSE_CLOCK, MOUSE_DATA, input[1:0] addr, input clk, rst, io_cs, read);
   
   reg [16:0] next_pos_x, next_pos_y;
-  reg [15:0] status, pos_x, pos_y, next_status;
+  reg [15:0] status, pos_x, pos_y, next_status, r_databus;
   wire [23:0] data_in;
+  wire [15:0] data;
   wire [7:0] byte_rec;
   
   ps2_clock clock_edge(.clk_high(clk_high), .clk_low(clk_low), .MOUSE_CLOCK(MOUSE_CLOCK), .clk(clk), .rst(rst));
@@ -19,7 +20,19 @@ module ps2_mouse(output [15:0] data, output done, TCP, t_clk, t_data, output r_a
   
   assign data = (addr == 2'b00) ? status : 
                 (addr == 2'b01) ? pos_x :
-                (addr == 2'b10) ? pos_y : 16'd0;					 
+                (addr == 2'b10) ? pos_y : 16'd0;
+			
+  assign databus = r_databus;
+
+  always@(posedge clk, posedge rst) begin
+	if (rst)
+		r_databus <= 16'hzzzz;
+	else
+		if(io_cs && read)
+			r_databus <= data;
+		else
+			r_databus <= 16'hzzzz;
+  end  
   
   always@(posedge clk, posedge rst) begin
     if(rst) begin
