@@ -1,4 +1,4 @@
-module Ball(output[2:0] color, output [3:0] zone_copy, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel_y, input clk, rst);
+module Ball(output[23:0] color, output [3:0] zone_copy, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel_y, input clk, rst);
     
     reg [15:0] r_pixel_y;								//holds last pixel_y value to trigger on a line change
     reg [12:0] offset;									//increase offset for new line of ROM
@@ -7,36 +7,35 @@ module Ball(output[2:0] color, output [3:0] zone_copy, input [15:0] x_loc, y_loc
 	wire [12:0] next_offset;							//next offset value
 	wire[12:0] stage_add;								//amount added to offset for each ROM line (effectively ROM line size)
     wire [3:0] zone;									//current z depth zone displaying in
-    wire [2:0] rom_data;								//select proper ROM output
-	wire [2:0] data_0;									//data from each ROM
-	wire [2:0] data_1;
-	wire [2:0] data_2;
-	wire [2:0] data_3;
-	wire [2:0] data_4;
-	wire [2:0] data_5;
-	wire [2:0] data_6;
-	wire [2:0] data_7;
-	wire [2:0] data_8;
-	wire [2:0] data_9;
+    wire [23:0] rom_data;								//select proper ROM output
+	wire [23:0] data_0;									//data from each ROM
+	wire [23:0] data_1;
+	wire [23:0] data_2;
+	wire [23:0] data_3;
+	wire [23:0] data_4;
+	wire [23:0] data_5;
+	wire [23:0] data_6;
+	wire [23:0] data_7;
+	wire [23:0] data_8;
+	wire [23:0] data_9;
     wire active;										//pixel_x and pixel_y are in the bounds of the ball; output
     
 	//length of ROM lines; used to set boundaries and compute ROM address
     localparam STAGE_0 = 8'd69;							
-    localparam STAGE_1 = 7'd59;
-    localparam STAGE_2 = 7'd51;
-    localparam STAGE_3 = 7'd43;
-    localparam STAGE_4 = 7'd37;
-    localparam STAGE_5 = 6'd31;
-    localparam STAGE_6 = 6'd25;
-    localparam STAGE_7 = 6'd21;
-    localparam STAGE_8 = 6'd17;
-    localparam STAGE_9 = 5'd15;
+    localparam STAGE_1 = 7'd53;
+    localparam STAGE_2 = 7'd43;
+    localparam STAGE_3 = 7'd36;
+    localparam STAGE_4 = 7'd31;
+    localparam STAGE_5 = 6'd27;
+    localparam STAGE_6 = 6'd24;
+    localparam STAGE_7 = 6'd22;
+    localparam STAGE_8 = 6'd20;
+    localparam STAGE_9 = 5'd18;
     
 	//instantiate all ROMs
     Ball_ROM_0 rom_0(.clka(clk), .addra(addr), .douta(data_0));
     Ball_ROM_1 rom_1(.clka(clk), .addra(addr[11:0]), .douta(data_1));
-	//change to Ball_ROM_2
-    Ball_ROM_1 rom_2(.clka(clk), .addra(addr[11:0]), .douta(data_2));
+    Ball_ROM_2 rom_2(.clka(clk), .addra(addr[11:0]), .douta(data_2));
     Ball_ROM_3 rom_3(.clka(clk), .addra(addr[11:0]), .douta(data_3));
     Ball_ROM_4 rom_4(.clka(clk), .addra(addr[11:0]), .douta(data_4));
     Ball_ROM_5 rom_5(.clka(clk), .addra(addr[9:0]), .douta(data_5));
