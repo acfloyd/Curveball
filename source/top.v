@@ -38,7 +38,10 @@ module top(input clk_100mhz,
     wire clk_100mhz_buf;
 	wire[23:0] graphics_color;
 	
-	
+	assign graphics_chipselect = 1'b0;
+	assign graphics_read = 1'b0;
+	assign graphics_databus = 16'hz;
+	assign graphics_data_address = 4'd0;
 
     Graphics_ASIC graphics(.clk(clk_100mhz_buf),
 					.rst(rst),

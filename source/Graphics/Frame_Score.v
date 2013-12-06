@@ -41,7 +41,7 @@ module Frame_Score(
 	Diagonal_Draw_R #(576, 47, 384, 191) d4(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[3]));
 	
 	// Score
-	//Score_Draw score(.clk(clk), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .draw(score_draw)); 
+	Score_Draw score(.clk(clk), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .draw(score_draw)); 
 	
 	assign color = (frame_draw) ? GREEN : (diag_draw) ? GREEN : (score_draw) ? TEAL: BLACK;
 	
