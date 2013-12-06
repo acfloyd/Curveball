@@ -5,7 +5,7 @@ module Audio_Controller(
    input rst,
    input cs,
    input rw,
-   inout[15:0] data,
+   input[15:0] data,
    input BIT_CLK,
    output SDATA_OUT,
    output SYNC,
@@ -32,7 +32,7 @@ module Audio_Controller(
 	
 	wire[75:0] cntrl_data;
 	wire cntrl_load, cntrl_ready;
-	Audio_Cntrl acntrl(BIT_CLK, rst, setup_done, cmd_reg_sync[31:16], shft_ready, cntrl_data, cntrl_load, cntrl_ready);
+	Audio_Cntrl acntrl(BIT_CLK, rst | cs, setup_done, cmd_reg_sync[31:16], shft_ready, cntrl_data, cntrl_load, cntrl_ready);
 	
 	assign shft_load = (setup_done) ? cntrl_load : setup_load;
 	assign shft_data = (setup_done) ? cntrl_data : setup_data;
@@ -40,15 +40,13 @@ module Audio_Controller(
 	// audio io
 	always@(posedge clk) begin
 		if(rst) cmd_reg <= 16'd0;
-		else if(~cntrl_ready) cmd_reg <= 16'd0;
 		else if(cs && !rw) cmd_reg <= data;
+		else if(~cntrl_ready) cmd_reg <= 16'd0;
 	end
 	
 	always@(posedge BIT_CLK) begin
 		if(rst) cmd_reg_sync <= 32'd0;
 		else cmd_reg_sync <= {cmd_reg_sync[15:0], cmd_reg};
 	end
-	
-   assign data = (~cs || ~rw) ? 16'dz : {15'd0, setup_done & shft_ready & cntrl_ready & !cmd_reg & !cmd_reg_sync};
-	
+
 endmodule   
