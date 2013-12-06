@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "curveball.h"
 
-int grid[100][100];
+int grid[1000][1000];
 
 void main (int argc, char** argv)
 {
@@ -28,6 +28,7 @@ void main (int argc, char** argv)
     // for testing, the program ends after so many wall hits
     while (TRUE)
     {
+        /*
         if (ball->posX % 5 < 3)
         {
             if (ball->posZ % 10 < 5)
@@ -42,6 +43,8 @@ void main (int argc, char** argv)
             else
                 grid[ball->posX / 5 + 1][ball->posZ / 10 + 1] = ball->posY;
         }
+        */
+        grid[ball->posY][ball->posZ] = ball->posX;
 
         update_game();
     }
@@ -60,19 +63,24 @@ void setup ()
     ball->posZ = 0;
     ball->velX = 0;
     ball->velY = 0;
-    ball->dirX = 1;
-    ball->dirY = 1;
     ball->velZ = 1;
 
     opponent = (Pad_t*)malloc(sizeof(Pad_t));
     opponent->posX = WIDTH / 2;
     opponent->posY = HEIGHT / 2;
+
+    popponent = (Pad_t*)malloc(sizeof(Pad_t));
+    popponent->posX = WIDTH / 2;
+    popponent->posY = HEIGHT / 2;
+
     paddle = (Pad_t*)malloc(sizeof(Pad_t));
     paddle->posX = WIDTH / 2;
     paddle->posY = HEIGHT / 2;
+
     mouse = (Pad_t*)malloc(sizeof(Pad_t));
     mouse->posX = WIDTH / 2;
     mouse->posY = HEIGHT / 2;
+
     pmouse = (Pad_t*)malloc(sizeof(Pad_t));
     pmouse->posX = WIDTH / 2;
     pmouse->posY = HEIGHT / 2;
@@ -96,16 +104,16 @@ void restart ()
     int i,j;
     fp=fopen("test.txt", "w");
     fprintf(fp, "0\t");
-    for (i = 0; i < 100; i++)
+    for (i = 0; i < 1000; i++)
     {
-        fprintf(fp, "%d\t", i*10);
+        fprintf(fp, "%d\t", i);
     }
     fprintf(fp,"\n");
 
-    for (i = 0; i < 100; i++)
+    for (i = 0; i < 1000; i++)
     {
-        fprintf(fp, "%d\t", i*5);
-        for (j = 0; j < 100; j++)
+        fprintf(fp, "%d\t", i);
+        for (j = 0; j < 1000; j++)
         {
             fprintf(fp, "%d\t", grid[i][j]);
         }
