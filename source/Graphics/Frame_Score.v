@@ -3,8 +3,8 @@ module Frame_Score(
 	input clk,
 	input rst,
 	input VGA_Ready,
-	input[15:0] your_score,
-	input[15:0] their_score,
+	input[3:0] your_score,
+	input[3:0] their_score,
 	input[15:0] game_state,
 	input[15:0] pixel_x,
 	input[15:0] pixel_y,
@@ -25,15 +25,15 @@ module Frame_Score(
 	wire[3:0] diag_draw;
 	
 	// static square frames
-	Static_Frame_Draw #( 63,  47, 514, 386) frame0(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[0]));
-	Static_Frame_Draw #( 99,  74, 442, 332) frame1(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[1]));
-	Static_Frame_Draw #(133, 100, 374, 281) frame2(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[2]));
-	Static_Frame_Draw #(163, 122, 314, 236) frame3(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[3]));
-	Static_Frame_Draw #(189, 142, 263, 197) frame4(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[4]));
-	Static_Frame_Draw #(211, 158, 218, 164) frame5(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[5]));
-	Static_Frame_Draw #(229, 172, 182, 137) frame6(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[6]));
-	Static_Frame_Draw #(243, 182, 154, 116) frame7(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[7]));
-	Static_Frame_Draw #(255, 191, 130,  98) frame8(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[8]));
+	Static_Frame_Draw #( 63,  47, 514, 386) frame0(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[0]));
+	Static_Frame_Draw #(132,  99, 376, 283) frame1(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[1]));
+	Static_Frame_Draw #(171, 128, 297, 223) frame2(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[2]));
+	Static_Frame_Draw #(197, 148, 245, 185) frame3(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[3]));
+	Static_Frame_Draw #(215, 161, 209, 157) frame4(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[4]));
+	Static_Frame_Draw #(229, 171, 182, 137) frame5(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[5]));
+	Static_Frame_Draw #(239, 179, 162, 122) frame6(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[6]));
+	Static_Frame_Draw #(247, 185, 145, 109) frame7(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[7]));
+	Static_Frame_Draw #(255, 191, 130,  98) frame8(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[8]));
 
 	Diagonal_Draw #(63, 47, 255, 191) d1(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[0]));
 	Diagonal_Draw #(384, 288, 576, 432) d2(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[1]));
@@ -130,8 +130,6 @@ endmodule
 
 // module for drawing a static frame. Parameters specify upper left corner point and side lengths
 module Static_Frame_Draw(
-	input clk,
-	input rst,
 	input[15:0] pixel_x,
 	input[15:0] pixel_y,
 	output draw
@@ -160,8 +158,8 @@ module Score_Draw(
   input clk,
   input[15:0] pixel_x,
   input[15:0] pixel_y,
-  input[15:0] your_score,
-  input[15:0] their_score,
+  input[3:0] your_score,
+  input[3:0] their_score,
   output draw
     );
     
