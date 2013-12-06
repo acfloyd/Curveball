@@ -46,8 +46,8 @@ module Graphics_ASIC(
 	assign next_ball_z = (VGA_ready && pixel_address == 19'h4AFFF) ?
 								(ball_z_buffer < 16'd999) ? ball_z_buffer + 16'd10 : 16'd000 : ball_z_buffer;
 	
-	assign ball_x_buffer = 16'd200;
-	assign ball_y_buffer = 16'd100;
+	assign ball_x_buffer = 16'd320;
+	assign ball_y_buffer = 16'd240;
 	
 	always @(posedge clk) begin
 		if (rst) begin
@@ -55,7 +55,7 @@ module Graphics_ASIC(
 			ball_z_buffer <= 16'd000;
 		end
 		else begin
-			paddle_1_x_buffer <= next_paddle_1_x;
+			paddle_1_x_buffer <= paddle_1_x_buffer;
 			ball_z_buffer <= next_ball_z;
 		end
 	end

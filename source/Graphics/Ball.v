@@ -61,7 +61,7 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
     Ball_ROM_5 rom_5(.clka(clk), .addra(addr[10:0]), .douta(data_5));
     Ball_ROM_6 rom_6(.clka(clk), .addra(addr[10:0]), .douta(data_6));
     Ball_ROM_7 rom_7(.clka(clk), .addra(addr[10:0]), .douta(data_7));
-    Ball_ROM_8 rom_8(.clka(clk), .addra(addr[9:0]), .douta(data_8));
+    Ball_ROM_8 rom_8(.clka(clk), .addra(addr[10:0]), .douta(data_8));
     Ball_ROM_9 rom_9(.clka(clk), .addra(addr[9:0]), .douta(data_9));
     Ball_ROM_10 rom_10(.clka(clk), .addra(addr[9:0]), .douta(data_10));
     Ball_ROM_11 rom_11(.clka(clk), .addra(addr[9:0]), .douta(data_11));
@@ -158,8 +158,8 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
                        (zone == 5'd17) ? 13'd1 + STAGE_17 :	
                        (zone == 5'd18) ? 13'd1 + STAGE_18 : 13'd1 + STAGE_19; 
      
-    //output the address; address output one pixel early so accurate data is available at each pixel given ROM's one cycle delay
-    assign addr = offset + (pixel_x - (x_loc - 16'd1));
+    //output the address
+    assign addr = offset + (pixel_x - x_loc);
     
 	//signals that we have a pixel to output
     assign active = ((pixel_x >= x_loc) && (pixel_x <= x_bound)) && ((pixel_y >= y_loc) && (pixel_y <= y_bound)) ? 1'b1 : 1'b0;         
@@ -183,14 +183,14 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
                       (zone == 5'd15) ? data_15 :
                       (zone == 5'd16) ? data_16 :
                       (zone == 5'd17) ? data_17 :	
-                      (zone == 5'd18) ? data_18 : data_19; 
-     
+                      (zone == 5'd18) ? data_18 : data_19;
+
 	//if we should output a pixel, output
     assign color = (active) ? rom_data : 24'd0;
 	 
 	//next offset logic to calculate the next offset used for address in next ROM line
     assign next_offset = (pixel_y < y_loc) ? 13'd0 :
-						 ((pixel_y >= y_loc) && (pixel_y <= y_bound)) ? offset + stage_add : 13'd0;
+						 ((pixel_y > y_loc) && (pixel_y <= y_bound)) ? offset + stage_add : 13'd0;
 	 
 	//sequential logic
     always@(posedge clk, posedge rst) begin
