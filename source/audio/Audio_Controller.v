@@ -4,7 +4,6 @@ module Audio_Controller(
    input clk,
    input rst,
    input cs,
-   input rw,
    input[15:0] data,
    input BIT_CLK,
    output SDATA_OUT,
@@ -40,7 +39,7 @@ module Audio_Controller(
 	// audio io
 	always@(posedge clk) begin
 		if(rst) cmd_reg <= 16'd0;
-		else if(cs && !rw) cmd_reg <= data;
+		else if(cs) cmd_reg <= data;
 		else if(~cntrl_ready) cmd_reg <= 16'd0;
 	end
 	

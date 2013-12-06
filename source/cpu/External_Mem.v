@@ -12,7 +12,7 @@ module External_Mem(Addr, WriteData, Read, Write, DataToCPU, DataBus, CS_RAM,
 
 	assign CS_RAM = (Read | Write) & Addr == 4'b0000;
 	assign CS_Graphics = (Read | Write) & Addr == 4'b0001;
-	assign CS_Audio = (Read | Write) & Addr == 4'b0010;
+	assign CS_Audio = (Write) & Addr == 4'b0010;
 	assign CS_Spart = (Read | Write) & Addr == 4'b0011;
 	assign CS_PS2 = (Read) & Addr == 4'b0100;
 
