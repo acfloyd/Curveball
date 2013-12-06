@@ -19,6 +19,7 @@
 Ball_t* ball; 
 Ball_t* pball; // previous ball location to base the parabola curve off of 
 Pad_t* opponent; // opponent's paddle
+Pad_t* popponent; // prevoius opponent's paddle
 Pad_t* paddle; // player's paddle
 Pad_t* mouse; // current mouse location
 Pad_t* pmouse; // previous mouse location

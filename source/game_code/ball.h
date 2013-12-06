@@ -4,11 +4,22 @@
 
 #define BALL_RAD 35
 #define VELZ_INC 20
+
+#define UPDATE 64
+#define STATIC1 1
+#define STATIC2 2
+#define STATIC3 3
+#define STATIC4 4
+#define VEL1 2
+#define VEL2 4
+#define VEL3 8
+#define VEL4 16
+
+
+#define CURVE_REDUCE 1
+#define VEL_FACTOR 2000
 #define VELXY_FACTOR_FIRST 10
 #define VELXY_FACTOR_HIT 2
-
-#define VEL_FACTOR 2000
-#define CURVE_REDUCE 20
 
 #define T_2ND(Z) ((Z * 11) / 1200)
 #define T_3RD(Z) ((Z * 11) / 800)
@@ -30,8 +41,10 @@ typedef struct Ball
     int16_t velX;
     int16_t velY;
     int16_t velZ;
-    int16_t dirX;
-    int16_t dirY;
+    int16_t accX;
+    int16_t accY;
+    int16_t xStat;
+    int16_t yStat;
 } Ball_t;
 
 void save_ball();

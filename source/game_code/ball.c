@@ -25,109 +25,73 @@ void save_ball ()
 
 void ball_update ()
 {
-    int16_t sect, zdiff;
+    int16_t sect, zdiff, mouseDiff;
+    int32_t tmp;
+
+/*
+    printf("ball->velX: %d, velY: %d, velZ: %d, posX: %d, posY: %d, posZ: %d, accX: %d, accY: %d\n",
+        ball->velX, ball->velY, ball->velZ, ball->posX, ball->posY, ball->posZ, ball->accX, ball->accY);
+*/
 
     // update the ball pos
-    if (pball != NULL)
+    if (!first)
     {
-        ball->posZ += ball->velZ; 
-        zdiff = (ball->velZ >= 0) ? (ball->posZ - pball->posZ) :
-                    (pball->posZ - ball->posZ);
+        int16_t r0,r1,r2,r3,r4,r5,r6,r7;
+        r6 = zdiff;
 
-        if (ball->velX != 0)
+        ball->posZ += ball->velZ; 
+
+        if (ball->posZ % UPDATE == 0)
         {
-            if (ball->velX <= 30)
-                ball->posX = pball->posX + EQ_2ND(zdiff, ball->dirX);
-            else if (ball->velX <= 60)
-                ball->posX = pball->posX + EQ_3RD(zdiff, ball->dirX);
-            else if (ball->velX <= 90)
-                ball->posX = pball->posX + EQ_4TH(zdiff, ball->dirX);
-            else
-                ball->posX = pball->posX + EQ_5TH(zdiff, ball->dirX);
+            ball->velX = ball->velX + ball->accX;
+            ball->velY = ball->velY + ball->accY;
         }
 
-        if (ball->velY != 0)
+        r0 = UPDATE >> ball->xStat;
+        if (ball->posZ % r0 == 0)
         {
-            if (ball->velY <= 30)
-                ball->posY = pball->posY + EQ_2ND(zdiff, ball->dirY);
-            else if (ball->velY <= 60)
-                ball->posY = pball->posY + EQ_3RD(zdiff, ball->dirY);
-            else if (ball->velY <= 90)
-                ball->posY = pball->posY + EQ_4TH(zdiff, ball->dirY);
-            else
-                ball->posY = pball->posY + EQ_5TH(zdiff, ball->dirY);
+            ball->posX = ball->posX + (ball->velX >> ball->xStat);
+        }
+
+        r0 = UPDATE >> ball->yStat;
+        if (ball->posZ % r0 == 0)
+        {
+            ball->posY = ball->posY + (ball->velY >> ball->yStat);
         }
     }
 
     // ball and side wall collision
-    // right wall
-    if (ball->posX + BALL_RAD >= WIDTH)
+    // right wall or left wall
+    if ((ball->posX + BALL_RAD >= WIDTH) || (ball->posX - BALL_RAD <= 0))
     {
-        printf("right wall\n");
-        ball->posX = WIDTH - BALL_RAD - 1;
+        if (ball->posX + BALL_RAD >= WIDTH) {
+            printf("right wall\n");
+            ball->posX = WIDTH - BALL_RAD - 1;
+        }
+        else
+        {
+            printf("left wall\n");
+            ball->posX = BALL_RAD + 1;
+        }
 
-        if (ball->dirX == 1)
-            ball->dirX = -1;
-
-        if (ball->velX > CURVE_REDUCE)
-            ball->velX -= CURVE_REDUCE;
-
-        if (ball->velY > CURVE_REDUCE)
-            ball->velY -= CURVE_REDUCE;
-
-        save_ball();
-    }
-    // left wall
-    else if (ball->posX - BALL_RAD <= 0)
-    {
-        printf("left wall\n");
-        ball->posX = BALL_RAD + 1;
-
-        if (ball->dirX == -1)
-            ball->dirX = 1;
-
-        if (ball->velX > CURVE_REDUCE)
-            ball->velX -= CURVE_REDUCE;
-
-        if (ball->velY > CURVE_REDUCE)
-            ball->velY -= CURVE_REDUCE;
-
-        save_ball();
+        ball->velX *= -1;
     }
 
-    // top wall
-    if (ball->posY - BALL_RAD <= 0)
+    // top wall and bottom
+    if ((ball->posY - BALL_RAD <= 0) || (ball->posY + BALL_RAD >= HEIGHT))
     {
-        printf("top wall\n");
-        ball->posY = BALL_RAD + 1;
+        if (ball->posY - BALL_RAD <= 0)
+        {
+            printf("top wall\n");
+            ball->posY = BALL_RAD + 1;
+        }
+        else
+        {
+            printf("bottom wall\n");
+            ball->posY = HEIGHT - BALL_RAD - 1;
+        }
 
-        if (ball->dirY == -1)
-            ball->dirY = 1;
-
-        if (ball->velX > CURVE_REDUCE)
-            ball->velX -= CURVE_REDUCE;
-
-        if (ball->velY > CURVE_REDUCE)
-            ball->velY -= CURVE_REDUCE;
-
-        save_ball();
-    }
-    // bottom wall
-    else if (ball->posY + BALL_RAD >= HEIGHT)
-    {
-        printf("bottom wall\n");
-        ball->posY = HEIGHT - BALL_RAD - 1;
-
-        if (ball->dirY == 1)
-            ball->dirY = -1;
-
-        if (ball->velX > CURVE_REDUCE)
-            ball->velX -= CURVE_REDUCE;
-
-        if (ball->velY > CURVE_REDUCE)
-            ball->velY -= CURVE_REDUCE;
-
-        save_ball();
+        ball->velY *= -1;
     }
 
     // ball and player wall collision
@@ -143,40 +107,89 @@ void ball_update ()
         if (sect || first)
         {
             // add to the velocity so the ball goes faster and it becomes more difficult.
-            ball->posZ = BALL_RAD;
+            ball->posZ = BALL_RAD + 1;
 
             if (first) // if it's the first hit (the player is serving)
             {
-                ball->velX = mouse->posX - pmouse->posX;
-                ball->velY = mouse->posY - pmouse->posY;
+                if (mouse->posX > pmouse->posX)
+                    mouseDiff = mouse->posX - pmouse->posX;
+                else
+                    mouseDiff = pmouse->posX - mouse->posX;
+
+                if (mouseDiff != 0)
+                {
+                    if (mouseDiff <= 30)
+                    {
+                        ball->velX = VEL1;
+                        ball->accX = -1 * VEL1;
+                        ball->xStat = STATIC1;
+                    }
+                    else if (mouseDiff <= 60)
+                    {
+                        ball->velX = VEL2;
+                        ball->accX = -1 * VEL2;
+                        ball->xStat = STATIC2;
+                    }
+                    else if (mouseDiff <= 90)
+                    {
+                        ball->velX = VEL3;
+                        ball->accX = -1 * VEL3;
+                        ball->xStat = STATIC3;
+                    }
+                    else
+                    {
+                        ball->velX = VEL4;
+                        ball->accX = -1 * VEL4;
+                        ball->xStat = STATIC4;
+                    }
+                }
+
+                if (mouse->posY > pmouse->posY)
+                    mouseDiff = mouse->posY - pmouse->posY;
+                else
+                    mouseDiff = pmouse->posY - mouse->posY;
+
+                if (mouseDiff != 0)
+                {
+                    if (mouseDiff <= 30)
+                    {
+                        ball->velY = VEL1;
+                        ball->accY = -1 * VEL1;
+                        ball->yStat = STATIC1;
+                    }
+                    else if (mouseDiff <= 60)
+                    {
+                        ball->velY = VEL2;
+                        ball->accY = -1 * VEL2;
+                        ball->yStat = STATIC2;
+                    }
+                    else if (mouseDiff <= 90)
+                    {
+                        ball->velY = VEL3;
+                        ball->accY = -1 * VEL3;
+                        ball->yStat = STATIC3;
+                    }
+                    else
+                    {
+                        ball->velY = VEL4;
+                        ball->accY = -1 * VEL4;
+                        ball->yStat = STATIC4;
+                    }
+                }
+
                 first = FALSE;
             }
             else // if the player isn't serving
             {
+                // TODO: nothing really done here yet
                 ball->velZ *= -1;
                 ball->velZ += VELZ_INC;
                 ball->velX = (mouse->posX - pmouse->posX) - ball->velX;
                 ball->velY = (mouse->posY - pmouse->posY) - ball->velY;
+                ball->accX = (ball->velX / 4) * -1;
+                ball->accY = (ball->velY / 4) * -1;
+                restart(); 
             }
-
-            // convert the velocity to a magnitude and save the direction
-            if (ball->velX >=0)
-                ball->dirX = 1;
-            else
-            {
-                ball->velX *= -1;
-                ball->dirX = -1;
-            }
-
-            if (ball->velY >=0)
-                ball->dirY = 1;
-            else
-            {
-                ball->velY *= -1;
-                ball->dirY = -1;
-            }
-            
-            save_ball();
         }
         else
         {
@@ -193,17 +206,14 @@ void ball_update ()
         printf("opp wall\n");
         if (intersect(opponent))
         {
+            // TODO: nothing really done here yet
             // opp hits the ball
             ball->velZ += VELZ_INC;
             ball->velZ *= -1;
-            
-            // only flip the direction of the x and y velocities for testing
-            // this will show a continuation of the curve placed on the ball already
-            ball->dirX *= -1;
-            ball->dirY *= -1;
 
             // move ball back to their wall
             ball->posZ = DEPTH - BALL_RAD;
+            restart();
         }
         else // if opp miss
         {
@@ -211,6 +221,7 @@ void ball_update ()
             difficulty++;
             restart();
         }
+        restart();
     }
 }
 
