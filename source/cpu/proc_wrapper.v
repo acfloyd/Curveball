@@ -1,11 +1,18 @@
-`timescale 1ns / 1ps
+
 module proc_wrapper(clk, rst);
 	
 	input clk, rst; 
-	wire CLKIN_IBUFG_OUT, CLK0_OUT, LOCKED_OUT;
+	wire Read, Write, CS_RAM, CS_Audio, CS_Graphics, CS_Spart, CS_PS2;
+	wire [15:0] Addr, WriteData, DataToCPU, DataBus, Instruct, NextPC;
+	
 
-	clk CLK(clk, rst, CLKIN_IBUFG_OUT, CLK0_OUT, LOCKED_OUT);
-	proc PROC(.clk(CLKIN_IBUFG_OUT), .rst(rst));
+	proc PROC(.clk(clk), .rst(rst), .WriteMem(Write), .ReadMem(Read), .ExternalAddr(Addr),
+			  .ExternalWriteData(WriteData), .ExternalReadData(DataToCPU), .Instruct(Instruct), .NextPC(NextPC));
+
+	External_Mem MEM(.Addr(Addr[15:12]), .WriteData(WriteData), .Read(Read), .Write(Write),
+					 .DataToCPU(DataToCPU), .DataBus(DataBus), .CS_RAM(CS_RAM), 
+					 .CS_Audio(CS_Audio), .CS_Graphics(CS_Graphics), .CS_Spart(CS_Spart),
+					 .CS_PS2(CS_PS2));
 
 
   
