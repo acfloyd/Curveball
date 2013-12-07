@@ -30,7 +30,7 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
 	wire [23:0] data_19;
     wire active;										//pixel_x and pixel_y are in the bounds of the ball; output
     
-	//length of ROM lines; used to set boundaries and compute ROM address
+	 //length of ROM lines; used to set boundaries and compute ROM address
     localparam STAGE_0 = 8'd69;							
     localparam STAGE_1 = 7'd60;
     localparam STAGE_2 = 7'd53;
@@ -41,16 +41,16 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
     localparam STAGE_7 = 7'd33;
     localparam STAGE_8 = 5'd31;
     localparam STAGE_9 = 5'd29;
-	 localparam STAGE_10 = 5'd27;
-	 localparam STAGE_11 = 5'd26;
-	 localparam STAGE_12 = 5'd24;
-	 localparam STAGE_13 = 5'd23;
-	 localparam STAGE_14 = 5'd22;
-	 localparam STAGE_15 = 5'd21;
-	 localparam STAGE_16 = 5'd20;
-	 localparam STAGE_17 = 5'd19;
-	 localparam STAGE_18 = 5'd18;
-	 localparam STAGE_19 = 5'd17;
+	localparam STAGE_10 = 5'd27;
+	localparam STAGE_11 = 5'd26;
+	localparam STAGE_12 = 5'd24;
+	localparam STAGE_13 = 5'd23;
+	localparam STAGE_14 = 5'd22;
+	localparam STAGE_15 = 5'd21;
+	localparam STAGE_16 = 5'd20;
+	localparam STAGE_17 = 5'd19;
+	localparam STAGE_18 = 5'd18;
+	localparam STAGE_19 = 5'd17;
     
 	//instantiate all ROMs
     Ball_ROM_0 rom_0(.clka(clk), .addra(addr), .douta(data_0));
@@ -61,7 +61,7 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
     Ball_ROM_5 rom_5(.clka(clk), .addra(addr[10:0]), .douta(data_5));
     Ball_ROM_6 rom_6(.clka(clk), .addra(addr[10:0]), .douta(data_6));
     Ball_ROM_7 rom_7(.clka(clk), .addra(addr[10:0]), .douta(data_7));
-    Ball_ROM_8 rom_8(.clka(clk), .addra(addr[10:0]), .douta(data_8));
+    Ball_ROM_8 rom_8(.clka(clk), .addra(addr[9:0]), .douta(data_8));
     Ball_ROM_9 rom_9(.clka(clk), .addra(addr[9:0]), .douta(data_9));
     Ball_ROM_10 rom_10(.clka(clk), .addra(addr[9:0]), .douta(data_10));
     Ball_ROM_11 rom_11(.clka(clk), .addra(addr[9:0]), .douta(data_11));
@@ -183,8 +183,8 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
                       (zone == 5'd15) ? data_15 :
                       (zone == 5'd16) ? data_16 :
                       (zone == 5'd17) ? data_17 :	
-                      (zone == 5'd18) ? data_18 : data_19;
-
+                      (zone == 5'd18) ? data_18 : data_19; 
+     
 	//if we should output a pixel, output
     assign color = (active) ? rom_data : 24'd0;
 	 
