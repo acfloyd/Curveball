@@ -7,8 +7,7 @@ module Graphics_ASIC(
 	input[3:0] data_address,
    input read,
 	input VGA_ready,
-   output[23:0] color
-   );
+   output[23:0] color);
 
 	parameter paddle_1_x_pos = 0;
 	parameter paddle_1_y_pos = 1;

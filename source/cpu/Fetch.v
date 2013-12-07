@@ -9,7 +9,7 @@ module Fetch(clk, rst, Stall, FetchStall, TruePC, NotBranchOrJump, NextPC,
     
     //TEMP INSTRUCT MEM
 
-    simple_rom #(13,"instructions.txt") mem(MuxOut, InstructRegIn);
+    simple_rom #(39,"instructions.txt") mem(MuxOut, InstructRegIn);
 
     /*reg [15:0] mem [0:19];
     initial begin
