@@ -11,12 +11,12 @@ module ps2_mouse(output r_ack, inout [15:0] databus, inout MOUSE_CLOCK, MOUSE_DA
   ps2_rx rx(.byte_rec(byte_rec), .received(received), .MOUSE_CLOCK(MOUSE_CLOCK), .MOUSE_DATA(MOUSE_DATA), .clk(clk), .rst(rst), .TCP(TCP), .clk_low(clk_low));
   ps2_packets packets(.data_out(data_in), .r_dav(dav), .r_ack(r_ack), .data_in(byte_rec), .clk(clk), .rst(rst), .received(received));
   
-  localparam top = 16'd48;
-  localparam bottom = 16'd356;
-  localparam right = 16'd474;
-  localparam left = 16'd64;
-  localparam middle_x = 16'd268;
-  localparam middle_y = 16'd201;
+  localparam top = 16'd0;
+  localparam bottom = 16'd308;
+  localparam right = 16'd410;
+  localparam left = 16'd0;
+  localparam middle_x = 16'd204;
+  localparam middle_y = 16'd153;
   
   assign data = (addr == 2'b00) ? status : 
                 (addr == 2'b01) ? pos_x :
@@ -55,11 +55,11 @@ module ps2_mouse(output r_ack, inout [15:0] databus, inout MOUSE_CLOCK, MOUSE_DA
       next_status = {1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, data_in[23:16]};
       next_pos_x = {1'b0, pos_x} + {data_in[20], data_in[20], data_in[20], data_in[20], data_in[20], data_in[20], data_in[20], data_in[20], data_in[20], data_in[15:8]};
       next_pos_y = {1'b0, pos_y} - {data_in[21], data_in[21], data_in[21], data_in[21], data_in[21], data_in[21], data_in[21], data_in[21], data_in[21], data_in[7:0]};
-      if(next_pos_x[15:0] <= left)
+      if(data_in[20] && next_pos_x[16])
         next_pos_x = {1'b0, left};
       else if(next_pos_x[15:0] >= right)
         next_pos_x = {1'b0, right};
-      if(next_pos_y[15:0] <= top)
+      if(!data_in[21] && next_pos_y[16])
         next_pos_y = {1'b0, top};
       else if(next_pos_y[15:0] >= bottom)
         next_pos_y = {1'b0, bottom};
