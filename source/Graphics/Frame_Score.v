@@ -6,6 +6,7 @@ module Frame_Score(
 	input[3:0] your_score,
 	input[3:0] their_score,
 	input[15:0] game_state,
+	input[15:0] ball_z,
 	input[15:0] pixel_x,
 	input[15:0] pixel_y,
 	output[23:0] color
@@ -22,6 +23,7 @@ module Frame_Score(
 	
 	wire[8:0] frame_draw;
 	wire score_draw;
+	wire highlight_draw;
 	wire[3:0] diag_draw;
 	
 	// static square frames
@@ -43,7 +45,21 @@ module Frame_Score(
 	// Score
 	Score_Draw score(.clk(clk), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .draw(score_draw)); 
 	
-	assign color = (frame_draw) ? GREEN : (diag_draw) ? GREEN : (score_draw) ? TEAL: BLACK;
+	assign highlight_draw = (frame_draw[0] && ball_z >=   0 && ball_z <=  62) ||
+									(frame_draw[1] && ball_z >=  63 && ball_z <= 187) ||
+									(frame_draw[2] && ball_z >= 188 && ball_z <= 312) ||
+									(frame_draw[3] && ball_z >= 313 && ball_z <= 437) ||
+									(frame_draw[4] && ball_z >= 438 && ball_z <= 562) ||
+									(frame_draw[5] && ball_z >= 563 && ball_z <= 687) ||
+									(frame_draw[6] && ball_z >= 688 && ball_z <= 812) ||
+									(frame_draw[7] && ball_z >= 813 && ball_z <= 937) ||
+									(frame_draw[8] && ball_z >= 938);
+	
+	assign color = (highlight_draw) ?	TEAL :
+						(frame_draw) ? 		GREEN : 
+						(diag_draw) ? 			GREEN : 
+						(score_draw) ? 		TEAL : 
+													BLACK;
 	
 endmodule
 
