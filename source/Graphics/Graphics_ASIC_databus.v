@@ -131,6 +131,7 @@ module Graphics_ASIC(
 							.VGA_Ready(VGA_ready),
 							.your_score(p1_score[3:0]),
 							.their_score(p2_score[3:0]),
+							.ball_z(ball_z),
 							.pixel_x(pixel_x),
 							.pixel_y(pixel_y),
 							.color(frame_score_color));
