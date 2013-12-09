@@ -20,6 +20,9 @@ module Graphics_ASIC(
 	parameter p2_score_pos = 8;
 	parameter game_state_pos = 9;
 
+	wire[18:0] pixel_address;
+	wire[15:0] next_ball_z;
+
    reg[15:0] databus_reg;
 	reg[15:0] paddle_1_x, paddle_1_y, paddle_2_x, paddle_2_y, ball_x, ball_y, ball_z,
 				 p1_score, p2_score, game_state;
@@ -71,7 +74,15 @@ module Graphics_ASIC(
 		end else if(chipselect & ~read) begin
 			buffer_regs[data_address] <= databus;
 		end
+		else begin
+			buffer_regs[ball_z_pos] <= next_ball_z;
+		end
 	end
+
+	assign next_ball_z = (VGA_ready && pixel_address == 19'h4AFFF) ?
+								(buffer_regs[ball_z_pos] < 16'd999) ? 
+								buffer_regs[ball_z_pos] + 16'd10 : 16'd000 : buffer_regs[ball_z_pos];
+	
 	
 	// register assignment
 	always@(posedge clk) begin
@@ -124,13 +135,24 @@ module Graphics_ASIC(
 				.pixel_y(pixel_y),
 				.color(ball_color));
 	*/
-	assign ball_color = 0;
+
+	Ball ball(.clk(clk),
+				.rst(rst),
+				.x_loc(ball_x),
+				.y_loc(ball_y),
+				.z_loc(ball_z),
+				.pixel_x(pixel_x),
+				.pixel_y(pixel_y),
+				.color(ball_color));
+
+	//assign ball_color = 0;
 
 	Frame_Score frame_score(.clk(clk),
 							.rst(rst),
 							.VGA_Ready(VGA_ready),
 							.your_score(p1_score[3:0]),
 							.their_score(p2_score[3:0]),
+							.ball_z(ball_z),
 							.pixel_x(pixel_x),
 							.pixel_y(pixel_y),
 							.color(frame_score_color));
