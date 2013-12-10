@@ -25,6 +25,7 @@ module Frame_Score(
 	wire score_draw;
 	wire highlight_draw;
 	wire[3:0] diag_draw;
+	wire[23:0] win_color;
 	
 	// static square frames
 	Static_Frame_Draw #( 63,  47, 514, 386) frame0(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[0]));
@@ -44,6 +45,7 @@ module Frame_Score(
 	
 	// Score
 	Score_Draw score(.clk(clk), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .draw(score_draw)); 
+	Win_Draw wd(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .game_state(game_state[1:0]), .ready(VGA_Ready), .color(win_color));
 	
 	assign highlight_draw = (frame_draw[0] && ball_z >=   0 && ball_z <=  62) ||
 									(frame_draw[1] && ball_z >=  63 && ball_z <= 187) ||
@@ -55,7 +57,8 @@ module Frame_Score(
 									(frame_draw[7] && ball_z >= 813 && ball_z <= 937) ||
 									(frame_draw[8] && ball_z >= 938);
 	
-	assign color = (highlight_draw) ?	TEAL :
+	assign color = (win_color) ? 			win_color :
+						(highlight_draw) ?	TEAL :
 						(frame_draw) ? 		GREEN : 
 						(diag_draw) ? 			GREEN : 
 						(score_draw) ? 		TEAL : 
@@ -218,4 +221,70 @@ module Score_Draw(
     end 
   endfunction
 endmodule
-  
+
+module Win_Draw(
+	input clk,
+	input rst,
+	input[15:0] pixel_x,
+	input[15:0] pixel_y,
+	input[1:0] game_state,
+	input ready,
+	output[23:0] color
+   );
+	 
+	parameter CHAR_WIDTH = 32;
+	parameter CHAR_HEIGHT = 32;
+	parameter addr_width = clog2(CHAR_WIDTH * CHAR_HEIGHT * 8);
+
+	parameter x = 192;
+	parameter y = 10;
+
+	// ROMS
+	wire[addr_width - 1:0] addr;
+	wire P1_data, P2_data;
+	P1_ROM p1rom(.clka(clk), .addra(addr), .douta(P1_data));
+	P2_ROM p2rom(.clka(clk), .addra(addr), .douta(P2_data));
+	
+	// address logic
+	wire[2:0] digit;
+	wire[4:0] addr_x, addr_y;
+	assign addr_x = (pixel_x < 639) ? pixel_x + 1 : 16'd0;
+	assign addr_y = pixel_y - y;
+	assign digit = (pixel_x - x) >> 5;
+	assign addr = {addr_y, digit, addr_x};
+	
+	// rainbow colors
+	reg[23:0] colors[7:0];
+	initial begin
+		colors[0] = 24'hFF0000;
+		colors[1] = 24'hFF4500;
+		colors[2] = 24'hFFFF00;
+		colors[3] = 24'h00FF00;
+		colors[4] = 24'h00FFFF;
+		colors[5] = 24'h0000FF;
+		colors[6] = 24'h4B0082;
+		colors[7] = 24'hFF00FF;
+	end
+	
+	// output logic
+	reg[21:0] offset;
+	always@(posedge clk) begin
+		if(rst) offset <= 0;
+		else if(ready) offset <= offset + 1;
+	end
+	
+	assign color = ~(pixel_x >= x && pixel_x <= x + CHAR_WIDTH * 8 && 
+						  pixel_y >= y && pixel_y <= y + CHAR_HEIGHT) ? 24'h000000 :
+						 (game_state == 2'b01 && P1_data) ? colors[(addr_y >> 1) + offset[21:19]] :
+						 (game_state == 2'b10 && P2_data) ? colors[(addr_y >> 1) + offset[21:19]]  :
+						  24'd0;
+		
+	function integer clog2;
+    input integer value;
+    begin 
+      value = value-1;
+      for (clog2=0; value>0; clog2=clog2+1)
+        value = value>>1;
+    end 
+  endfunction
+endmodule
