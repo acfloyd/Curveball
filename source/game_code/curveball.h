@@ -35,4 +35,5 @@ uint16_t difficulty;
 void setup();
 void update_game();
 void restart();
+void writeExit();
 void mousePressed();

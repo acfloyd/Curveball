@@ -3,7 +3,7 @@
 #define B_DEFINES
 
 #define BALL_RAD 35
-#define VELZ_INC 20
+#define VELZ_START 1
 
 #define UPDATE 64
 #define STATIC1 1
@@ -15,7 +15,7 @@
 #define VEL3 8
 #define VEL4 16
 
-
+/*
 #define CURVE_REDUCE 1
 #define VEL_FACTOR 2000
 #define VELXY_FACTOR_FIRST 10
@@ -30,6 +30,7 @@
 #define EQ_3RD(Z, D) (D *((54 * T_3RD(Z)) - (5 * T_3RD(Z) * T_3RD(Z))))
 #define EQ_4TH(Z, D) (D *((63 * T_4TH(Z)) - (5 * T_4TH(Z) * T_4TH(Z))))
 #define EQ_5TH(Z, D) (D * ((77 * T_5TH(Z)) - (5 * T_5TH(Z) * T_5TH(Z))))
+*/
 
 #endif
 
@@ -47,7 +48,6 @@ typedef struct Ball
     int16_t yStat;
 } Ball_t;
 
-void save_ball();
 void ball_update();
 uint16_t intersect();
 

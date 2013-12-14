@@ -4,7 +4,6 @@
 void paddle_update ()
 {
     // TODO: uncomment code when implementing, 
-    // staticly defining paddle movement for testing
     /*
     pmouse->posX = paddle->posX;
     pmouse->posY = paddle->posY;

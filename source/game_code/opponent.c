@@ -3,6 +3,10 @@
 
 void opp_update ()
 {
-    opponent->posX = 200;
-    opponent->posY = 150;
+    opponent->posX = ball->posX;
+    opponent->posY = ball->posY;
+    popponent->posX = opponent->posX;
+    popponent->posY = opponent->posY;
+
+    // TODO: read in new opponent values from the spart
 }

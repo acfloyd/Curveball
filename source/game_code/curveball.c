@@ -18,12 +18,24 @@ void main (int argc, char** argv)
         exit(0);
     }
 
-    setup();
+    oppScore = 0;
+    playerScore = 0;
 
+    ball = (Ball_t*)malloc(sizeof(Ball_t));
+    ball->posZ = 0;
+    ball->velZ = VELZ_START;
+
+    // TODO: this is only for testing, pmouse should be checked in the setup function
+    pmouse = (Pad_t*)malloc(sizeof(Pad_t));
+    pmouse->posX = WIDTH / 2;
+    pmouse->posY = HEIGHT / 2;
     pmouse->posX += atoi(argv[1]);
     pmouse->posY += atoi(argv[2]);
 
+    setup();
+
     printf("curve X = %d, Y = %d\n", atoi(argv[1]), atoi(argv[2]));
+    printf("pmouse posX: %d, posY: %d\n", pmouse->posX, pmouse->posY);
 
     // for testing, the program ends after so many wall hits
     while (TRUE)
@@ -44,7 +56,7 @@ void main (int argc, char** argv)
                 grid[ball->posX / 5 + 1][ball->posZ / 10 + 1] = ball->posY;
         }
         */
-        grid[ball->posY][ball->posZ] = ball->posX;
+        grid[ball->posX][ball->posZ] = ball->posY;
 
         update_game();
     }
@@ -56,15 +68,15 @@ void setup ()
     first = TRUE;
 
     // init the ball and the opponent
-    pball = NULL;
-    ball = (Ball_t*)malloc(sizeof(Ball_t));
     ball->posX = WIDTH / 2;
     ball->posY = HEIGHT / 2;
-    ball->posZ = 0;
     ball->velX = 0;
     ball->velY = 0;
-    ball->velZ = 1;
+    ball->accX = 0;
+    ball->accY = 0;
 
+    // TODO: these do not need initial locations for the actual game code
+    // the locations should be read from the updated registers
     opponent = (Pad_t*)malloc(sizeof(Pad_t));
     opponent->posX = WIDTH / 2;
     opponent->posY = HEIGHT / 2;
@@ -81,25 +93,22 @@ void setup ()
     mouse->posX = WIDTH / 2;
     mouse->posY = HEIGHT / 2;
 
-    pmouse = (Pad_t*)malloc(sizeof(Pad_t));
-    pmouse->posX = WIDTH / 2;
-    pmouse->posY = HEIGHT / 2;
-    
-    oppScore = 0;
-    playerScore = 0;
+    pmouse->posX += 30;
+
     difficulty = 1;
+
+    // TODO: wait for a mouse click here
 }
 
 void update_game ()
 {
     opp_update();
-    ball_update();
     paddle_update();
+    ball_update();
 }
 
-void restart ()
+void writeExit ()
 {
-    // TODO: temp stop for simulation, remove when implementing
     FILE *fp;
     int i,j;
     fp=fopen("test.txt", "w");
@@ -121,21 +130,12 @@ void restart ()
     }
     fclose(fp);
     exit(0);
-
-
-    fprintf(fp, "%d\t%d\t%d\n", ball->posX, ball->posY, ball->posZ);
-
-    stopped = TRUE;
-    first = TRUE;
-    free((void*)ball);
-    ball = malloc(sizeof(Ball_t));
-    oppScore = 0;
-    playerScore = 0;
 }
 
 void mousePressed ()
 {
     // make sure game hasn't started yet
+    // TODO: not used
     if (stopped)
         stopped = FALSE;
 }
