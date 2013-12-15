@@ -210,6 +210,15 @@ CONTINUE:
         JAL P2UPDATE
         JAL P1UPDATE                ; update paddles
 WAITCLICK:
+
+        ;/* NAA NAA */
+        LBI R0, #1
+        SLBI R0, #0
+        LBI R4, scoreAddr_high
+        SLBI R4, scoreAddr_low
+        ST R0, R4, p2Score
+        ;/* NAA NAA END */
+
         SUBI R4, R6, #0
         BNEZ R4, #3                 ; skip paddle update for 20 mouse click checks
         JAL P2UPDATE
@@ -352,6 +361,14 @@ P1UPDATE:
 
 ; update the ball location and calc the curve for the ball
 BUPDATE:    
+
+        ;/* NAA NAA */
+        LBI R0, #2
+        SLBI R0, #0
+        LBI R1, scoreAddr_high
+        SLBI R1, scoreAddr_low
+        ST R0, R1, p2Score
+        ;/* NAA NAA END */
 
         ; translate the paddle2 pos to perspective
         LBI R5, ballAddr
