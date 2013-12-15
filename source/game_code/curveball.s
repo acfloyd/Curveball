@@ -143,7 +143,6 @@ OPPWINCHK: ; end if (playerScore == endScore)
         LD R3, R0, p2Score
         SUBI R3, R3, endScore
         BNEZ R3, CONTINUE           ; if (oppScore == endScore)
-        ; TODO: add some code here to output that palyer 2 wins
         LBI R0, #2
         LBI R3, gameStateAddr_high
         SLBI R3, gameStateAddr_low
@@ -154,7 +153,7 @@ OPPWINCHK: ; end if (playerScore == endScore)
         J CONTINUE
 CONTINUE:
 
-        LBI R0, #1
+        LBI R0, #0
         LBI R3, gameStateAddr_high
         SLBI R3, gameStateAddr_low
         ST R0, R3, #0               ; set gamestate reg to game playing
