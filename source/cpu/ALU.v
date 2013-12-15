@@ -16,7 +16,7 @@ module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk,
     
     Adder_16 adder (.A(Aout), .B(Bout), .AddMode(AddMode), .Out(AdderOut), .Z(AdderZero), .Overflow(AdderOverflow));
     
-    mult_16 multiplier (.A(Aout), .B(Bout), .Out(MultiplierOut), .overflow());
+    mult_16 multiplier (.A(Aout), .B(Bout), .Out(MultiplierOut));
     
     div_16 divider (.A(Aout), .B(Bout), .enable(divEnable), .ready(ready), .Out(DividerOut), .RemOut(Remainder), .clk(clk), .divByZero(divByZero));
 

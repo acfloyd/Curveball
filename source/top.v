@@ -19,22 +19,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module top(input clk_100mhz,
-                          input rst,
-                          output blank,
-                          output comp_sync,
-                          output hsync,
-                          output vsync,
-                          output[7:0] pixel_r,
-                          output[7:0] pixel_g,
-                          output[7:0] pixel_b,
-                          output vgaclk,
-                          inout MOUSE_CLOCK,
-                          inout MOUSE_DATA,
-                          input BIT_CLK, 
-                          output SDATA_OUT, 
-                          output SYNC, 
-                          output AUDIO_RESET_Z
 			  input rst,
+			  input sw1,
 			  output blank,
 			  output comp_sync,
 			  output hsync,
@@ -48,7 +34,13 @@ module top(input clk_100mhz,
 			  input BIT_CLK, 
 			  output SDATA_OUT, 
 			  output SYNC, 
-			  output AUDIO_RESET_Z
+			  output AUDIO_RESET_Z,
+			  output LED_0, 
+			  output LED_1, 
+			  output LED_2, 
+			  output LED_3,
+			  output txd,
+			  input rxd
     );
         
         wire graphics_VGA_ready;
@@ -59,7 +51,12 @@ module top(input clk_100mhz,
 	wire ack;
 	wire Read, Write, CS_RAM, CS_Audio, CS_Graphics, CS_Spart, CS_PS2;
 	wire [15:0] Addr, WriteData, DataToCPU, DataBus, Instruct, NextPC;
-
+	wire [15:0] ps2_mouse_data, spart_data, x_loc, y_loc, x_loc2, x_loc3;
+	wire [1:0] ps2_mouse_addr, spart_addr;
+	wire TCP, t_clk, t_data, r_ack, r_ack_bit, dav, r_dav, spart_dav, rda;
+	wire [1:0] status_bits, status;
+	wire [7:0] data_out, data_in;
+	
 	proc PROC(.clk(cpuclk), 
 			  .rst(rst | ~cpu_locked_dcm), 
 			  .WriteMem(Write), 
@@ -70,7 +67,9 @@ module top(input clk_100mhz,
 			  .Instruct(Instruct), 
 			  .NextPC(NextPC));
 
-	External_Mem MEM(.Addr(Addr[15:12]), 
+	External_Mem MEM(.clk(cpuclk),
+					 .rst(rst | ~cpu_locked_dcm),
+					 .Addr(Addr[15:12]), 
 					 .WriteData(WriteData), 
 					 .Read(Read), 
 					 .Write(Write),
@@ -80,8 +79,15 @@ module top(input clk_100mhz,
 					 .CS_Audio(CS_Audio), 
 					 .CS_Graphics(CS_Graphics), 
 					 .CS_Spart(CS_Spart),
-					 .CS_PS2(CS_PS2));
+					 .CS_PS2(CS_PS2),
+					 .switch(sw1));
 
+	proc_ram PROCRAM(.clk(cpuclk),
+					 .rst(rst | ~cpu_locked_dcm),
+					 .DataBus(DataBus),
+					 .Addr(Addr[7:0]),
+					 .CS_RAM(CS_RAM),
+					 .Read(Read));
 
     Graphics_ASIC graphics(.clk(cpuclk),
 					.rst(rst | ~cpu_locked_dcm),
@@ -90,17 +96,26 @@ module top(input clk_100mhz,
 					.databus(DataBus),
 					.data_address(Addr[3:0]),
 					.VGA_ready(graphics_VGA_ready),
-					.color(graphics_color));
-					
-	ps2_mouse mouse(.r_ack(ack),
-						 .databus(DataBus), 
-						 .MOUSE_CLOCK(MOUSE_CLOCK), 
-						 .MOUSE_DATA(MOUSE_DATA), 
-						 .addr(Addr[1:0]), 
-						 .clk(cpuclk), 
-						 .rst(rst), 
-						 .io_cs(CS_PS2), 
-						 .read(Read));
+					.color(graphics_color),
+					.x_loc(x_loc),
+					.y_loc(y_loc));
+	
+	
+	ps2_external p_ex(.clk(cpuclk),
+							.rst(rst | ~cpu_locked_dcm), 
+							.cs(CS_Spart), 
+							.addr_in(Addr[1:0]), 
+							.DataBus(DataBus), 
+							.rxd(rxd));	
+
+	ps2_internal p_in(.clk(cpuclk), 
+							.rst(rst | ~cpu_locked_dcm), 
+							.cs(CS_PS2), 
+							.addr(Addr[1:0]), 
+							.DataBus(Databus), 
+							.txd(txd), 
+							.MOUSE_CLOCK(MOUSE_CLOCK), 
+							.MOUSE_DATA(MOUSE_DATA));
 
 	Audio_Controller ac(.clk(cpuclk),
 						.rst(rst | ~cpu_locked_dcm), 
@@ -116,15 +131,15 @@ module top(input clk_100mhz,
 							 .rst(rst),
 							 .Wdata(graphics_color),
 							 .vgaclk(vgaclk),
-                             .locked_dcm(locked_dcm),
-                                                         .state(graphics_VGA_ready),
-                                                         .blank(blank),
-                                                         .comp_sync(comp_sync),
-                                                         .hsync(hsync),
-                                                         .vsync(vsync),
-                                                         .pixel_r(pixel_r),
-                                                         .pixel_g(pixel_g),
-                                                         .pixel_b(pixel_b));
+							  .locked_dcm(locked_dcm),
+							  .state(graphics_VGA_ready),
+							  .blank(blank),
+							  .comp_sync(comp_sync),
+							  .hsync(hsync),
+							  .vsync(vsync),
+							  .pixel_r(pixel_r),
+							  .pixel_g(pixel_g),
+							  .pixel_b(pixel_b));
                                                          
         vga_clk vga_clk_gen1(clk_100mhz, rst, vgaclk, clk_100mhz_buf, locked_dcm);
         cpu_clk cpu_clk_gen1(clk_100mhz, rst, cpuclk, clk_100mhz_buf2, cpu_locked_dcm);

@@ -1,0 +1,149 @@
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 	UW-Madison ECE 554
+// Engineer: 	John Cabaj, Nate Williams, Paul McBride
+// 
+// Create Date:    September 15, 2013
+// Design Name: 	 SPART
+// Module Name:    driver 
+// Project Name: 		Mini-Project 1 - SPART
+// Target Devices: 	Xilinx Vertex II FPGA
+// Tool versions: 
+// Description: 		Implements a driver to control SPART operation
+//
+// Dependencies: 
+//
+// Revision: 		1.0
+// Revision 0.01 - File Created
+// Additional Comments: 
+//
+//////////////////////////////////////////////////////////////////////////////////
+module write_driver(
+    input clk,						// 100 MHz clock
+    input rst,						// Asynchronous reset, tied to dip switch 0
+	 input dav,
+	 input [15:0] data_in,
+	 output reg [1:0] addr,
+	 output reg iocs,
+	 input tbr,
+	 output reg [7:0] data_out,
+	 output reg write
+    );
+	 
+	 reg [3:0] state, next_state;
+	 reg [1:0] status, next_status;
+    
+	 localparam WAIT = 4'h0;
+	 localparam WRITE_STATUS_1 = 4'h1;
+	 localparam WRITE_STATUS_2 = 4'h2;
+	 localparam WRITE_X_1 = 4'h3;
+	 localparam WRITE_X_2 = 4'h4;
+	 localparam WRITE_Y_1 = 4'h5;
+	 localparam WRITE_Y_2 = 4'h6;
+	 localparam WAIT_START_1 = 4'h7;
+	 localparam WAIT_START_2 = 4'h8;
+	 localparam START_BYTE_1 = 4'h9;
+	 localparam START_BYTE_2 = 4'ha;
+	 
+    always@(posedge clk, posedge rst) begin
+		if(rst) begin
+		    state <= WAIT;
+			 status <= 2'd0;
+		end
+		else begin
+		    state <= next_state;
+			 status <= next_status;
+		end
+    end
+    
+    always@(*) begin
+       iocs = 1'b1;
+       next_state = state;
+       addr = 2'd0;
+       next_status = status;
+		 data_out = 15'd0;
+		 write = 1'b0;
+	    case(state)
+	        WAIT: begin
+			  iocs = 1'b1;
+	           if(dav)
+	              next_state = START_BYTE_1;
+	        end
+			  START_BYTE_1: begin
+	           if(tbr) begin
+	              //addr = 2'd0;
+	              //next_status = data_in[1:0];
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = 8'hBA;//data_in[15:8];
+	              next_state = START_BYTE_2;
+	           end
+	        end
+			  START_BYTE_2: begin
+	           if(tbr) begin
+	              //addr = 2'd0;
+	              //next_status = data_in[1:0];
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = 8'h11;//data_in[15:8];
+	              next_state = WRITE_STATUS_1;
+	           end
+	        end
+	        WRITE_STATUS_1: begin
+	           if(tbr) begin
+	              addr = 2'd0;
+	              next_status = data_in[1:0];
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = data_in[15:8];
+	              next_state = WRITE_STATUS_2;
+	           end
+	        end
+	        WRITE_STATUS_2: begin
+	           if(tbr) begin
+	              addr = 2'd0;
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = data_in[7:0];
+	              next_state = WRITE_X_1;
+	           end
+	        end
+	        WRITE_X_1: begin
+	           if(tbr) begin
+	              addr = 2'd1;
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = data_in[15:8];
+	              next_state = WRITE_X_2;
+	           end
+	        end
+	        WRITE_X_2: begin
+	           if(tbr) begin
+	              addr = 2'd1;
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = data_in[7:0];
+	              next_state = WRITE_Y_1;
+	           end
+	        end
+	        WRITE_Y_1: begin
+	           if(tbr) begin
+	              addr = 2'd2;
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = data_in[15:8];
+	              next_state = WRITE_Y_2;
+	           end
+	        end
+	        WRITE_Y_2: begin
+	           if(tbr) begin
+	              addr = 2'd2;
+	              iocs = 1'b1;
+					  write = 1'b1;
+	              data_out = data_in[7:0];
+	              next_state = WAIT;
+	           end
+	        end
+	    endcase
+    end
+    
+endmodule

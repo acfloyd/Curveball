@@ -162,7 +162,7 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
     assign addr = offset + (pixel_x - x_loc);
     
 	//signals that we have a pixel to output
-    assign active = ((pixel_x >= x_loc) && (pixel_x <= x_bound)) && ((pixel_y >= y_loc) && (pixel_y <= y_bound)) ? 1'b1 : 1'b0;         
+    assign active = (rom_data[15:8] >= 8'h90) && ((pixel_x >= x_loc) && (pixel_x <= x_bound)) && ((pixel_y >= y_loc) && (pixel_y <= y_bound)) ? 1'b1 : 1'b0;         
      
 	//selects correct data from ROMs
     assign rom_data = (zone == 5'd0) ? data_0 :
