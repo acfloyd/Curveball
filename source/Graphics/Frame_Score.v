@@ -4,7 +4,7 @@ module Frame_Score(
 	input rst,
 	input VGA_Ready,
 	input[3:0] your_score,
-	input[3:0] their_score,
+	input[15:0] their_score,
 	input[15:0] game_state,
 	input[15:0] ball_z,
 	input[15:0] pixel_x,
@@ -178,7 +178,7 @@ module Score_Draw(
   input[15:0] pixel_x,
   input[15:0] pixel_y,
   input[3:0] your_score,
-  input[3:0] their_score,
+  input[15:0] their_score,
   output draw
     );
     
@@ -189,7 +189,7 @@ module Score_Draw(
     
   // parameters for scores
   parameter x1 = 64; // ul x coordinate for score 1
-  parameter x2 = 544; // ul x coordinate for score 2
+  parameter x2 = 458; // ul x coordinate for score 2
   parameter y = 10; // ul y coordinate for both scores
   
   // build score ROM
@@ -209,7 +209,12 @@ module Score_Draw(
   wire[4:0] addr_x, addr_y;
   assign addr_x = (pixel_x < 639) ? pixel_x + 1 : 16'd0;
   assign addr_y = pixel_y - y;
-  assign digit = (pixel_x < x1 + score_width) ? your_score[3:0] : their_score[3:0];
+  assign digit = (pixel_x < x1 + score_width) ? your_score[3:0] :
+					  (pixel_x < x2 + 32) their_score[15:12] :
+					  (pixel_x < x2 + 64) their_score[11:8] :
+					  (pixel_x < x2 + 96) their_score[7:4] :
+					  their_score[3:0];
+					  
   assign addr = {addr_y, digit, addr_x};
    
   function integer clog2;
