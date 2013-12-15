@@ -291,6 +291,7 @@ P2UPDATE:
         MULT R4, R3, R1             ; r4 <-- 340 * (gameX - 256)
         BNEZ R4, #2                 ; if overflow is detected, shift and repeat mult
         SRAI R1, R1, #1
+        SRAI R5, R5, #1
         MULT R4, R3, R1
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ)
@@ -310,8 +311,9 @@ P2UPDATE:
         ADD R5, R5, R3              ; r5 <-- 340 + gameZ
 
         MULT R4, R3, R2             ; r4 <-- 340 * (gameX - 192)
-        BNEZ R4, #2                 ; if overflow is detected, shift and repeat mult
+        BNEZ R4, #3                 ; if overflow is detected, shift and repeat mult
         SRAI R2, R2, #1
+        SRAI R5, R5, #1
         MULT R4, R3, R2
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ)
@@ -371,8 +373,9 @@ BUPDATE:
         ADD R5, R5, R3              ; r5 <-- 340 + gameZ
 
         MULT R4, R3, R1             ; r4 <-- 340 * (gameX - 256)
-        BNEZ R4, #2                 ; if overflow is detected, shift and repeat mult
+        BNEZ R4, #3                 ; if overflow is detected, shift and repeat mult
         SRAI R1, R1, #1
+        SRAI R5, R5, #1
         MULT R4, R3, R1
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ)
@@ -392,8 +395,9 @@ BUPDATE:
         ADD R5, R5, R3              ; r5 <-- 340 + gameZ
 
         MULT R4, R3, R2             ; r4 <-- 340 * (gameX - 192)
-        BNEZ R4, #2                 ; if overflow is detected, shift and repeat mult
+        BNEZ R4, #3                 ; if overflow is detected, shift and repeat mult
         SRAI R2, R2, #1
+        SRAI R5, R5, #1
         MULT R4, R3, R2
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ)
