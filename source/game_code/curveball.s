@@ -173,8 +173,10 @@ CONTINUE:
         LBI R0, ballVelAddr         
         ST R1, R0, velX             ; ball->velX = 0
         ST R1, R0, velY             ; ball->velY = 0
-        ST R1, R0, accX             ; ball->dirX = 0
-        ST R1, R0, accY             ; ball->dirY = 0
+        ST R1, R0, accX             ; ball->accX = 0
+        ST R1, R0, accY             ; ball->accY = 0
+        ST R1, R0, xStat            ; ball->xStat = 0
+        ST R1, R0, yStat            ; ball->xStat = 0
         
         ; setup paddle 2
         LBI R0, paddle2Addr
@@ -199,9 +201,8 @@ CONTINUE:
         ST R1, R0, posX             ; opponent->posX = (WIDTH / 2) - 51
 
         ; set difficulty
-        LBI R0, difficultyAddr      ; difficulty = 1
         LBI R1, #1
-        ST R1, R0, #0
+        STI R1, difficultyAddr      ; difficulty = 1
 
         ; check for mouse click here
         ; TODO: cnt could be changed here to get curve off of serve
@@ -224,7 +225,7 @@ WAITCLICK:
         BEQZ R3, #3                 ; if (ball->posZ != 0) check against paddle2
         LBI R0, paddle2Addr
         J #1
-        LBI R0, paddle1Addr
+N1AA:   LBI R0, paddle1Addr
 
         LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
         LBI R3, INTERSECT_HIGH
@@ -268,12 +269,10 @@ P2UPDATE:
         ST R1, R4, posX             ; pPaddle2 = opp->posX
         ST R2, R4, posY             ; pPaddle2 = opp->posY
 
-        ;/* NAA NAA */
-        ;LD R1, R3, mPosx
-        ;LD R2, R3, mPosy
-        ;ST R1, R0, posX             ; spart->posX = opponent->posX
-        ;ST R2, R0, posY             ; spart->posY = opponent->posY
-        ;/* NAA NAA END */
+        LD R1, R3, mPosx
+        LD R2, R3, mPosy
+        ST R1, R0, posX             ; opponent->posX = spart->posX
+        ST R2, R0, posY             ; opponent->posY = spart->posY
 
         ; translate the paddle2 pos to perspective
         LBI R6, paddle2Tran_high
@@ -346,7 +345,7 @@ P1UPDATE:
         ST R1, R0, posX             ; transPaddle1->posX is set
         LBI R3, #48
         ADD R2, R2, R3
-        ST R2, R2, posY             ; transPaddle1->posY is set
+        ST R2, R0, posY             ; transPaddle1->posY is set
         JR R7, #0                   ; return
 
 ; update the ball location and calc the curve for the ball
@@ -402,7 +401,7 @@ BUPDATE:
         SLBI R0, #240
         ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ) + 240
         ST R4, R6, posY             
-        
+ENDBTRANS:        
         LBI R1, ballAddr            ; r1 <-- ballAddr
         LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
         LBI R3, ENDPBN_HIGH
@@ -655,7 +654,11 @@ ENDTBW: ; end if ((ball->posX + BALL_RAD >= HEIGHT) || (ball->posX - BALL_RAD <=
 
         LDI R3, firstAddr           ; r3 <-- first
         OR R4, R3, R0               ; r4 <-- sect || first
-        BEQZ R4, NOINTRP            ; if (sect || first)
+        BEQZ R4, #1                 ; if (sect || first)
+        J #3
+        LBI R4, NOINTRP_HIGH
+        SLBI R4, NOINTRP_LOW
+        JR R4, #0
 
         ; contact with paddle, play a sound
         LBI R0, audioAddr_high
@@ -1116,28 +1119,28 @@ INTERSECT:
         LD R5, R0, posX             ; r5 <-- p->posX
         SUB R6, R4, R5              ; r6 <-- ball->posX + BALL_RAD - p->posX
         BLTZ R6, RETINTRF           ; if (ball->posX + BALL_RAD >= p->posX)
-N2AA:
+
         LBI R4, ball_rad
         SUB R4, R3, R4              ; r4 <-- ball->posX - BALL_RAD
         LBI R6, paddle_width
         ADD R6, R5, R6              ; r6 <-- p->posX + PAD_WIDTH
         SUB R6, R6, R4              ; r6 <-- (p->posX + PAD_WIDTH) - (ball->posX - BALL_RAD)
         BLTZ R6, RETINTRF           ; if (ball->posX - BALL_RAD <= p->posX + PAD_WIDTH)
-N3AA:
+
         LD R3, R1, posY             ; r3 <-- ball->posY
         LBI R4, ball_rad
         ADD R4, R3, R4              ; r4 <-- ball->posY + BALL_RAD
         LD R5, R0, posY             ; r5 <-- p->posY
         SUB R6, R4, R5              ; r6 <-- ball->posY + BALL_RAD - p->posY
         BLTZ R6, RETINTRF           ; if (ball->posY + BALL_RAD >= p->posY)
-N4AA:
+
         LBI R4, ball_rad
         SUB R4, R3, R4              ; r4 <-- ball->posY - BALL_RAD
         LBI R6, paddle_height
         ADD R6, R5, R6              ; r6 <-- p->posY + PAD_HEIGHT
         SUB R6, R6, R4              ; r6 <-- (p->posY + PAD_HEIGHT) - (ball->posY - BALL_RAD)
         BLTZ R6, RETINTRF           ; if (ball->posY - BALL_RAD <= p->posY + PAD_HEIGHT)
-N5AA:
+
         LBI R0, #1                  ; return TRUE
         JR R7, #0
 RETINTRF:        
