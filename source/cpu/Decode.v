@@ -19,8 +19,6 @@ module Decode(clk, rst, Stall, Instruct, DataIn, WrEn, SignExtSel, ZeroExtend8, 
 	wire BranchFlag, DataZero, Flag, JumpOrBranchFlag;
 	wire [2:0] RtReadAddr;
 
-	//assign Data = (LoadR7) ? NextPC : DataIn;
-
 	assign SignExt5 = {{11{Instruct[4]}}, Instruct[4:0]};
 	assign SignExt8 = {{8{Instruct[7]}}, Instruct[7:0]};
 	assign SignExt11 = {{5{Instruct[10]}}, Instruct[10:0]};
