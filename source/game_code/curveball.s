@@ -24,7 +24,7 @@ MACRO paddle_width #101
 MACRO paddle_height #75
 MACRO velz_inc #20
 
-MACRO endScore #15
+MACRO endScore #1
 
 ; curve defines
 MACRO update #64
@@ -37,41 +37,40 @@ MACRO static2 #2
 MACRO static3 #3
 MACRO static4 #4
 
-; global var bases
+; mapped var bases
 MACRO audioAddr_high #32
 MACRO audioAddr_low #0
-MACRO ballAddr_low #16
-MACRO ballAddr_high #0             
-MACRO ballVelAddr #0
-MACRO paddle2Addr_low #12
-MACRO paddle2Addr_high #0          
-MACRO paddle1Addr_low #14
-MACRO paddle1Addr_high #0          
 MACRO spartAddr_high #48
 MACRO spartAddr_low #0              ; 12888
 MACRO mouseAddr_low #0
 MACRO mouseAddr_high #64            ; 16384
-MACRO pMouseAddr #6
-MACRO pPaddle2Addr #8
 MACRO scoreAddr_low #7
 MACRO scoreAddr_high #16            ; 4110
 MACRO gameStateAddr_low #18
 MACRO gameStateAddr_high #16        ; 4114
-MACRO difficultyAddr #10
-MACRO firstAddr #11
 MACRO gameStartAddr_high #80
 MACRO gameStartAddr_low #0          ; 0x5000 (20480)
 
+; translated addresses
+MACRO ballTran_high #16             
+MACRO ballTran_low #4               ; 4100, 0x1004
+MACRO paddle2Tran_high #16
+MACRO paddle2Tran_low #2            ; 4098, 0x1002
+MACRO paddle1Tran_high #16
+MACRO paddle1Tran_low #0            ; 4096, 0x1000
+
+; gen mem bases
+MACRO ballVelAddr #0
+MACRO pMouseAddr #6
+MACRO pPaddle2Addr #8
+MACRO difficultyAddr #10
+MACRO firstAddr #11
+MACRO paddle2Addr #12
+MACRO paddle1Addr #14
+MACRO ballAddr #16
+
 ; TODO: add gamestate functionality
 ; TODO: remove low/high instructions for gen memory
-
-; translated addresses
-MACRO ballTran_high #16             ; 4104
-MACRO ballTran_low #8
-MACRO paddle2Tran_high #16
-MACRO paddle2Tran_low #4            ; 4100
-MACRO paddle1Tran_high #16
-MACRO paddle1Tran_low #0            ; 4096 
 
 ; offset from global var base
 MACRO posX #0
@@ -116,8 +115,7 @@ MAIN:   LBI R0, scoreAddr_high
         BNEZ R4, #1
         LBI R1, #1                  ; if starting posZ in non-zero, then it will check the spart
 
-        LBI R0, ballAddr_high
-        SLBI R0, ballAddr_low
+        LBI R0, ballAddr
         ST R1, R0, posZ             ; ball->posZ = 0
 
         LBI R0, ballVelAddr
@@ -143,6 +141,11 @@ OPPWINCHK: ; end if (playerScore == endScore)
         LD R3, R0, p2Score
         SUBI R3, R3, endScore
         BNEZ R3, CONTINUE           ; if (oppScore == endScore)
+
+        ;/* NAA NAA */
+        ;HALT
+        ;/* NAA NAA END */
+
         LBI R0, #2
         LBI R3, gameStateAddr_high
         SLBI R3, gameStateAddr_low
@@ -159,8 +162,7 @@ CONTINUE:
         ST R0, R3, #0               ; set gamestate reg to game playing
         LBI R0, #1                  
         STI R0, firstAddr           ; first = TRUE
-        LBI R0, ballAddr_high       ; setup the ball
-        SLBI R0, ballAddr_low
+        LBI R0, ballAddr            ; setup the ball
         LBI R1, halfWidth_high      
         SLBI R1, halfWidth_low
         ST R1, R0, posX             ; ball->posX = WIDTH / 2
@@ -175,8 +177,7 @@ CONTINUE:
         ST R1, R0, accY             ; ball->dirY = 0
         
         ; setup paddle 2
-        LBI R0, paddle2Addr_high
-        SLBI R0, paddle2Addr_low
+        LBI R0, paddle2Addr
         LBI R1, halfWidth_high     
         SLBI R1, halfWidth_low
         LBI R3, #51
@@ -189,8 +190,7 @@ CONTINUE:
         ST R1, R0, posY             ; opponent->posY = (HEIGHT / 2) - 37
 
         ; setup paddle 1
-        LBI R0, paddle1Addr_high
-        SLBI R0, paddle1Addr_low    
+        LBI R0, paddle1Addr
         ST R1, R0, posY             ; opponent->posY = (HEIGHT / 2) - 37
         LBI R1, halfWidth_high      ; paddle->posX = WIDTH / 2
         SLBI R1, halfWidth_low
@@ -219,15 +219,12 @@ WAITCLICK:
         ; check if the mouse click also was when the paddle was over the ball
 
         ; check ball->posZ to determine which paddle to check against
-        LBI R1, ballAddr_high       
-        SLBI R1, ballAddr_low       ; r1 <-- ballAddr
+        LBI R1, ballAddr            ; r1 <-- ballAddr
         LD R3, R1, posZ             ; r3 <-- ball->posZ
         BEQZ R3, #3                 ; if (ball->posZ != 0) check against paddle2
-        LBI R0, paddle2Addr_high
-        SLBI R0, paddle2Addr_low
-        J #2
-        LBI R0, paddle1Addr_high
-        SLBI R0, paddle1Addr_low
+        LBI R0, paddle2Addr
+        J #1
+        LBI R0, paddle1Addr
 
         LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
         LBI R3, INTERSECT_HIGH
@@ -261,8 +258,7 @@ GLOOP:
 ; save off the current location of the paddle #2
 P2UPDATE: 
         ; load addrs
-        LBI R0, paddle2Addr_high
-        SLBI R0, paddle2Addr_low
+        LBI R0, paddle2Addr
         LBI R3, spartAddr_high
         SLBI R3, spartAddr_low
         LBI R4, pPaddle2Addr
@@ -272,10 +268,12 @@ P2UPDATE:
         ST R1, R4, posX             ; pPaddle2 = opp->posX
         ST R2, R4, posY             ; pPaddle2 = opp->posY
 
-        LD R1, R3, mPosx
-        LD R2, R3, mPosy
-        ST R1, R0, posX             ; spart->posX = opponent->posX
-        ST R2, R0, posY             ; spart->posY = opponent->posY
+        ;/* NAA NAA */
+        ;LD R1, R3, mPosx
+        ;LD R2, R3, mPosy
+        ;ST R1, R0, posX             ; spart->posX = opponent->posX
+        ;ST R2, R0, posY             ; spart->posY = opponent->posY
+        ;/* NAA NAA END */
 
         ; translate the paddle2 pos to perspective
         LBI R6, paddle2Tran_high
@@ -327,8 +325,7 @@ P2UPDATE:
 
 ; save off the current location of the paddle #2
 P1UPDATE: 
-        LBI R0, paddle1Addr_high
-        SLBI R0, paddle1Addr_low
+        LBI R0, paddle1Addr
         LD R1, R0, posX
         LD R2, R0, posY
         LBI R4, pMouseAddr
@@ -356,8 +353,7 @@ P1UPDATE:
 BUPDATE:    
 
         ; translate the paddle2 pos to perspective
-        LBI R5, ballAddr_high
-        SLBI R5, ballAddr_low
+        LBI R5, ballAddr
         LD R1, R5, posX
         LD R2, R5, posY
         LD R3, R5, posZ
@@ -407,8 +403,7 @@ BUPDATE:
         ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ) + 240
         ST R4, R6, posY             
         
-        LBI R1, ballAddr_high       
-        SLBI R1, ballAddr_low       ; r1 <-- ballAddr
+        LBI R1, ballAddr            ; r1 <-- ballAddr
         LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
         LBI R3, ENDPBN_HIGH
         SLBI R3, ENDPBN_LOW
@@ -463,9 +458,10 @@ ENDMODUP: ; end if (ball->posZ % UPDATE == 0)
         ST R3, R1, posX             ; ball->posX = ball->posX + (ball->velX >> ball->xStat)
 
         ;/* NAA NAA */
-        LBI R4, paddle2Addr_high
-        SLBI R4, paddle2Addr_low
-        ST R3, R4, posX
+        ;LBI R4, paddle2Addr
+        ;ST R3, R4, posX
+        ;LBI R4, pPaddle2Addr
+        ;ST R3, R4, posX
         ;/* NAA NAA END */
 
 
@@ -485,9 +481,10 @@ ENDMODSX: ; end if (ball->posZ % r0)
         ST R3, R1, posY             ; ball->posY = ball->posY + (ball->velY >> ball->yStat)
 
         ;/* NAA NAA */
-        LBI R0, paddle2Addr_high
-        SLBI R0, paddle2Addr_low
-        ST R3, R0, posY
+        ;LBI R0, paddle2Addr
+        ;ST R3, R0, posY
+        ;LBI R0, pPaddle2Addr
+        ;ST R3, R0, posY
         ;/* NAA NAA END */
 
 ENDMODSY: ; end if (ball->posZ % r0)
@@ -541,9 +538,10 @@ INRLW:
         ST R3, R1, posX             ; ball->posX = WIDTH - BALL_RAD - 1
 
         ;/* NAA NAA */
-        LBI R0, paddle2Addr_high
-        SLBI R0, paddle2Addr_low
-        ST R3, R0, posX
+        ;LBI R0, paddle2Addr
+        ;ST R3, R0, posX
+        ;LBI R0, pPaddle2Addr
+        ;ST R3, R0, posX
         ;/* NAA NAA END */
 
         J ENDIFLW
@@ -554,9 +552,10 @@ ENDIFRW: ; end if (ball->posX + BALL_RAD >= WIDTH)
         ST R0, R1, posX             ; ball->posX = BALL_RAD + 1
 
         ;/* NAA NAA */
-        LBI R3, paddle2Addr_high
-        SLBI R3, paddle2Addr_low
-        ST R0, R3, posX
+        ;LBI R3, paddle2Addr
+        ;ST R0, R3, posX
+        ;LBI R3, pPaddle2Addr
+        ;ST R0, R3, posX
         ;/* NAA NAA END */
 
 ENDIFLW:
@@ -603,9 +602,10 @@ INTBW:
         ST R0, R1, posY             ; ball->posY = BALL_RAD + 1
 
         ;/* NAA NAA */
-        LBI R3, paddle2Addr_high
-        SLBI R3, paddle2Addr_low
-        ST R0, R3, posY
+        ;LBI R3, paddle2Addr
+        ;ST R0, R3, posY
+        ;LBI R3, pPaddle2Addr
+        ;ST R0, R3, posY
         ;/* NAA NAA END */
 
         J ENDIFBW
@@ -618,9 +618,10 @@ ENDIFTW:
         ST R3, R1, posY             ; ball->posY = HEIGHT - BALL_RAD - 1
 
         ;/* NAA NAA */
-        LBI R0, paddle2Addr_high
-        SLBI R0, paddle2Addr_low
-        ST R3, R0, posY
+        ;LBI R0, paddle2Addr
+        ;ST R3, R0, posY
+        ;LBI R0, pPaddle2Addr
+        ;ST R3, R0, posY
         ;/* NAA NAA END */
 
 ENDIFBW:
@@ -646,8 +647,7 @@ ENDTBW: ; end if ((ball->posX + BALL_RAD >= HEIGHT) || (ball->posX - BALL_RAD <=
         SLBI R3, ENDPW_LOW
         JR R3, #0                   ; jump to label ENDPW
 
-        LBI R0, paddle1Addr_high
-        SLBI R0, paddle1Addr_low    ; r0 <-- paddle1Addr
+        LBI R0, paddle1Addr         ; r0 <-- paddle1Addr
         LBI R3, INTERSECT_HIGH
         SLBI R3, INTERSECT_LOW
         JALR R3, #0                 ; r0 <-- intersect(paddle)
@@ -871,8 +871,7 @@ ENDPW: ; end if (ball->posZ - BALL_RAD <= 0)
         SLBI R0, ENDOW_LOW
         JR R0, #0
 
-        LBI R0, paddle2Addr_high
-        SLBI R0, paddle2Addr_low
+        LBI R0, paddle2Addr
         LBI R3, INTERSECT_HIGH
         SLBI R3, INTERSECT_LOW
         JALR R3, #0                 ; r0 <-- intersect(paddle2)
@@ -901,8 +900,7 @@ ENDPW: ; end if (ball->posZ - BALL_RAD <= 0)
         ST R0, R1, posZ             ; ball->posZ = DEPTH - BALL_RAD - 1
 
         ; start of setting velX, accX, and xStat based on the mouse movement
-        LBI R4, paddle2Addr_high
-        SLBI R4, paddle2Addr_low      ; r4 <-- paddle2Addr (opponent)
+        LBI R4, paddle2Addr         ; r4 <-- paddle2Addr (opponent)
         LBI R5, pPaddle2Addr        ; r5 <-- pPaddle2Addr (popponent)
         LDI R3, firstAddr
 
@@ -989,8 +987,7 @@ MOTSTEX0: ; end if (mouseDiff != 0)
 
   
         ; start of setting velY, accY, and yStat based on the mouse movement
-        LBI R4, paddle2Addr_high
-        SLBI R4, paddle2Addr_low      ; r4 <-- paddle2Addr (opponent)
+        LBI R4, paddle2Addr         ; r4 <-- paddle2Addr (opponent)
         LBI R5, pPaddle2Addr          ; r5 <-- pPaddle2Addr (popponent)
 
         BEQZ R3, INTRONFY           ; if (first)
