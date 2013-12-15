@@ -46,7 +46,7 @@ MACRO mouseAddr_low #0
 MACRO mouseAddr_high #64            ; 16384
 MACRO scoreAddr_low #7
 MACRO scoreAddr_high #16            ; 4110
-MACRO gameStateAddr_low #18
+MACRO gameStateAddr_low #9
 MACRO gameStateAddr_high #16        ; 4114
 MACRO gameStartAddr_high #80
 MACRO gameStartAddr_low #0          ; 0x5000 (20480)
@@ -216,7 +216,7 @@ WAITCLICK:
         SLBI R0, #0
         LBI R4, scoreAddr_high
         SLBI R4, scoreAddr_low
-        ST R0, R4, p2Score
+        ST R0, R4, p1Score
         ;/* NAA NAA END */
 
         SUBI R4, R6, #0
@@ -367,7 +367,7 @@ BUPDATE:
         SLBI R0, #0
         LBI R1, scoreAddr_high
         SLBI R1, scoreAddr_low
-        ST R0, R1, p2Score
+        ST R0, R1, p1Score
         ;/* NAA NAA END */
 
         ; translate the paddle2 pos to perspective
