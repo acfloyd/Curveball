@@ -24,7 +24,7 @@ MACRO paddle_width #101
 MACRO paddle_height #75
 MACRO velz_inc #20
 
-MACRO endScore #1
+MACRO endScore #15
 
 ; curve defines
 MACRO update #64
@@ -41,12 +41,12 @@ MACRO static4 #4
 MACRO audioAddr_high #32
 MACRO audioAddr_low #0
 MACRO ballAddr_low #16
-MACRO ballAddr_high #0             ; 4104
+MACRO ballAddr_high #0             
 MACRO ballVelAddr #0
 MACRO paddle2Addr_low #12
-MACRO paddle2Addr_high #0          ; 4100
+MACRO paddle2Addr_high #0          
 MACRO paddle1Addr_low #14
-MACRO paddle1Addr_high #0          ; 4096
+MACRO paddle1Addr_high #0          
 MACRO spartAddr_high #48
 MACRO spartAddr_low #0              ; 12888
 MACRO mouseAddr_low #0
@@ -59,17 +59,19 @@ MACRO gameStateAddr_low #18
 MACRO gameStateAddr_high #16        ; 4114
 MACRO difficultyAddr #10
 MACRO firstAddr #11
+MACRO gameStartAddr_high #80
+MACRO gameStartAddr_low #0          ; 0x5000 (20480)
 
 ; TODO: add gamestate functionality
 ; TODO: remove low/high instructions for gen memory
 
 ; translated addresses
-MACRO ballTran_high #16
+MACRO ballTran_high #16             ; 4104
 MACRO ballTran_low #8
 MACRO paddle2Tran_high #16
-MACRO paddle2Tran_low #4
+MACRO paddle2Tran_low #4            ; 4100
 MACRO paddle1Tran_high #16
-MACRO paddle1Tran_low #0
+MACRO paddle1Tran_low #0            ; 4096 
 
 ; offset from global var base
 MACRO posX #0
@@ -106,9 +108,18 @@ MAIN:   LBI R0, scoreAddr_high
         LBI R1, #0
         ST R1, R0, p1Score          ; playerScore = 0
         ST R1, R0, p2Score          ; oppScore = 0
+
+        ; check who is starting with the ball
+        LBI R3, gameStartAddr_high
+        SLBI R3, gameStartAddr_low
+        LD R4, R3, #0               ; load in the dip switch determining the start
+        BNEZ R4, #1
+        LBI R1, #1                  ; if starting posZ in non-zero, then it will check the spart
+
         LBI R0, ballAddr_high
         SLBI R0, ballAddr_low
         ST R1, R0, posZ             ; ball->posZ = 0
+
         LBI R0, ballVelAddr
         LBI R2, velz_start
         ST R2, R0, velZ             ; ball->velZ = VELZ_START
@@ -120,7 +131,10 @@ SETUP:
         LD R3, R0, p1Score          ; r3 <-- playerScore
         SUBI R3, R3, endScore
         BNEZ R3, OPPWINCHK          ; if (playerScore == endScore)
-        ; TODO: add some code here to output that palyer 1 wins
+        LBI R0, #1
+        LBI R3, gameStateAddr_high
+        SLBI R3, gameStateAddr_low
+        ST R0, R3, #0               ; set gamestate reg to player 1 win
         LBI R3, #0
         ST R3, R0, p1Score          ; playerScore = 0
         ST R3, R0, p2Score          ; oppScore = 0
@@ -130,12 +144,20 @@ OPPWINCHK: ; end if (playerScore == endScore)
         SUBI R3, R3, endScore
         BNEZ R3, CONTINUE           ; if (oppScore == endScore)
         ; TODO: add some code here to output that palyer 2 wins
+        LBI R0, #2
+        LBI R3, gameStateAddr_high
+        SLBI R3, gameStateAddr_low
+        ST R0, R3, #0               ; set gamestate reg to player 2 win
         LBI R3, #0
         ST R3, R0, p1Score          ; playerScore = 0
         ST R3, R0, p2Score          ; oppScore = 0
         J CONTINUE
 CONTINUE:
 
+        LBI R0, #1
+        LBI R3, gameStateAddr_high
+        SLBI R3, gameStateAddr_low
+        ST R0, R3, #0               ; set gamestate reg to game playing
         LBI R0, #1                  
         STI R0, firstAddr           ; first = TRUE
         LBI R0, ballAddr_high       ; setup the ball
@@ -183,6 +205,7 @@ CONTINUE:
         ST R1, R0, #0
 
         ; check for mouse click here
+        ; TODO: cnt could be changed here to get curve off of serve
         LBI R6, #20                 ; r6 <-- cnt
         JAL P2UPDATE
         JAL P1UPDATE                ; update paddles
@@ -195,19 +218,33 @@ WAITCLICK:
         SUBI R6, R6, #1             ; r6 <-- cnt - 1
 
         ; check if the mouse click also was when the paddle was over the ball
+
+        ; check ball->posZ to determine which paddle to check against
         LBI R1, ballAddr_high       
         SLBI R1, ballAddr_low       ; r1 <-- ballAddr
-        LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
+        LD R3, R1, posZ             ; r3 <-- ball->posZ
+        BEQZ R3, #3                 ; if (ball->posZ != 0) check against paddle2
+        LBI R0, paddle2Addr_high
+        SLBI R0, paddle2Addr_low
+        J #2
         LBI R0, paddle1Addr_high
         SLBI R0, paddle1Addr_low
+
+        LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
         LBI R3, INTERSECT_HIGH
         SLBI R3, INTERSECT_LOW
         JALR R3, #0                 ; r0 <-- intersect(paddle2)
         ; r0 <-- sect at this point
 
-BUPDATE:
+        ; check whether to look at the mouse or the spart
+        LD R3, R1, posZ
+        BEQZ R3, #3                 ; if (ball->posZ != 0) check spart
+        LBI R3, spartAddr_high
+        SLBI R3, spartAddr_low
+        J #2
         LBI R3, mouseAddr_high
         SLBI R3, mouseAddr_low      ; r0 <-- load mouse status addr
+
         LD R1, R3, mStatus          ; r1 <-- get mouse status
         LBI R2, #1                  ; r2 <-- left click mask
         AND R5, R2, R1              ; r3 <-- masked mouse
