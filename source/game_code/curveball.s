@@ -123,6 +123,9 @@ MAIN:   LBI R0, scoreAddr_high
         LBI R2, velz_start
         ST R2, R0, velZ             ; ball->velZ = VELZ_START
 
+        JAL P1UPDATE
+        J #-1
+
 SETUP:  
         ; end game checks done here
         LBI R0, scoreAddr_high
@@ -208,8 +211,9 @@ CONTINUE:
         ; check for mouse click here
         ; TODO: cnt could be changed here to get curve off of serve
         LBI R6, #20                 ; r6 <-- cnt
-        JAL P2UPDATE
         JAL P1UPDATE                ; update paddles
+        JAL P2UPDATE
+        JAL BTRANS
 WAITCLICK:
 
         ;/* NAA NAA */
@@ -220,10 +224,12 @@ WAITCLICK:
         ;/* NAA NAA END */
 
         SUBI R4, R6, #0
-        BNEZ R4, #3                 ; skip paddle update for 20 mouse click checks
+        BNEZ R4, #4                 ; skip paddle update for 20 mouse click checks
         JAL P2UPDATE
         JAL P1UPDATE
+        JAL BTRANS
         LBI R6, #20                 ; r6 <-- reset to 20
+
         SUBI R6, R6, #1             ; r6 <-- cnt - 1
 
         ; check if the mouse click also was when the paddle was over the ball
@@ -375,9 +381,9 @@ P1UPDATE:
         ST R2, R0, posY             ; transPaddle1->posY is set
         JR R7, #0                   ; return
 
-; update the ball location and calc the curve for the ball
-BUPDATE:    
 
+        
+BTRANS: 
         ;/* NAA NAA */
         LBI R1, scoreAddr_high
         SLBI R1, scoreAddr_low
@@ -437,7 +443,12 @@ BUPDATE:
         SLBI R0, #240
         ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ) + 240
         ST R4, R6, posY             
-ENDBTRANS:        
+        JR R7, #0
+
+; update the ball location and calc the curve for the ball
+BUPDATE:   
+        JAL BTRANS
+
         LBI R1, ballAddr            ; r1 <-- ballAddr
         LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
         LBI R3, ENDPBN_HIGH
@@ -1119,7 +1130,7 @@ ENDINTROW: ; end if (intersect(opponent) || first)
         SLBI R0, scoreAddr_low      ; r0 <-- scoreAddr
         LD R3, R0, #0
         ADDI R3, R3, #1
-        ;/* NAA NAA */
+        ;;/* NAA NAA */
         ;ST R3, R0, p1Score          ; playerScore++
         ;/* NAA NAA END */
         LBI R0, depth_high
