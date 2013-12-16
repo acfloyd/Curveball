@@ -144,7 +144,7 @@ OPPWINCHK: ; end if (playerScore == endScore)
         BNEZ R3, CONTINUE           ; if (oppScore == endScore)
 
         ;/* NAA NAA */
-        HALT
+        ;HALT
         ;/* NAA NAA END */
 
         LBI R0, #2
@@ -886,7 +886,9 @@ NOINTRP: ; end if (sect || first)
         SLBI R0, scoreAddr_low
         LD R3, R0, p2Score
         ADDI R3, R3, #1
-        ST R3, R0, p2Score          ; oppScore++
+        ;/* NAA NAA */
+        ;ST R3, R0, p2Score          ; oppScore++
+        ;/* NAA NAA END */
         LBI R0, #0
         ST R0, R1, posZ             ; ball->posZ = 0
         LBI R0, velz_start
@@ -1117,7 +1119,9 @@ ENDINTROW: ; end if (intersect(opponent) || first)
         SLBI R0, scoreAddr_low      ; r0 <-- scoreAddr
         LD R3, R0, #0
         ADDI R3, R3, #1
-        ST R3, R0, p1Score          ; playerScore++
+        ;/* NAA NAA */
+        ;ST R3, R0, p1Score          ; playerScore++
+        ;/* NAA NAA END */
         LBI R0, depth_high
         SLBI R0, depth_low
         ST R0, R1, posZ             ; ball->posZ = DEPTH
