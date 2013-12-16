@@ -18,7 +18,7 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module receiver(output [7:0] rec_buff, output RDA, input clk, rst, RxD, read, rxEnable);
+module receiver(output [7:0] rec_buff, output RDA, input clk, rst, RxD, rxEnable);
     
   //instantiate receiver and sampler
   rx r(.rec_buff(rec_buff), .RDA(RDA), .clk(clk), .rst(rst), .RxD(RxD), .rxEnable(rxEnable), .start(start), .enable(enable));
@@ -115,7 +115,7 @@ module sampler(output reg start, output reg enable, input RxD, rxEnable, clk, rs
 endmodule
 
 // receives data in
-module rx(output reg [7:0] rec_buff, output reg RDA, input clk, rst, RxD, rxEnable, start, read, enable);
+module rx(output reg [7:0] rec_buff, output reg RDA, input clk, rst, RxD, rxEnable, start, enable);
   
   reg [3:0] state, next_state;			//state and next state
   reg [7:0] shifter;							// receiver shifter

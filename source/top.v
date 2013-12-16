@@ -48,14 +48,13 @@ module top(input clk_100mhz,
     wire clk_100mhz_buf, clk_100mhz_buf2;
 	wire[23:0] graphics_color;
 	wire cpuclk;
-	wire ack;
 	wire Read, Write, CS_RAM, CS_Audio, CS_Graphics, CS_Spart, CS_PS2;
 	wire [15:0] Addr, WriteData, DataToCPU, DataBus, Instruct, NextPC;
-	wire [15:0] ps2_mouse_data, spart_data, x_loc, y_loc, x_loc2, x_loc3;
-	wire [1:0] ps2_mouse_addr, spart_addr;
-	wire TCP, t_clk, t_data, r_ack, r_ack_bit, dav, r_dav, spart_dav, rda;
-	wire [1:0] status_bits, status;
-	wire [7:0] data_out, data_in;
+	
+	assign LED_0 = ~CS_RAM;
+	assign LED_1 = ~CS_Graphics;
+	assign LED_2 = ~CS_Spart;
+	assign LED_3 = ~CS_PS2;
 	
 	proc PROC(.clk(cpuclk), 
 			  .rst(rst | ~cpu_locked_dcm), 
@@ -96,9 +95,8 @@ module top(input clk_100mhz,
 					.databus(DataBus),
 					.data_address(Addr[3:0]),
 					.VGA_ready(graphics_VGA_ready),
-					.color(graphics_color),
-					.x_loc(x_loc),
-					.y_loc(y_loc));
+					.color(graphics_color)
+					);
 	
 	
 	ps2_external p_ex(.clk(cpuclk),
@@ -112,7 +110,7 @@ module top(input clk_100mhz,
 							.rst(rst | ~cpu_locked_dcm), 
 							.cs(CS_PS2), 
 							.addr(Addr[1:0]), 
-							.DataBus(Databus), 
+							.DataBus(DataBus), 
 							.txd(txd), 
 							.MOUSE_CLOCK(MOUSE_CLOCK), 
 							.MOUSE_DATA(MOUSE_DATA));

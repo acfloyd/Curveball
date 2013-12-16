@@ -21,7 +21,6 @@
 module reader(
     input clk,
     input rst,
-	 input read,
     output rda,
 	 output [7:0] data_out,
     input rxd

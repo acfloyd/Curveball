@@ -7,9 +7,7 @@ module Graphics_ASIC(
 	input[3:0] data_address,
    input read,
 	input VGA_ready,
-   output[23:0] color,
-	input[15:0] x_loc,
-	input[15:0] y_loc);
+   output[23:0] color);
 
 	parameter paddle_1_x_pos = 0;
 	parameter paddle_1_y_pos = 1;
@@ -32,22 +30,8 @@ module Graphics_ASIC(
 	wire[23:0] paddle_1_color, paddle_2_color, ball_color,  frame_score_color;
 	
 	reg[15:0] buffer_regs[9:0];
-	//assign player_1_score_buffer = 16'd1;
-	//assign player_2_score_buffer = 16'd2;
-	
-	//assign paddle_2_x_buffer = 16'd350;
-	//assign paddle_2_y_buffer = 16'd250;
-/*	
-	assign next_pad1_x = (VGA_ready && pixel_address == 19'h4AFFF) ?
-									(paddle_1_x_buffer <= 16'd400) ?
-										paddle_1_x_buffer + 16'd1
-									: 16'd100
-								:paddle_1_x_buffer;
-*/
-								
-	//assign paddle_1_y_buffer = 16'd200;
 
-    assign databus = databus_reg;
+   assign databus = databus_reg;
 
 	// data bus assignment
 	always@(posedge clk) begin
@@ -69,7 +53,7 @@ module Graphics_ASIC(
 			buffer_regs[4] <= 320;
 			buffer_regs[5] <= 240;
 			buffer_regs[6] <= 0;
-			buffer_regs[7] <= 0;
+			buffer_regs[7] <= 16'hffff;
 			buffer_regs[8] <= 0;
 			buffer_regs[9] <= 0;
 		end else if(chipselect & ~read) begin
@@ -87,7 +71,7 @@ module Graphics_ASIC(
 			ball_x <= 320;
 			ball_y <= 240;
 			ball_z <= 0;
-			p1_score <= 0;
+			p1_score <= 16'hffff;
 			p2_score <= 0;
 			game_state <= 0;
 		end else if(VGA_ready && pixel_x == 639 && pixel_y == 479) begin
@@ -135,8 +119,9 @@ module Graphics_ASIC(
 	Frame_Score frame_score(.clk(clk),
 							.rst(rst),
 							.VGA_Ready(VGA_ready),
-							.your_score(p1_score[3:0]),
-							.their_score(p2_score[3:0]),
+							.your_score(p1_score),
+							.their_score(p2_score),
+							.game_state(game_state),
 							.ball_z(ball_z),
 							.pixel_x(pixel_x),
 							.pixel_y(pixel_y),
