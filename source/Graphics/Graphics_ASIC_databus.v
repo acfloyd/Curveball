@@ -106,7 +106,7 @@ module Graphics_ASIC(
 					.color(paddle_2_color));
 	
 	
-	Ball ball(.zone_copy(zone),
+	Ball ball(
 				.clk(clk),
 				.rst(rst),
 				.x_loc(ball_x),
