@@ -1,4 +1,4 @@
-module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel_y, input clk, rst);
+module Ball(output [3:0] zone_copy, output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel_y, input clk, rst);
     
     reg [15:0] r_pixel_y;								//holds last pixel_y value to trigger on a line change
     reg [12:0] offset;									//increase offset for new line of ROM
@@ -94,6 +94,8 @@ module Ball(output[23:0] color, input [15:0] x_loc, y_loc, z_loc, pixel_x, pixel
                   (z_loc <= 10'd849) ? 5'd16 : 
 						(z_loc <= 10'd899) ? 5'd17 :
 					   (z_loc <= 10'd949) ? 5'd18 : 5'd19; 
+						
+	assign zone_copy = zone[3:0];
                   
 	//store bound in which a pixel will be output in x direction			  
     assign x_bound = (zone == 5'd0) ? x_loc + STAGE_0 :

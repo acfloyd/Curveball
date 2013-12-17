@@ -7,7 +7,8 @@ module Graphics_ASIC(
 	input[3:0] data_address,
    input read,
 	input VGA_ready,
-   output[23:0] color);
+   output[23:0] color,
+	output[3:0] zone);
 
 	parameter paddle_1_x_pos = 0;
 	parameter paddle_1_y_pos = 1;
@@ -52,8 +53,8 @@ module Graphics_ASIC(
 			buffer_regs[3] <= 240;
 			buffer_regs[4] <= 320;
 			buffer_regs[5] <= 240;
-			buffer_regs[6] <= 0;
-			buffer_regs[7] <= 16'hffff;
+			buffer_regs[6] <= 500;
+			buffer_regs[7] <= 0;
 			buffer_regs[8] <= 0;
 			buffer_regs[9] <= 0;
 		end else if(chipselect & ~read) begin
@@ -70,8 +71,8 @@ module Graphics_ASIC(
 			paddle_2_y <= 240;
 			ball_x <= 320;
 			ball_y <= 240;
-			ball_z <= 0;
-			p1_score <= 16'hffff;
+			ball_z <= 500;
+			p1_score <= 0;
 			p2_score <= 0;
 			game_state <= 0;
 		end else if(VGA_ready && pixel_x == 639 && pixel_y == 479) begin
@@ -105,7 +106,8 @@ module Graphics_ASIC(
 					.color(paddle_2_color));
 	
 	
-	Ball ball(.clk(clk),
+	Ball ball(.zone_copy(zone),
+				.clk(clk),
 				.rst(rst),
 				.x_loc(ball_x),
 				.y_loc(ball_y),

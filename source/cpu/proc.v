@@ -1,10 +1,9 @@
-module proc(clk, rst, WriteMem, ReadMem, ExternalAddr, ExternalWriteData, ExternalReadData,
-			Instruct, NextPC);
+module proc(clk, rst, WriteMem, ReadMem, ExternalAddr, ExternalWriteData, ExternalReadData);
 	
 	input clk, rst;
 	input [15:0] ExternalReadData;
 	output WriteMem, ReadMem;
-	output [15:0] ExternalAddr, ExternalWriteData, Instruct, NextPC;
+	output [15:0] ExternalAddr, ExternalWriteData;
 	
 	//Control
 	wire Stall, DivStall, NotBranchOrJump, WrRegEn, ZeroExtend8, NextPCSel, BranchImmedSel;

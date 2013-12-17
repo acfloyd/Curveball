@@ -6,10 +6,11 @@ module External_Mem(clk, rst, Addr, WriteData, Read, Write, DataToCPU, DataBus, 
 	output [15:0] DataToCPU;
 	inout [15:0] DataBus;
 	output CS_RAM, CS_Audio, CS_Graphics, CS_Spart, CS_PS2;
-	reg Drive_DataBus;
+	reg Drive_SwitchData;
+	wire [15:0] SwitchData;
 
 	assign DataBus = Write ? WriteData : 16'dz;
-	assign DataToCPU = DataBus;
+	assign DataToCPU = Drive_SwitchData ? SwitchData : DataBus;
 
 	assign CS_RAM = (Read | Write) & Addr == 4'b0000;
 	assign CS_Graphics = (Read | Write) & Addr == 4'b0001;
@@ -20,16 +21,16 @@ module External_Mem(clk, rst, Addr, WriteData, Read, Write, DataToCPU, DataBus, 
 	
 	always @(posedge clk or posedge rst) begin
 		if (rst) begin
-			Drive_DataBus <= 1'b0;
+			Drive_SwitchData <= 1'b0;
 		end
 		else if (CS_Switch) begin
-			Drive_DataBus <= 1'b1;
+			Drive_SwitchData <= 1'b1;
 		end
 		else begin
-			Drive_DataBus <= 1'b0;
+			Drive_SwitchData <= 1'b0;
 		end
 	end
 
-	assign DataBus = (Drive_DataBus) ? {{15{1'b0}}, switch} : 16'hzzzz;
+	assign SwitchData = {{15{1'b0}}, switch};
 
 endmodule

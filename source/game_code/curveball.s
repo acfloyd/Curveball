@@ -46,8 +46,6 @@ MACRO mouseAddr_low #0
 MACRO mouseAddr_high #64            ; 16384
 MACRO scoreAddr_low #7
 MACRO scoreAddr_high #16            ; 4110
-MACRO gameStateAddr_low #9
-MACRO gameStateAddr_high #16        ; 4114
 MACRO gameStartAddr_high #80
 MACRO gameStartAddr_low #0          ; 0x5000 (20480)
 
@@ -58,6 +56,8 @@ MACRO paddle2Tran_high #16
 MACRO paddle2Tran_low #2            ; 4098, 0x1002
 MACRO paddle1Tran_high #16
 MACRO paddle1Tran_low #0            ; 4096, 0x1000
+MACRO gameStateAddr_low #9
+MACRO gameStateAddr_high #16        ; 4114
 
 ; gen mem bases
 MACRO ballVelAddr #0
@@ -91,7 +91,7 @@ MACRO mPosy #2
 
 ; extra memory needed to hold mapped global variables
 ; addresses are for general purpose mem
-; 0: ball vel x, y, z acc x, y stat x, y
+; 0: ballvel x, y, z acc x, y stat x, y
 ; 6: pMouse x, y
 ; 8: pPaddle2 x and y
 ; 10: difficulty
@@ -112,19 +112,24 @@ MAIN:   LBI R0, scoreAddr_high
         LBI R3, gameStartAddr_high
         SLBI R3, gameStartAddr_low
         LD R4, R3, #0               ; load in the dip switch determining the start
+
+	; NAA NAA
+	LBI R3, scoreAddr_high
+	SLBI R3, scoreAddr_low
+	SLLI R4, R4, #8
+	ST R4, R3, p2Score
+	; END NAA NAA
+
         BNEZ R4, #2
         LBI R1, #3                  ; if starting posZ in non-zero, then it will check the spart
         SLBI R1, #232
 
         LBI R0, ballAddr
-        ST R1, R0, posZ             ; ball->posZ = 0
+        ST R1, R0, posZ             ; ball->posZ = 0 or 1000
 
         LBI R0, ballVelAddr
         LBI R2, velz_start
         ST R2, R0, velZ             ; ball->velZ = VELZ_START
-
-        JAL P1UPDATE
-        J #-1
 
 SETUP:  
         ; end game checks done here
@@ -133,10 +138,10 @@ SETUP:
         LD R3, R0, p1Score          ; r3 <-- playerScore
         SUBI R3, R3, endScore
         BNEZ R3, OPPWINCHK          ; if (playerScore == endScore)
-        LBI R0, #1
+        LBI R4, #1
         LBI R3, gameStateAddr_high
         SLBI R3, gameStateAddr_low
-        ST R0, R3, #0               ; set gamestate reg to player 1 win
+        ST R4, R3, #0               ; set gamestate reg to player 1 win
         LBI R3, #0
         ST R3, R0, p1Score          ; playerScore = 0
         ST R3, R0, p2Score          ; oppScore = 0
@@ -181,28 +186,6 @@ CONTINUE:
         ST R1, R0, accY             ; ball->accY = 0
         ST R1, R0, xStat            ; ball->xStat = 0
         ST R1, R0, yStat            ; ball->xStat = 0
-        
-        ; setup paddle 2
-        LBI R0, paddle2Addr
-        LBI R1, halfWidth_high     
-        SLBI R1, halfWidth_low
-        LBI R3, #51
-        SUB R1, R1, R3
-        ST R1, R0, posX             ; opponent->posX = (WIDTH / 2) - 51
-        LBI R1, halfHeight_high    
-        SLBI R1, halfHeight_low    
-        LBI R3, #37
-        SUB R1, R1, R3
-        ST R1, R0, posY             ; opponent->posY = (HEIGHT / 2) - 37
-
-        ; setup paddle 1
-        LBI R0, paddle1Addr
-        ST R1, R0, posY             ; opponent->posY = (HEIGHT / 2) - 37
-        LBI R1, halfWidth_high      ; paddle->posX = WIDTH / 2
-        SLBI R1, halfWidth_low
-        LBI R3, #51
-        SUB R1, R1, R3
-        ST R1, R0, posX             ; opponent->posX = (WIDTH / 2) - 51
 
         ; set difficulty
         LBI R1, #1
@@ -210,34 +193,19 @@ CONTINUE:
 
         ; check for mouse click here
         ; TODO: cnt could be changed here to get curve off of serve
-        LBI R6, #20                 ; r6 <-- cnt
-        JAL P1UPDATE                ; update paddles
-        JAL P2UPDATE
-        JAL BTRANS
+        ;LBI R6, #20                 ; r6 <-- cnt
 WAITCLICK:
 
-        ;/* NAA NAA */
-        LBI R0, #1
-        LBI R4, scoreAddr_high
-        SLBI R4, scoreAddr_low
-        ST R0, R4, p1Score
-        ;/* NAA NAA END */
-
-        SUBI R4, R6, #0
-        BNEZ R4, #4                 ; skip paddle update for 20 mouse click checks
         JAL P2UPDATE
         JAL P1UPDATE
         JAL BTRANS
-        LBI R6, #20                 ; r6 <-- reset to 20
-
-        SUBI R6, R6, #1             ; r6 <-- cnt - 1
 
         ; check if the mouse click also was when the paddle was over the ball
 
         ; check ball->posZ to determine which paddle to check against
         LBI R1, ballAddr            ; r1 <-- ballAddr
         LD R3, R1, posZ             ; r3 <-- ball->posZ
-        BEQZ R3, #3                 ; if (ball->posZ != 0) check against paddle2
+        BEQZ R3, #2                 ; if (ball->posZ != 0) check against paddle2
         LBI R0, paddle2Addr
         J #1
         LBI R0, paddle1Addr
@@ -247,6 +215,18 @@ WAITCLICK:
         SLBI R3, INTERSECT_LOW
         JALR R3, #0                 ; r0 <-- intersect(paddle2)
         ; r0 <-- sect at this point
+		
+	;/* NAA NAA */
+        LBI R4, scoreAddr_high
+        SLBI R4, scoreAddr_low
+	LD R3, R4, p2Score
+	LBI R5, #-1
+	SLBI R5, #0
+	AND R3, R3, R5
+	SLLI R6, R0, #4
+	OR R6, R3, R6 
+        ST R6, R4, p2Score
+        ;/* NAA NAA END */
 
         ; check whether to look at the mouse or the spart
         LD R3, R1, posZ
@@ -261,8 +241,19 @@ WAITCLICK:
         LBI R2, #1                  ; r2 <-- left click mask
         AND R5, R2, R1              ; r3 <-- masked mouse
 
+	;/* NAA NAA */
+        LBI R4, scoreAddr_high
+        SLBI R4, scoreAddr_low
+	LD R3, R4, p2Score
+	LBI R0, #-1
+	SLBI R0, #240
+	AND R3, R3, R0
+	OR R6, R3, R5 
+        ST R6, R4, p2Score
+        ;/* NAA NAA END */
+		
         AND R3, R5, R0  
-N1AA:   BNEZ R3, GLOOP              ; if left clicked and paddle intersect, go to game loop
+        BNEZ R3, GLOOP              ; if left clicked and paddle intersect, go to game loop
         J WAITCLICK
 
 ; loop runs forever updating the game state
@@ -273,13 +264,6 @@ GLOOP:
 
 ; save off the current location of the paddle #2
 P2UPDATE: 
-
-        ;/* NAA NAA */
-        LBI R0, scoreAddr_high
-        SLBI R0, scoreAddr_low
-        LBI R1, #4
-        ST R1, R0, p1Score
-        ;/* NAA NAA END */
 
         ; load addrs
         LBI R0, paddle2Addr
@@ -302,60 +286,28 @@ P2UPDATE:
         SLBI R6, paddle2Tran_low
 
         ;x value
-        LBI R0, #1
-        SLBI R0, #0                 ; r0 <-- 256
-        SUB R1, R1, R0              ; r1 <-- gameX - 256
-        LBI R3, #1
-        SLBI R3, #84                ; r3 <-- 340
-        LBI R5, #3
-        SLBI R5, #232               ; r5 <-- gameZ (1000)
-        ADD R5, R5, R3              ; r5 <-- 340 + gameZ
-
-        MULT R4, R3, R1             ; r4 <-- 340 * (gameX - 256)
-        BNEZ R4, #2                 ; if overflow is detected, shift and repeat mult
-        SRAI R1, R1, #1
-        SRAI R5, R5, #1
-        MULT R4, R3, R1
-
-        DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ)
-        LBI R0, #1
-        SLBI R0, #64                ; r0 <-- 320
-        ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ) + 320
-        ST R4, R6, posX
+		LBI R0, width_high
+		SLBI R0, width_low
+		SUB R1, R0, R1
+		LBI R0, paddle_width
+		SUB R1, R1, R0
+        SRAI R1, R1, #2
+		LBI R0, #1
+		SLBI R0, #0
+		ADD R1, R1, R0
+        ST R1, R6, posX
 
         ;y value
-        LBI R0, #0
-        SLBI R0, #192               ; r0 <-- 192
-        SUB R2, R2, R0              ; r2 <-- gameY - 192
-        LBI R3, #1
-        SLBI R3, #84                ; r3 <-- 340
-        LBI R5, #3
-        SLBI R5, #232               ; r5 <-- gameZ (1000)
-        ADD R5, R5, R3              ; r5 <-- 340 + gameZ
-
-        MULT R4, R3, R2             ; r4 <-- 340 * (gameX - 192)
-        BNEZ R4, #3                 ; if overflow is detected, shift and repeat mult
-        SRAI R2, R2, #1
-        SRAI R5, R5, #1
-        MULT R4, R3, R2
-
-        DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ)
-        LBI R0, #0
-        SLBI R0, #240
-        ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ) + 240
-        ST R4, R6, posY             
+		SRAI R2, R2, #2
+		LBI R0, #0
+		SLBI R0, #192
+		ADD R2, R2, R0
+        ST R2, R6, posY             
 
         JR R7, #0                   ; return
 
 ; save off the current location of the paddle #2
 P1UPDATE: 
-
-        ;/* NAA NAA */
-        LBI R0, scoreAddr_high
-        SLBI R0, scoreAddr_low
-        LBI R1, #3
-        ST R1, R0, p1Score
-        ;/* NAA NAA END */
 
         LBI R0, paddle1Addr
         LD R1, R0, posX
@@ -384,12 +336,6 @@ P1UPDATE:
 
         
 BTRANS: 
-        ;/* NAA NAA */
-        LBI R1, scoreAddr_high
-        SLBI R1, scoreAddr_low
-        LBI R5, #5
-        ST R5, R1, p1Score
-        ;/* NAA NAA END */
 
         ; translate the paddle2 pos to perspective
         LBI R5, ballAddr
@@ -399,6 +345,12 @@ BTRANS:
         LBI R6, ballTran_high
         SLBI R6, ballTran_low
         ST R3, R6, posZ             ; posZ stays the same, stored here
+
+	; NAA NAA
+	LBI R0, scoreAddr_high
+	SLBI R0, scoreAddr_low
+	ST R3, R0, p1Score
+	;end NAA NAA
 
         ;x value
         LBI R0, #1
@@ -1164,12 +1116,6 @@ ENDOW: ; end if (ball->posZ + BALL_RAD >= DEPTH)
 ; r2 <-- ballVelAddr
 ; TODO: could use set less than instructions here? maybe more efficent
 INTERSECT: 
-        ;/* NAA NAA */
-        LBI R3, scoreAddr_high
-        SLBI R3, scoreAddr_low
-        LBI R4, #2
-        ST R4, R3, p1Score
-        ;/* NAA NAA END */
 
         LD R3, R1, posX             ; r3 <-- ball->posX
         LBI R4, ball_rad

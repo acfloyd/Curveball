@@ -7,7 +7,7 @@ module Fetch(clk, rst, Stall, FetchStall, TruePC, NotBranchOrJump, NextPC,
     reg [15:0] PC;
     wire [15:0] MuxOut, NextPCRegIn, InstructRegIn;
 
-    simple_rom #(85,"instructions.txt") mem(MuxOut, InstructRegIn);
+    simple_rom #(249,"game_code.bin") mem(MuxOut, InstructRegIn);
 
     always @ (posedge clk, posedge rst) begin
         if(rst) PC <= 16'd0;

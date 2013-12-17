@@ -21,6 +21,8 @@
 module top(input clk_100mhz,
 			  input rst,
 			  input sw1,
+			  input sw2,
+			  input sw3,
 			  output blank,
 			  output comp_sync,
 			  output hsync,
@@ -49,12 +51,18 @@ module top(input clk_100mhz,
 	wire[23:0] graphics_color;
 	wire cpuclk;
 	wire Read, Write, CS_RAM, CS_Audio, CS_Graphics, CS_Spart, CS_PS2;
-	wire [15:0] Addr, WriteData, DataToCPU, DataBus, Instruct, NextPC;
+	wire [15:0] Addr, WriteData, DataToCPU, DataBus;
+	wire [3:0] zone;
 	
-	assign LED_0 = ~CS_RAM;
-	assign LED_1 = ~CS_Graphics;
-	assign LED_2 = ~CS_Spart;
-	assign LED_3 = ~CS_PS2;
+	//assign LED_0 = (sw2)?~CS_RAM:rxd;
+	//assign LED_1 = (sw2)?~CS_Graphics:txd;
+	//assign LED_2 = (sw2)?~CS_Spart:0;
+	//assign LED_3 = (sw2)?~CS_PS2:0;
+	
+	assign LED_0 = ~sw1;
+	assign LED_1 = zone[1];
+	assign LED_2 = zone[2];
+	assign LED_3 = zone[3];
 	
 	proc PROC(.clk(cpuclk), 
 			  .rst(rst | ~cpu_locked_dcm), 
@@ -62,9 +70,7 @@ module top(input clk_100mhz,
 			  .ReadMem(Read), 
 			  .ExternalAddr(Addr),
 			  .ExternalWriteData(WriteData), 
-			  .ExternalReadData(DataToCPU), 
-			  .Instruct(Instruct), 
-			  .NextPC(NextPC));
+			  .ExternalReadData(DataToCPU));
 
 	External_Mem MEM(.clk(cpuclk),
 					 .rst(rst | ~cpu_locked_dcm),
@@ -95,7 +101,8 @@ module top(input clk_100mhz,
 					.databus(DataBus),
 					.data_address(Addr[3:0]),
 					.VGA_ready(graphics_VGA_ready),
-					.color(graphics_color)
+					.color(graphics_color),
+					.zone(zone)
 					);
 	
 	
