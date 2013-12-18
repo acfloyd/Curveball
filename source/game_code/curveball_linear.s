@@ -17,7 +17,7 @@ MACRO depth_low #232
 MACRO stallCnt_high #127
 MACRO stallCnt_low #255 ; cnt = 32767, 0x7FFF
 
-MACRO velz_start #7
+MACRO velz_start #5
 MACRO ball_rad #35
 MACRO curve_reduce #20
 MACRO paddle_width #101
@@ -666,16 +666,10 @@ ENDTBW: ; end if ((ball->posX + BALL_RAD >= HEIGHT) || (ball->posX - BALL_RAD <=
         ST R4, R1, posZ             ; ball->posZ = BALL_RAD + 1
 
         ; start of setting velX, accX, and xStat based on the mouse movement
-        LBI R4, mouseAddr_high
-        SLBI R4, mouseAddr_low      ; r4 <-- mouseAddr
-        LBI R5, pMouseAddr          ; r5 <-- pMouseAddr
 
         BEQZ R3, INTRPNFX           ; if (first)
         LBI R0, velz_start
         ST R0, R2, velZ             ; ball->velZ = VELZ_START
-        LD R3, R4, mPosx            ; r3 <-- mouse->posX
-        LD R6, R5, posX             ; r6 <-- pmouse->posX
-        SUB R6, R3, R6              ; r6(mouseDiff) <-- mouse->posX - pmouse->posX
         J INTRPNX_ELSE
 INTRPNFX: ; end if (first)
 
@@ -690,55 +684,53 @@ INTRPNFX: ; end if (first)
         LDI R3, difficultyAddr      ; r3 <-- difficulty
         ADD R0, R0, R3
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
-
-        LD R0, R5, posX             ; r0 <-- pmouse->posX
-        LD R3, R4, mPosx            ; r3 <-- mouse->posX
-
-        SUB R3, R3, R0              ; r3 <-- mouse->posX - pmouse->posX
-        LD R0, R2, velX             ; r0 <-- ball->velX
-        ADD R6, R0, R3              ; r6(mouseDiff) <-- (mouse->posX - pmouse->posX) + ball->velX 
 INTRPNX_ELSE: ; end of else if (first)
         ; r6 has mouseDiff at this point
+        LBI R0, paddle1Addr
+        LD R6, R2, velX
 
+        LD R3, R1, posX
+        LD R4, R0, posX
+        SUB R5, R3, R4
+        LBI R4, #51             
+        SUB R5, R5, R4
+        BLTZ R5, #2
+        ADDI R6, R6, #1
+        J #1
+        SUBI R6, R6, #1
 	NOP
 	NOP
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #4
 	ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
-        LBI R4, mouseAddr_high
-        SLBI R4, mouseAddr_low      ; r4 <-- mouseAddr
-        LBI R5, pMouseAddr          ; r5 <-- pMouseAddr
 
         LDI R3, firstAddr
         BEQZ R3, INTRPNFY           ; if (first)
         LBI R3, #0
         STI R3, firstAddr           ; first = FALSE
-        LD R3, R4, mPosy            ; r3 <-- mouse->posY
-        LD R6, R5, posY             ; r6 <-- pmouse->posY
-        SUB R6, R3, R6              ; r6(mouseDiff) <-- mouse->posY - pmouse->posY
-        J INTRPNY_ELSE
 INTRPNFY: ; end if (first)
 
-        ; else of if (first)
-        LD R0, R5, posY             ; r0 <-- pmouse->posY
-        LD R3, R4, mPosy            ; r3 <-- mouse->posY
-        SUB R3, R3, R0              ; r3 <-- mouse->posY - pmouse->posY
-        LD R0, R2, velY             ; r0 <-- ball->velY
-        ADD R6, R0, R3              ; r6(mouseDiff) <-- (mouse->posY - pmouse->posY) + ball->velY 
-INTRPNY_ELSE: ; end of else if (first)
-        ; r6 has mouseDiff at this point
+        LBI R0, paddle1Addr
+        LD R6, R2, velY
 
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-  SRAI R6, R6, #4
-	ST R6, R2, velY
+        LD R3, R1, posY
+        LD R4, R0, posY
+        SUB R5, R3, R4
+        LBI R4, #38             
+        SUB R5, R5, R4
+        BLTZ R5, #2
+        ADDI R6, R6, #1
+        J #1
+        SUBI R6, R6, #1
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        ST R6, R2, velY
         
         J ENDOW
 NOINTRP: ; end if (sect || first)
