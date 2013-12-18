@@ -17,7 +17,7 @@ MACRO depth_low #232
 MACRO stallCnt_high #127
 MACRO stallCnt_low #255 ; cnt = 32767, 0x7FFF
 
-MACRO velz_start #1
+MACRO velz_start #10
 MACRO ball_rad #35
 MACRO curve_reduce #20
 MACRO paddle_width #101
@@ -114,8 +114,8 @@ MAIN:   LBI R0, scoreAddr_high
 
 	; set previous paddle 1 and 2 counters to prevent previous paddles
 	; from updating for a certian num of calls to each update routine
-	STI R1, pPad1Cnt
-	STI R1, pPad2Cnt
+	      STI R1, pPad1Cnt
+	      STI R1, pPad2Cnt
 
         ; check who is starting with the ball
         LBI R3, gameStartAddr_high
@@ -163,11 +163,7 @@ OPPWINCHK: ; end if (playerScore == endScore)
         J CONTINUE
 CONTINUE:
 
-        LBI R0, #0
-        LBI R3, gameStateAddr_high
-        SLBI R3, gameStateAddr_low
-        ST R0, R3, #0               ; set gamestate reg to game playing
-        LBI R0, #1                  
+               LBI R0, #1                  
         STI R0, firstAddr           ; first = TRUE
         LBI R0, ballAddr            ; setup the ball
         LBI R1, halfWidth_high      
@@ -242,7 +238,13 @@ WAITCLICK:
 
 ; loop runs forever updating the game state
 GLOOP:  
-	; start of a wait loop decrimenting from 20,000 to 0
+
+   LBI R0, #0
+   LBI R3, gameStateAddr_high
+   SLBI R3, gameStateAddr_low
+   ST R0, R3, #0               ; set gamestate reg to game playing
+	
+  ; start of a wait loop decrimenting from 20,000 to 0
 	LBI R5, #127
 	SLBI R5, #255
 	LBI R4, #2
@@ -275,11 +277,11 @@ P2UPDATE:
 
 	
 
-	LDI R5, pPad2Cnt
-	LBI R6, #20
-	SUB R6, R6, R5
-	BNEZ R6, NOP2UP
-	LBI R5, #0
+	      LDI R5, pPad2Cnt
+	      LBI R6, #20
+	      SUB R6, R6, R5
+	      BNEZ R6, NOP2UP
+	      LBI R5, #0
 
         LD R1, R0, posX
         LD R2, R0, posY
@@ -497,7 +499,7 @@ BUPTE:
 	NOP
 	NOP
 	ADD R3, R3, R0
-	ST R3, R0, posX		    ; ball->posX += ball->velX
+	ST R3, R1, posX		    ; ball->posX += ball->velX
         
         LD R0, R2, velY             ; r0 <-- ball->velY
 	LD R3, R1, posY		    ; r4 <-- ball->posY
@@ -714,6 +716,7 @@ INTRPNX_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
+  SRAI R6, R6, #2
 	ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -745,6 +748,7 @@ INTRPNY_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
+  SRAI R6, R6, #2
 	ST R6, R2, velY
         
         J ENDOW
@@ -853,6 +857,7 @@ INTRONX_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
+  SRAI R6, R6, #2
 	ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -882,6 +887,7 @@ INTRONY_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
+  SRAI R6, R6, #2
 	ST R6, R2, velY
 
         J ENDOW
