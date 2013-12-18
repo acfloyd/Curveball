@@ -17,7 +17,7 @@ MACRO depth_low #232
 MACRO stallCnt_high #127
 MACRO stallCnt_low #255 ; cnt = 32767, 0x7FFF
 
-MACRO velz_start #10
+MACRO velz_start #5
 MACRO ball_rad #35
 MACRO curve_reduce #20
 MACRO paddle_width #101
@@ -109,8 +109,8 @@ MACRO mPosy #2
 MAIN:   LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low
         LBI R1, #0
-        ;ST R1, R0, p1Score          ; playerScore = 0
-        ;ST R1, R0, p2Score          ; oppScore = 0
+        ST R1, R0, p1Score          ; playerScore = 0
+        ST R1, R0, p2Score          ; oppScore = 0
 
 	; set previous paddle 1 and 2 counters to prevent previous paddles
 	; from updating for a certian num of calls to each update routine
@@ -147,8 +147,8 @@ SETUP:
         SLBI R3, gameStateAddr_low
         ST R4, R3, #0               ; set gamestate reg to player 1 win
         LBI R3, #0
-        ;ST R3, R0, p1Score          ; playerScore = 0
-        ;ST R3, R0, p2Score          ; oppScore = 0
+        ST R3, R0, p1Score          ; playerScore = 0
+        ST R3, R0, p2Score          ; oppScore = 0
         J CONTINUE
 OPPWINCHK: ; end if (playerScore == endScore)
         LD R3, R0, p2Score
@@ -159,7 +159,7 @@ OPPWINCHK: ; end if (playerScore == endScore)
         SLBI R3, gameStateAddr_low
         ST R0, R3, #0               ; set gamestate reg to player 2 win
         LBI R3, #0
-        ;ST R3, R0, p1Score          ; playerScore = 0
+        ST R3, R0, p1Score          ; playerScore = 0
         J CONTINUE
 CONTINUE:
 
@@ -261,6 +261,15 @@ GSTALL1:
 	BEQZ R5, #2
 	SUBI R5, R5, #1
 	J GSTALL1
+
+	; start of a wait loop decrimenting from 20,000 to 0
+	LBI R5, #1
+	SLBI R5, #255
+	LBI R4, #2
+GSTALL2:
+	BEQZ R5, #2
+	SUBI R5, R5, #1
+	J GSTALL2
 
         JAL P2UPDATE                ; opp_update()
         JAL P1UPDATE                ; paddle_update()
@@ -381,11 +390,6 @@ NOP1UP:
         ST R1, R0, posX             ; paddle->posX = mouse->posX
         ST R2, R0, posY             ; paddle->posY = mouse->posY
 
-	LBI R0, scoreAddr_high
-	SLBI R0, scoreAddr_low
-	ST R1, R0, p1Score
-	ST R2, R0, p2Score
-
         ; translate the paddle1 to perspective mode
         LBI R0, paddle1Tran_high
         SLBI R0, paddle1Tran_low
@@ -414,18 +418,6 @@ BTRANS:
 	NOP
 	NOP
 	
-	;LBI R0, width_high
-	;SLBI R0, width_low
-	;SUB R1, R0, R1
-	LBI R0, #64
-	ADD R1, R1, R0
-	ST R1, R6, posX             ; posX offset by 64
-	LBI R0, #48
-	ADD R2, R2, R0
-	ST R2, R6, posY             ; posY offset by 48
-	ST R3, R6, posZ             ; posZ stays the same, stored here
-        JR R7, #0
-
         ;x value
         LBI R0, #1
         SLBI R0, #0                 ; r0 <-- 256
@@ -436,10 +428,8 @@ BTRANS:
         SLBI R5, #232               ; r5 <-- gameZ (1000)
         ADD R5, R5, R3              ; r5 <-- 340 + gameZ
 
-        MULT R4, R3, R1             ; r4 <-- 340 * (gameX - 256)
-        BNEZ R4, #3                 ; if overflow is detected, shift and repeat mult
-        SRAI R1, R1, #1
-        SRAI R5, R5, #1
+        SRAI R1, R1, #2
+        SRAI R5, R5, #2
         MULT R4, R3, R1
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ)
@@ -458,10 +448,8 @@ BTRANS:
         SLBI R5, #232               ; r5 <-- gameZ (1000)
         ADD R5, R5, R3              ; r5 <-- 340 + gameZ
 
-        MULT R4, R3, R2             ; r4 <-- 340 * (gameX - 192)
-        BNEZ R4, #3                 ; if overflow is detected, shift and repeat mult
-        SRAI R2, R2, #1
-        SRAI R5, R5, #1
+        SRAI R2, R2, #2
+        SRAI R5, R5, #2
         MULT R4, R3, R2
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ)
@@ -716,7 +704,7 @@ INTRPNX_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #2
+  SRAI R6, R6, #3
 	ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -748,7 +736,7 @@ INTRPNY_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #2
+  SRAI R6, R6, #3
 	ST R6, R2, velY
         
         J ENDOW
@@ -765,7 +753,7 @@ NOINTRP: ; end if (sect || first)
         SLBI R0, scoreAddr_low
         LD R3, R0, p2Score
         ADDI R3, R3, #1
-        ;ST R3, R0, p2Score          ; oppScore++
+        ST R3, R0, p2Score          ; oppScore++
         LBI R0, #0
         ST R0, R1, posZ             ; ball->posZ = 0
         LBI R0, velz_start
@@ -857,7 +845,7 @@ INTRONX_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #2
+  SRAI R6, R6, #3
 	ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -887,7 +875,7 @@ INTRONY_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #2
+  SRAI R6, R6, #3
 	ST R6, R2, velY
 
         J ENDOW
@@ -904,7 +892,7 @@ ENDINTROW: ; end if (intersect(opponent) || first)
         SLBI R0, scoreAddr_low      ; r0 <-- scoreAddr
         LD R3, R0, #0
         ADDI R3, R3, #1
-        ;ST R3, R0, p1Score          ; playerScore++
+        ST R3, R0, p1Score          ; playerScore++
         LBI R0, depth_high
         SLBI R0, depth_low
         ST R0, R1, posZ             ; ball->posZ = DEPTH
