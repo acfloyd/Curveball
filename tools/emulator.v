@@ -97,48 +97,7 @@ always @(posedge clk) begin
         // store the ball position values to be used for testing in excel after program halts
         //$display("PC: %d\n", PC);
 
-/*
-        if (PC > 641)
-            $finish;
-        if (PC == 103) begin
-            $display("p1update\n");
-            $display("pad1->posX: %d, posY: %d\n", Dmem[`PAD1ADDR + `POSX], Dmem[`PAD1ADDR + `POSY]);
-        end
-        if (PC == 95) begin
-            $display("p2update\n");
-            $display("pad1->posX: %d, posY: %d\n", Dmem[`PAD1ADDR + `POSX], Dmem[`PAD1ADDR + `POSY]);
-        end
-
-        if (PC == 70) begin
-            $display("WAITCLICK\n");
-            $display("ball->posX: %d, posY: %d, posZ: %d\n", Dmem[`BALLADDR + `POSX], Dmem[`BALLADDR + `POSY], Dmem[`BALLADDR + `POSZ]);
-            $display("pad1->posX: %d, posY: %d\n", Dmem[`PAD1ADDR + `POSX], Dmem[`PAD1ADDR + `POSY]);
-            $display("r0: %d, r5: %d\n", rf[0], rf[5]);
-
-            if (Dmem[`PAD1ADDR + `POSX] == 1)
-                $finish;
-        end
-
-        if (PC == 602) begin
-            $display("INTERSECT\n");
-            $display("ball->posX: %d, posY: %d, posZ: %d\n", Dmem[`BALLADDR + `POSX], Dmem[`BALLADDR + `POSY], Dmem[`BALLADDR + `POSZ]);
-            $display("pad1->posX: %d, posY: %d\n", Dmem[`PAD1ADDR + `POSX], Dmem[`PAD1ADDR + `POSY]);
-        end
-
-        if (PC == 608)
-            $display("N2AA\n");
-        if (PC == 614)
-            $display("N3AA\n");
-        if (PC == 620)
-            $display("N4AA\n");
-        if (PC == 624)
-            $display("r6: %d, r4: %d, r5: %d\n", rf[6], rf[4], rf[5]);
-        if (PC == 626)
-            $display("N5AA\n");
-        if (PC == 114)
-            $display("N6AA, r1: %d, r2: %d, r3: %d\n", rf[1], rf[2], rf[3]);
-*/
-        if (PC == 121) begin // if at BUPDATE
+        if (PC == 271) begin // if at BUPDATE
             $display("BUPDATE: first: %d, ball->posX: %d, posY: %d, posZ: %d\n", Dmem[11], Dmem[`BALLADDR + `POSX], Dmem[`BALLADDR + `POSY], Dmem[`BALLADDR + `POSZ]);
             outGrid[Dmem[`BALLADDR + `POSX]][Dmem[`BALLADDR + `POSZ]] = Dmem[`BALLADDR + `POSY];
         end

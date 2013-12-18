@@ -189,7 +189,7 @@ module Score_Draw(
     
   // parameters for scores
   parameter x1 = 64; // ul x coordinate for score 1
-  parameter x2 = 384; // ul x coordinate for score 2
+  parameter x2 = 544; // ul x coordinate for score 2
   parameter y = 10; // ul y coordinate for both scores
   
   // build score ROM
@@ -199,8 +199,8 @@ module Score_Draw(
   
   // draw logic
   wire p1_w, p2_w, p_v;
-  assign p1_w = pixel_x >= x1 && pixel_x < x1 + score_width * 4;
-  assign p2_w = pixel_x >= x2 && pixel_x < x2 + score_width * 4;
+  assign p1_w = pixel_x >= x1 && pixel_x < x1 + score_width;
+  assign p2_w = pixel_x >= x2 && pixel_x < x2 + score_width;
   assign p_v = pixel_y >= y && pixel_y < y + score_height;
   assign draw = (p_v && (p1_w || p2_w)) ? data : 1'b0;
   
@@ -209,13 +209,7 @@ module Score_Draw(
   wire[4:0] addr_x, addr_y;
   assign addr_x = (pixel_x < 639) ? pixel_x + 1 : 16'd0;
   assign addr_y = pixel_y - y;
-  assign digit = (pixel_x < x1 + score_width) ? your_score[15:12] :
-					  (pixel_x < x1 + score_width * 2) ? your_score[11:8] :
-					  (pixel_x < x1 + score_width * 3) ? your_score[7:4] :
-					  (pixel_x < x1 + score_width * 4) ? your_score[3:0] :
-					  (pixel_x < x2 + score_width) ? their_score[15:12] :
-					  (pixel_x < x2 + score_width * 2) ? their_score[11:8] :
-					  (pixel_x < x2 + score_width * 3) ? their_score[7:4] :
+  assign digit = (pixel_x < x1 + score_width) ? your_score[3:0] :
 					  their_score[3:0];
 					  
   assign addr = {addr_y, digit, addr_x};

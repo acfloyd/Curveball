@@ -112,10 +112,10 @@ MAIN:   LBI R0, scoreAddr_high
         ST R1, R0, p1Score          ; playerScore = 0
         ST R1, R0, p2Score          ; oppScore = 0
 
-	; set previous paddle 1 and 2 counters to prevent previous paddles
-	; from updating for a certian num of calls to each update routine
-	STI R1, pPad1Cnt
-	STI R1, pPad2Cnt
+		; set previous paddle 1 and 2 counters to prevent previous paddles
+		; from updating for a certian num of calls to each update routine
+		STI R1, pPad1Cnt
+		STI R1, pPad2Cnt
 
         ; check who is starting with the ball
         LBI R3, gameStartAddr_high
@@ -183,7 +183,9 @@ CONTINUE:
         LBI R0, #0
         LBI R3, gameStateAddr_high
         SLBI R3, gameStateAddr_low
-        ST R0, R3, #0               ; set gamestate reg to game playing
+	; NAA
+        ST R0, R3, #1               ; set gamestate reg to game playing
+	; end NAA
         LBI R0, #1                  
         STI R0, firstAddr           ; first = TRUE
         LBI R0, ballAddr            ; setup the ball
@@ -232,15 +234,15 @@ WAITCLICK:
         ; r0 <-- sect at this point
 		
 	;/* NAA NAA */
-        LBI R4, scoreAddr_high
-        SLBI R4, scoreAddr_low
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-        ST R0, R4, p2Score
+        ;LBI R4, scoreAddr_high
+        ;SLBI R4, scoreAddr_low
+	;NOP
+	;NOP
+	;NOP
+	;NOP
+	;NOP
+	;NOP
+        ;ST R0, R4, p2Score
         ;/* NAA NAA END */
 
         ; check whether to look at the mouse or the spart
@@ -257,14 +259,14 @@ WAITCLICK:
         AND R5, R2, R1              ; r3 <-- masked mouse
 
 	;/* NAA NAA */
-        LBI R4, scoreAddr_high
-        SLBI R4, scoreAddr_low
-	LD R3, R4, p2Score
-	LBI R1, #-1
-	SLBI R1, #240
-	AND R3, R3, R1
-	OR R6, R3, R5 
-        ST R6, R4, p2Score
+        ;LBI R4, scoreAddr_high
+        ;SLBI R4, scoreAddr_low
+	;LD R3, R4, p2Score
+	;LBI R1, #-1
+	;SLBI R1, #240
+	;AND R3, R3, R1
+	;OR R6, R3, R5 
+        ;ST R6, R4, p2Score
         ;/* NAA NAA END */
 		
         AND R3, R5, R0  
@@ -303,6 +305,8 @@ P2UPDATE:
         LBI R3, spartAddr_high
         SLBI R3, spartAddr_low
         LBI R4, pPaddle2Addr
+
+	
 
 	LDI R5, pPad2Cnt
 	LBI R6, #20
@@ -370,6 +374,22 @@ NOP2UP:
 P1UPDATE: 
         LBI R0, paddle1Addr
 
+	; NAA
+        LBI R4, pMouseAddr
+	LBI R1, scoreAddr_high
+	SLBI R1, scoreAddr_low
+	LD R5, R4, posX
+	LD R6, R0, posX
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	ST R5, R1, p2Score
+	SUB R6, R6, R5
+	ST R6, R1, p1Score
+	; end NAA
+
 	LDI R6, pPad1Cnt
 	LBI R5, #20
 	SUB R5, R5, R6
@@ -393,7 +413,7 @@ NOP1UP:
 	NOP
 	NOP
 	NOP
-	ADD R6, R6, #1
+	ADDI R6, R6, #1
 	STI R6, pPad1Cnt
 
         LBI R3, mouseAddr_high
@@ -439,9 +459,9 @@ BTRANS:
 	;LBI R0, width_high
 	;SLBI R0, width_low
 	;SUB R1, R0, R1
-	LBI R0, #64
-	ADD R1, R1, R0
-	ST R1, R6, posX             ; posX offset by 64
+	;LBI R0, #64
+	;ADD R1, R1, R0
+	;ST R1, R6, posX             ; posX offset by 64
 	LBI R0, #48
 	ADD R2, R2, R0
 	ST R2, R6, posY             ; posY offset by 48
@@ -451,7 +471,6 @@ BTRANS:
 	LBI R0, scoreAddr_high
 	SLBI R0, scoreAddr_low
 	;ST R3, R0, p1Score
-	JR R7, #0
 	;end NAA NAA
 
         ;x value
@@ -475,6 +494,8 @@ BTRANS:
         SLBI R0, #64                ; r0 <-- 320
         ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ) + 320
         ST R4, R6, posX
+
+	JR R7, #0
 
         ;y value
         LBI R0, #0
@@ -514,6 +535,11 @@ BUPDATE:
 
         LD R4, R1, posZ             ; r4 <-- ball->posZ
         LD R5, R2, velZ             ; r5 <-- ball->velZ
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         ADD R4, R4, R5              
         ST R4, R1, posZ             ; ball->posZ += ball->velZ
         
@@ -819,8 +845,8 @@ INTRPNFX: ; end if (first)
 	; NAA NAA
 	LBI R7, scoreAddr_high
 	SLBI R7, scoreAddr_low
-	ST R0, R7, p2Score
-	ST R3, R7, p1Score
+	;ST R0, R7, p2Score
+	;ST R3, R7, p1Score
 	; end NAA NAA
 
         SUB R3, R3, R0              ; r3 <-- mouse->posX - pmouse->posX
@@ -841,7 +867,7 @@ INTRPNX_ELSE: ; end of else if (first)
 
         BEQZ R6, MTSTEX0            ; if (mouseDiff != 0)
 
-        LBI R0, #30
+        LBI R0, #16
         SUB R0, R0, R6              ; r0 <-- 30 - mouseDiff
         BLTZ R0, MTSTLX30           ; if (mouseDiff <= 30)
         MULTI R0, R5, stat_vel_1   ; r0 <-- VEL1 * mouseDir
@@ -853,7 +879,7 @@ INTRPNX_ELSE: ; end of else if (first)
         J MTSTEX0
 MTSTLX30: ; end if (mouseDiff <= 30)
 
-        LBI R0, #60
+        LBI R0, #31
         SUB R0, R0, R6              ; r0 <-- 60 - mouseDiff
         BLTZ R0, MTSTLX60           ; if (mouseDiff <= 60)
         MULTI R0, R5, stat_vel_2   ; r0 <-- VEL2 * mouseDir
@@ -865,7 +891,7 @@ MTSTLX30: ; end if (mouseDiff <= 30)
         J MTSTEX0
 MTSTLX60: ; end if (mouseDiff <= 60)
 
-        LBI R0, #90
+        LBI R0, #48
         SUB R0, R0, R6              ; r0 <-- 90 - mouseDiff
         BLTZ R0, MTSTLX90           ; if (mouseDiff <= 90)
         MULTI R0, R5, stat_vel_3   ; r0 <-- VEL3 * mouseDir

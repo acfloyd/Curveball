@@ -17,7 +17,7 @@ MACRO depth_low #232
 MACRO stallCnt_high #127
 MACRO stallCnt_low #255 ; cnt = 32767, 0x7FFF
 
-MACRO velz_start #5
+MACRO velz_start #1
 MACRO ball_rad #35
 MACRO curve_reduce #20
 MACRO paddle_width #101
@@ -60,7 +60,7 @@ MACRO paddle1Tran_high #16
 MACRO paddle1Tran_low #0            ; 4096, 0x1000
 
 ; gen mem bases
-MACRO ballVelAddr #50
+MACRO ballVelAddr #0
 MACRO pMouseAddr #6
 MACRO pPaddle2Addr #8
 MACRO difficultyAddr #10
@@ -109,18 +109,8 @@ MACRO mPosy #2
 MAIN:   LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low
         LBI R1, #0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-        ST R1, R0, p1Score          ; playerScore = 0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-        ST R1, R0, p2Score          ; oppScore = 0
+        ;ST R1, R0, p1Score          ; playerScore = 0
+        ;ST R1, R0, p2Score          ; oppScore = 0
 
 	; set previous paddle 1 and 2 counters to prevent previous paddles
 	; from updating for a certian num of calls to each update routine
@@ -137,22 +127,12 @@ MAIN:   LBI R0, scoreAddr_high
         SLBI R1, #232
 
         LBI R0, ballAddr
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R1, R0, posZ             ; ball->posZ = 0 or 1000
 
         LBI R0, ballVelAddr
         LBI R2, velz_start
         BNEZ R4, #1
         MULTI R2, R2, #-1
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R2, R0, velZ             ; ball->velZ = VELZ_START
 
 SETUP:  
@@ -165,24 +145,10 @@ SETUP:
         LBI R4, #1
         LBI R3, gameStateAddr_high
         SLBI R3, gameStateAddr_low
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R4, R3, #0               ; set gamestate reg to player 1 win
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-        ST R3, R0, p1Score          ; playerScore = 0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-        ST R3, R0, p2Score          ; oppScore = 0
+        LBI R3, #0
+        ;ST R3, R0, p1Score          ; playerScore = 0
+        ;ST R3, R0, p2Score          ; oppScore = 0
         J CONTINUE
 OPPWINCHK: ; end if (playerScore == endScore)
         LD R3, R0, p2Score
@@ -191,64 +157,26 @@ OPPWINCHK: ; end if (playerScore == endScore)
         LBI R0, #2
         LBI R3, gameStateAddr_high
         SLBI R3, gameStateAddr_low
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R0, R3, #0               ; set gamestate reg to player 2 win
         LBI R3, #0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-        ST R3, R0, p1Score          ; playerScore = 0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-        ST R3, R0, p2Score          ; playerScore = 0
-        ;J CONTINUE
+        ;ST R3, R0, p1Score          ; playerScore = 0
+        J CONTINUE
 CONTINUE:
-		LBI R1, #0	
-        LBI R0, ballVelAddr   
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-		ST R1, R0, velY             ; ball->velY = 0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
-        ST R1, R0, velX             ; ball->velX = 0
+
 		LBI R0, #1                  
         STI R0, firstAddr           ; first = TRUE
         LBI R0, ballAddr            ; setup the ball
         LBI R1, halfWidth_high      
         SLBI R1, halfWidth_low
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R1, R0, posX             ; ball->posX = WIDTH / 2
         LBI R1, halfHeight_high    
         SLBI R1, halfHeight_low     
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R1, R0, posY             ; ball->posY = HEIGHT / 2
-       
-		
-		
-		
+        LBI R1, #0
+        LBI R0, ballVelAddr         
+        ST R1, R0, velX             ; ball->velX = 0
+        ST R1, R0, velY             ; ball->velY = 0
+
         ; set difficulty
         LBI R1, #1
         STI R1, difficultyAddr      ; difficulty = 1
@@ -310,11 +238,6 @@ GLOOP:
    LBI R0, #0
    LBI R3, gameStateAddr_high
    SLBI R3, gameStateAddr_low
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
    ST R0, R3, #0               ; set gamestate reg to game playing
 	
   ; start of a wait loop decrimenting from 20,000 to 0
@@ -325,9 +248,6 @@ GSTALL0:
 	BEQZ R5, #2
 	SUBI R5, R5, #1
 	J GSTALL0
-	
-	JAL P2UPDATE                ; opp_update()
-    JAL P1UPDATE                ; paddle_update()
 
 	; start of a wait loop decrimenting from 20,000 to 0
 	LBI R5, #127
@@ -337,9 +257,6 @@ GSTALL1:
 	BEQZ R5, #2
 	SUBI R5, R5, #1
 	J GSTALL1
-	
-	JAL P2UPDATE                ; opp_update()
-    JAL P1UPDATE                ; paddle_update()
 
 	; start of a wait loop decrimenting from 20,000 to 0
 	LBI R5, #127
@@ -378,22 +295,7 @@ P2UPDATE:
         NOP
         NOP
         NOP
-		;LBI R0, width_high
-        ;SLBI R0, width_low
-        ;SUB R1, R0, R1
-        ;LBI R0, paddle_width
-        ;SUB R1, R1, R0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R1, R0, posX             ; opponent->posX = spart->posX
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R2, R0, posY             ; opponent->posY = spart->posY
 
         ; translate the paddle2 pos to perspective
@@ -401,16 +303,16 @@ P2UPDATE:
         SLBI R6, paddle2Tran_low
 
         ;x value
+        LBI R0, width_high
+        SLBI R0, width_low
+        SUB R1, R0, R1
+        LBI R0, paddle_width
+        SUB R1, R1, R0	
         SRAI R1, R1, #2
         LBI R0, #1
         SLBI R0, #0
         ;LBI R0, #64
         ADD R1, R1, R0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R1, R6, posX
 
         ;y value
@@ -419,11 +321,6 @@ P2UPDATE:
         SLBI R0, #192
         ;LBI R0, #48
         ADD R2, R2, R0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R2, R6, posY             
 
         JR R7, #0                   ; return
@@ -441,11 +338,6 @@ P1UPDATE:
         NOP
         NOP
         ST R1, R0, posX             ; paddle->posX = mouse->posX
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R2, R0, posY             ; paddle->posY = mouse->posY
 
         ; translate the paddle1 to perspective mode
@@ -453,19 +345,9 @@ P1UPDATE:
         SLBI R0, paddle1Tran_low
         LBI R3, #64
         ADD R1, R1, R3
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R1, R0, posX             ; transPaddle1->posX is set
         LBI R3, #48
         ADD R2, R2, R3
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R2, R0, posY             ; transPaddle1->posY is set
         JR R7, #0                   ; return
         
@@ -506,11 +388,6 @@ BTRANS:
         LBI R0, #1
         SLBI R0, #64                ; r0 <-- 320
         ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ) + 320
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R4, R6, posX
 
         ;y value
@@ -532,11 +409,6 @@ BTRANS:
         LBI R0, #0
         SLBI R0, #240
         ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ) + 240
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R4, R6, posY             
         JR R7, #0
 
@@ -559,12 +431,8 @@ BUPDATE:
         NOP
         NOP
         ADD R4, R4, R5              
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R4, R1, posZ             ; ball->posZ += ball->velZ
+		
         LD R0, R2, velX             ; r0 <-- ball->velX
         LD R3, R1, posX		        ; r3 <-- ball->posX
         NOP
@@ -573,11 +441,6 @@ BUPDATE:
         NOP
         NOP
         ADD R3, R3, R0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R3, R1, posX		    ; ball->posX += ball->velX
         
         LD R0, R2, velY             ; r0 <-- ball->velY
@@ -588,11 +451,6 @@ BUPDATE:
         NOP
         NOP
         ADD R3, R3, R0
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R3, R1, posY		    ; ball->posY += ball->velY
 
 ENDPBN: ; end if (pball != NULL)
@@ -625,12 +483,7 @@ INRLW:
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
         LBI R3, #128
-        SLBI R3, #4
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
+        SLBI R3, #0
         ST R3, R0, #0               ; play the wall hit sound
 
         ; right wall
@@ -646,11 +499,6 @@ INRLW:
         LBI R3, ball_rad
         SUB R3, R0, R3              ; r3 <-- WIDTH - BALL_RAD
         SUBI R3, R3, #1
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R3, R1, posX             ; ball->posX = WIDTH - BALL_RAD - 1
 
         J ENDIFLW
@@ -658,11 +506,6 @@ ENDIFRW: ; end if (ball->posX + BALL_RAD >= WIDTH)
 
         LBI R0, ball_rad
         ADDI R0, R0, #1
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R0, R1, posX             ; ball->posX = BALL_RAD + 1
 
 ENDIFLW:
@@ -673,11 +516,6 @@ ENDIFLW:
         NOP
         NOP
         MULTI R0, R0, #-1
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R0, R2, velX             ; ball->velX *= -1
 ENDRLW: ; end if ((ball->posX + BALL_RAD >= WIDTH) || (ball->posX - BALL_RAD <= 0))
 
@@ -716,11 +554,6 @@ INTBW:
         BLTZ R0, ENDIFTW            ; if (ball->posX - BALL_RAD <= 0)
         LBI R0, ball_rad            ; r0 <-- BALL_RAD
         ADDI R0, R0, #1
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R0, R1, posY             ; ball->posY = BALL_RAD + 1
 
         J ENDIFBW
@@ -730,11 +563,6 @@ ENDIFTW:
         LBI R3, ball_rad
         SUB R3, R0, R3              ; r0 <-- HEIGHT - BALL_RAD
         SUBI R3, R3, #1
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R3, R1, posY             ; ball->posY = HEIGHT - BALL_RAD - 1
 
 ENDIFBW:
@@ -830,6 +658,12 @@ INTRPNX_ELSE: ; end of else if (first)
         NOP
         NOP
         ST R6, R2, velX
+  
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, R0, p1Score
+        ; end NAA
 
         ; start of setting velY, accY, and yStat based on the mouse movement
 
@@ -842,16 +676,20 @@ INTRPNX_ELSE: ; end of else if (first)
         SUB R5, R5, R4
         BLTZ R5, #2
         ADDI R6, R6, #1
-		;LBI R6, #1
         J #1
         SUBI R6, R6, #1
-		;LBI R6, #-1
         NOP
         NOP
         NOP
         NOP
         NOP
         ST R6, R2, velY
+
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, R0, p2Score
+        ; end NAA
         
         J ENDOW
 NOINTRP: ; end if (sect || first)
@@ -867,7 +705,7 @@ NOINTRP: ; end if (sect || first)
         SLBI R0, scoreAddr_low
         LD R3, R0, p2Score
         ADDI R3, R3, #1
-        ST R3, R0, p2Score          ; oppScore++
+        ;ST R3, R0, p2Score          ; oppScore++
         LBI R0, #0
         ST R0, R1, posZ             ; ball->posZ = 0
         LBI R0, velz_start
@@ -942,7 +780,11 @@ INTRONFX: ; end if (first)
         NOP
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
 INTRONX_ELSE: ; end of else if (first)
-
+		
+		;LBI R0, #1
+		;ST R0, R2, velX
+		;ST R0, R2, velY
+		;J ENDOW
         LBI R0, paddle2Addr
         LD R6, R2, velX
 
@@ -952,17 +794,21 @@ INTRONX_ELSE: ; end of else if (first)
         LBI R4, #51             
         SUB R5, R5, R4
         BLTZ R5, #2
-        ;SUBI R6, R6, #1
-		ADDI R6, R6, #1
+        ADDI R6, R6, #1
         J #1
-        ;ADDI R6, R6, #1
-		SUBI R6, R6, #1
+        SUBI R6, R6, #1
         NOP
         NOP
         NOP
         NOP
         NOP
         ST R6, R2, velX
+
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, R0, p1Score
+        ; end NAA
 
         ; start of setting velY, accY, and yStat based on the mouse movement
 
@@ -975,16 +821,20 @@ INTRONX_ELSE: ; end of else if (first)
         SUB R5, R5, R4
         BLTZ R5, #2
         ADDI R6, R6, #1
-		;LBI R6, #1
         J #1
         SUBI R6, R6, #1
-		;LBI R6, #-1
         NOP
         NOP
         NOP
         NOP
         NOP
         ST R6, R2, velY
+        
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, R0, p2Score
+        ; end NAA
   
         J ENDOW
 ENDINTROW: ; end if (intersect(opponent) || first)
@@ -1000,22 +850,12 @@ ENDINTROW: ; end if (intersect(opponent) || first)
         SLBI R0, scoreAddr_low      ; r0 <-- scoreAddr
         LD R3, R0, #0
         ADDI R3, R3, #1
-        ST R3, R0, p1Score          ; playerScore++
+        ;ST R3, R0, p1Score          ; playerScore++
         LBI R0, depth_high
         SLBI R0, depth_low
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R0, R1, posZ             ; ball->posZ = DEPTH
         LBI R0, velz_start
         MULTI R0, R0, #-1
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
         ST R0, R2, velZ             ; ball->velZ = VELZ_START * -1
 
         ; now go to setup() to reset initial values and wait for a player click

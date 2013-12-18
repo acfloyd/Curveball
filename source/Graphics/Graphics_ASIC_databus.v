@@ -59,6 +59,10 @@ module Graphics_ASIC(
 			buffer_regs[9] <= 0;
 		end else if(chipselect & ~read) begin
 			buffer_regs[data_address] <= databus;
+			if(game_state) begin
+				buffer_regs[p1_score_pos] <= 0;
+				buffer_regs[p2_score_pos] <= 0;
+			end
 		end
 	end	
 	
@@ -128,7 +132,8 @@ module Graphics_ASIC(
 							.pixel_x(pixel_x),
 							.pixel_y(pixel_y),
 							.color(frame_score_color));
-						
+							
+	wire[23:0] cntrl_color, cage_color;			
 	Control control(.clk(clk),
 					.rst(rst),
 					.paddle_1(paddle_1_color),
@@ -138,7 +143,26 @@ module Graphics_ASIC(
 					.VGA_ready(VGA_ready),
 					.pixel_x(pixel_x),
 					.pixel_y(pixel_y),
-					.color(color),
+					.color(cntrl_color),
 					.address(pixel_address));
+					
+					wire[13:0] cage1_addr, cage2_addr;
+					wire[23:0] cage_data1, cage_data2;
+					
+					reg[25:0] count;
+					
+					assign cage1_addr = {pixel_y - 192, pixel_x[6:0]};
+					assign cage2_addr = {pixel_y - 192, pixel_x[6:0]};
+					
+					CAGE1 c1(clk, cage1_addr, cage_data1);
+					CAGE2 c2(clk, cage2_addr, cage_data2);
+				
+					always@(posedge clk) begin
+						if(rst) count <= 0;
+						else count <= count + 1;
+					end
+					
+					assign cage_color = (count[25]) ? cage_data1 : cage_data2;
+					assign color = (game_state && pixel_x >= 256 && pixel_x <= 384 && pixel_y >= 192 && pixel_y <= 288) ? cage_color : cntrl_color;
 endmodule
 
