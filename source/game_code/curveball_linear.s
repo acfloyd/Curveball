@@ -657,9 +657,9 @@ INTRPNX_ELSE: ; end of else if (first)
         ST R6, R2, velX
   
         ; NAA
-        LBI R0, scoreAddr_high
-        SLBI R0, scoreAddr_low
-        ST R6, p1Score
+        LBI R5, scoreAddr_high
+        SLBI R5, scoreAddr_low
+        ST R6, R5, p1Score
         ; end NAA
 
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -690,6 +690,7 @@ INTRPNX_ELSE: ; end of else if (first)
         
         J ENDOW
 NOINTRP: ; end if (sect || first)
+        HALT
 
         ; contact with wall, play a sound
         LBI R0, audioAddr_high
@@ -798,9 +799,9 @@ INTRONX_ELSE: ; end of else if (first)
         ST R6, R2, velX
 
         ; NAA
-        LBI R0, scoreAddr_high
-        SLBI R0, scoreAddr_low
-        ST R6, p1Score
+        LBI R5, scoreAddr_high
+        SLBI R5, scoreAddr_low
+        ST R6, R5, p1Score
         ; end NAA
 
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -831,6 +832,7 @@ INTRONX_ELSE: ; end of else if (first)
   
         J ENDOW
 ENDINTROW: ; end if (intersect(opponent) || first)
+        HALT
 
         ; contact with wall, play a sound
         LBI R0, audioAddr_high
