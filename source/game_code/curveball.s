@@ -297,11 +297,21 @@ P2UPDATE:
 
         LD R1, R0, posX
         LD R2, R0, posY
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
         ST R1, R4, posX             ; pPaddle2 = opp->posX
         ST R2, R4, posY             ; pPaddle2 = opp->posY
 
         LD R1, R3, mPosx
         LD R2, R3, mPosy
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
         ST R1, R0, posX             ; opponent->posX = spart->posX
         ST R2, R0, posY             ; opponent->posY = spart->posY
 
@@ -339,12 +349,22 @@ P1UPDATE:
         LD R1, R0, posX
         LD R2, R0, posY
         LBI R4, pMouseAddr
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
         ST R1, R4, posX             ; pMouse->posX = paddle->posX
         ST R2, R4, posY             ; pMouse->posY = paddle->posY
         LBI R3, mouseAddr_high
         SLBI R3, mouseAddr_low
         LD R1, R3, mPosx
         LD R2, R3, mPosy
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
         ST R1, R0, posX             ; paddle->posX = mouse->posX
         ST R2, R0, posY             ; paddle->posY = mouse->posY
 
@@ -392,7 +412,7 @@ BTRANS:
 	; NAA NAA
 	LBI R0, scoreAddr_high
 	SLBI R0, scoreAddr_low
-	ST R3, R0, p1Score
+	;ST R3, R0, p1Score
 	JR R7, #0
 	;end NAA NAA
 
@@ -498,7 +518,9 @@ ENDMODUP: ; end if (ball->posZ % UPDATE == 0)
         SRA R4, R0, R3              ; r4 <-- ball->velX >> ball->xStat
         LD R3, R1, posX             ; r3 <-- ball->posX
         ADD R3, R3, R4
-        ST R3, R1, posX             ; ball->posX = ball->posX + (ball->velX >> ball->xStat)
+        ;/* NAA NAA */
+        ;ST R3, R1, posX             ; ball->posX = ball->posX + (ball->velX >> ball->xStat)
+        ;/* NAA NAA END */
 
         ;/* NAA NAA */
         ;LBI R4, paddle2Addr
@@ -521,7 +543,9 @@ ENDMODSX: ; end if (ball->posZ % r0)
         SRA R4, R0, R3              ; r4 <-- ball->velY >> ball->yStat
         LD R3, R1, posY             ; r3 <-- ball->posY
         ADD R3, R3, R4
-        ST R3, R1, posY             ; ball->posY = ball->posY + (ball->velY >> ball->yStat)
+        ;/* NAA NAA */
+        ;ST R3, R1, posY             ; ball->posY = ball->posY + (ball->velY >> ball->yStat)
+        ;/* NAA NAA END */
 
         ;/* NAA NAA */
         ;LBI R0, paddle2Addr
@@ -561,9 +585,9 @@ INRLW:
         ; contact with right or left wall, play a sound
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
-        LBI R3, #1
-        SLLI R3, R3, #15            ; r3 <-- r3 has a 1 in the most significant bit
-        ST R3, R0, #4               ; play the wall hit sound
+        LBI R3, #128
+		SLBI R3, #0
+        ST R3, R0, #0               ; play the wall hit sound
 
         ; right wall
         LD R0, R1, posX             ; r0 <-- ball->posX
@@ -603,6 +627,11 @@ ENDIFRW: ; end if (ball->posX + BALL_RAD >= WIDTH)
 
 ENDIFLW:
         LD R0, R2, velX             ; r0 <-- ball->velX
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         MULTI R0, R0, #-1
         ST R0, R2, velX             ; ball->velX *= -1
 ENDRLW: ; end if ((ball->posX + BALL_RAD >= WIDTH) || (ball->posX - BALL_RAD <= 0))
@@ -629,9 +658,9 @@ INTBW:
         ; contact with top or bottom wall, play a sound
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
-        LBI R3, #1
-        SLLI R3, R3, #15            ; r3 <-- r3 has a 1 in the most significant bit
-        ST R3, R0, #4               ; play the wall hit sound
+        LBI R3, #128
+		SLBI R3, #4
+		ST R3, R0, #4               ; play the wall hit sound
 
         ; top wall
         LD R0, R1, posY             ; r0 <-- ball->posY
@@ -669,6 +698,11 @@ ENDIFTW:
 
 ENDIFBW:
         LD R0, R2, velY            ; r0 <-- ball->velY
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         MULTI R0, R0, #-1
         ST R0, R2, velY             ; ball->velY *= -1
 ENDTBW: ; end if ((ball->posX + BALL_RAD >= HEIGHT) || (ball->posX - BALL_RAD <= 0))
@@ -707,8 +741,8 @@ ENDTBW: ; end if ((ball->posX + BALL_RAD >= HEIGHT) || (ball->posX - BALL_RAD <=
         ; contact with paddle, play a sound
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
-        LBI R4, #1
-        SLLI R4, R4, #15            ; r3 <-- r3 has a 1 in the most significant bit
+        LBI R4, #128
+        SLBI R4, #0           		; r3 <-- r3 has a 1 in the most significant bit
         ST R4, R0, #0               ; play the wall hit sound
 
         LBI R4, ball_rad
@@ -731,6 +765,11 @@ INTRPNFX: ; end if (first)
 
         ; else of if (first)
         LD R0, R2, velZ             ; r0 <-- ball->velZ
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
         ;LDI R3, difficultyAddr      ; r3 <-- difficulty
         ;ADD R0, R0, R3
@@ -738,6 +777,14 @@ INTRPNFX: ; end if (first)
 
         LD R0, R5, posX             ; r0 <-- pmouse->posX
         LD R3, R4, mPosx            ; r3 <-- mouse->posX
+
+	; NAA NAA
+	LBI R7, scoreAddr_high
+	SLBI R7, scoreAddr_low
+	ST R0, R7, p2Score
+	ST R3, R7, p1Score
+	; end NAA NAA
+
         SUB R3, R3, R0              ; r3 <-- mouse->posX - pmouse->posX
         LD R0, R2, velX             ; r0 <-- ball->velX
         ADD R6, R0, R3              ; r6(mouseDiff) <-- (mouse->posX - pmouse->posX) + ball->velX 
@@ -753,11 +800,6 @@ INTRPNX_ELSE: ; end of else if (first)
         LBI R5, #-1
         ; r6: mouseDiff, r5: mouseDir
 
-	; NAA NAA
-	LBI R0, scoreAddr_high
-	SLBI R0, scoreAddr_low
-	ST R6, R0, p2Score
-	; end NAA NAA
 
         BEQZ R6, MTSTEX0            ; if (mouseDiff != 0)
 
@@ -892,9 +934,9 @@ NOINTRP: ; end if (sect || first)
         ; contact with wall, play a sound
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
-        LBI R3, #1
-        SLLI R3, R3, #15            ; r3 <-- r3 has a 1 in the most significant bit
-        ST R3, R0, #8               ; play the score sound
+        LBI R3, #128
+        SLBI R3, #8            		; r3 <-- r3 has a 1 in the most significant bit
+        ST R3, R0, #0              ; play the score sound
         
         LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low
@@ -974,6 +1016,11 @@ INTRONFX: ; end if (first)
         ;LDI R3, difficultyAddr      ; r3 <-- difficulty
         ;ADD R0, R0, R3
         MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
 
         LD R0, R5, posX             ; r0 <-- popponent->posX
@@ -1125,9 +1172,9 @@ ENDINTROW: ; end if (intersect(opponent) || first)
         ; contact with wall, play a sound
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
-        LBI R3, #1
-        SLLI R3, R3, #15            ; r3 <-- r3 has a 1 in the most significant bit
-        ST R3, R0, #8               ; play the wall hit sound
+        LBI R3, #128
+        SLBI R3, #8            ; r3 <-- r3 has a 1 in the most significant bit
+        ST R3, R0, #0               ; play the wall hit sound
 
         LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low      ; r0 <-- scoreAddr
