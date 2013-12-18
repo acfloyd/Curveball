@@ -112,6 +112,11 @@ MAIN:   LBI R0, scoreAddr_high
         ST R1, R0, p1Score          ; playerScore = 0
         ST R1, R0, p2Score          ; oppScore = 0
 
+	; set previous paddle 1 and 2 counters to prevent previous paddles
+	; from updating for a certian num of calls to each update routine
+	STI R1, pPad1Cnt
+	STI R1, pPad2Cnt
+
         ; check who is starting with the ball
         LBI R3, gameStartAddr_high
         SLBI R3, gameStartAddr_low
@@ -299,6 +304,12 @@ P2UPDATE:
         SLBI R3, spartAddr_low
         LBI R4, pPaddle2Addr
 
+	LDI R5, pPad2Cnt
+	LBI R6, #20
+	SUB R6, R6, R5
+	BNEZ R6, NOP2UP
+	LBI R5, #0
+
         LD R1, R0, posX
         LD R2, R0, posY
 	NOP
@@ -308,6 +319,15 @@ P2UPDATE:
 	NOP
         ST R1, R4, posX             ; pPaddle2 = opp->posX
         ST R2, R4, posY             ; pPaddle2 = opp->posY
+
+NOP2UP:
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	ADDI R5, R5, #1
+	STI R5, pPad2Cnt
 
         LD R1, R3, mPosx
         LD R2, R3, mPosy
@@ -348,27 +368,43 @@ P2UPDATE:
 
 ; save off the current location of the paddle #2
 P1UPDATE: 
-
         LBI R0, paddle1Addr
+
+	LDI R6, pPad1Cnt
+	LBI R5, #20
+	SUB R5, R5, R6
+	BNEZ R5, NOP1UP
+	LBI R6, #0
+
         LD R1, R0, posX
         LD R2, R0, posY
         LBI R4, pMouseAddr
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         ST R1, R4, posX             ; pMouse->posX = paddle->posX
         ST R2, R4, posY             ; pMouse->posY = paddle->posY
+
+NOP1UP:
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	ADD R6, R6, #1
+	STI R6, pPad1Cnt
+
         LBI R3, mouseAddr_high
         SLBI R3, mouseAddr_low
         LD R1, R3, mPosx
         LD R2, R3, mPosy
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         ST R1, R0, posX             ; paddle->posX = mouse->posX
         ST R2, R0, posY             ; paddle->posY = mouse->posY
 
@@ -382,8 +418,6 @@ P1UPDATE:
         ADD R2, R2, R3
         ST R2, R0, posY             ; transPaddle1->posY is set
         JR R7, #0                   ; return
-
-
         
 BTRANS: 
 
