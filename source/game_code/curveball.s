@@ -68,6 +68,8 @@ MACRO firstAddr #11
 MACRO paddle2Addr #12
 MACRO paddle1Addr #14
 MACRO ballAddr #16
+MACRO pPad1Cnt #19
+MACRO pPad2Cnt #20
 
 ; TODO: add gamestate functionality
 ; TODO: remove low/high instructions for gen memory
@@ -99,6 +101,8 @@ MACRO mPosy #2
 ; 12: paddle2 x, y
 ; 14: paddle1 x, y
 ; 16: ball x, y, z
+; 19: pPaddle2 counter
+; 20: pPaddle1 counter
 
 ;void main()
 ; start by setting up the initial object positions
@@ -297,21 +301,21 @@ P2UPDATE:
 
         LD R1, R0, posX
         LD R2, R0, posY
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         ST R1, R4, posX             ; pPaddle2 = opp->posX
         ST R2, R4, posY             ; pPaddle2 = opp->posY
 
         LD R1, R3, mPosx
         LD R2, R3, mPosy
-		NOP
-		NOP
-		NOP
-		NOP
-		NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
         ST R1, R0, posX             ; opponent->posX = spart->posX
         ST R2, R0, posY             ; opponent->posY = spart->posY
 
@@ -321,10 +325,10 @@ P2UPDATE:
 
         ;x value
 	LBI R0, width_high
-		SLBI R0, width_low
-		SUB R1, R0, R1
-		LBI R0, paddle_width
-		SUB R1, R1, R0	
+	SLBI R0, width_low
+	SUB R1, R0, R1
+	LBI R0, paddle_width
+	SUB R1, R1, R0	
 	;SRAI R1, R1, #2
 	;LBI R0, #1
 	;SLBI R0, #0
@@ -519,7 +523,7 @@ ENDMODUP: ; end if (ball->posZ % UPDATE == 0)
         LD R3, R1, posX             ; r3 <-- ball->posX
         ADD R3, R3, R4
         ;/* NAA NAA */
-        ;ST R3, R1, posX             ; ball->posX = ball->posX + (ball->velX >> ball->xStat)
+        ST R3, R1, posX             ; ball->posX = ball->posX + (ball->velX >> ball->xStat)
         ;/* NAA NAA END */
 
         ;/* NAA NAA */
