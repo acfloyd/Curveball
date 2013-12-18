@@ -17,7 +17,7 @@ MACRO depth_low #232
 MACRO stallCnt_high #127
 MACRO stallCnt_low #255 ; cnt = 32767, 0x7FFF
 
-MACRO velz_start #5
+MACRO velz_start #3
 MACRO ball_rad #35
 MACRO curve_reduce #20
 MACRO paddle_width #101
@@ -686,7 +686,7 @@ INTRPNX_ELSE: ; end of else if (first)
         ; NAA
         LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low
-        ST R6, p2Score
+        ST R6, R0, p2Score
         ; end NAA
         
         J ENDOW
