@@ -109,8 +109,8 @@ MACRO mPosy #2
 MAIN:   LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low
         LBI R1, #0
-        ST R1, R0, p1Score          ; playerScore = 0
-        ST R1, R0, p2Score          ; oppScore = 0
+        ;ST R1, R0, p1Score          ; playerScore = 0
+        ;ST R1, R0, p2Score          ; oppScore = 0
 
 	; set previous paddle 1 and 2 counters to prevent previous paddles
 	; from updating for a certian num of calls to each update routine
@@ -147,8 +147,8 @@ SETUP:
         SLBI R3, gameStateAddr_low
         ST R4, R3, #0               ; set gamestate reg to player 1 win
         LBI R3, #0
-        ST R3, R0, p1Score          ; playerScore = 0
-        ST R3, R0, p2Score          ; oppScore = 0
+        ;ST R3, R0, p1Score          ; playerScore = 0
+        ;ST R3, R0, p2Score          ; oppScore = 0
         J CONTINUE
 OPPWINCHK: ; end if (playerScore == endScore)
         LD R3, R0, p2Score
@@ -159,7 +159,7 @@ OPPWINCHK: ; end if (playerScore == endScore)
         SLBI R3, gameStateAddr_low
         ST R0, R3, #0               ; set gamestate reg to player 2 win
         LBI R3, #0
-        ST R3, R0, p1Score          ; playerScore = 0
+        ;ST R3, R0, p1Score          ; playerScore = 0
         J CONTINUE
 CONTINUE:
 
@@ -656,9 +656,14 @@ INTRPNX_ELSE: ; end of else if (first)
         NOP
         ST R6, R2, velX
   
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, p1Score
+        ; end NAA
+
         ; start of setting velY, accY, and yStat based on the mouse movement
 
-        LBI R0, paddle1Addr
         LD R6, R2, velY
 
         LD R3, R1, posY
@@ -676,6 +681,12 @@ INTRPNX_ELSE: ; end of else if (first)
         NOP
         NOP
         ST R6, R2, velY
+
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, p2Score
+        ; end NAA
         
         J ENDOW
 NOINTRP: ; end if (sect || first)
@@ -691,7 +702,7 @@ NOINTRP: ; end if (sect || first)
         SLBI R0, scoreAddr_low
         LD R3, R0, p2Score
         ADDI R3, R3, #1
-        ST R3, R0, p2Score          ; oppScore++
+        ;ST R3, R0, p2Score          ; oppScore++
         LBI R0, #0
         ST R0, R1, posZ             ; ball->posZ = 0
         LBI R0, velz_start
@@ -756,8 +767,8 @@ INTRONFX: ; end if (first)
 
         ; else of if (first)
         LD R0, R2, velZ             ; r0 <-- ball->velZ
-        ;LDI R3, difficultyAddr      ; r3 <-- difficulty
-        ;ADD R0, R0, R3
+        LDI R3, difficultyAddr      ; r3 <-- difficulty
+        ADD R0, R0, R3
         MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
         NOP
         NOP
@@ -767,7 +778,7 @@ INTRONFX: ; end if (first)
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
 INTRONX_ELSE: ; end of else if (first)
 
-        LBI R0, paddle1Addr
+        LBI R0, paddle2Addr
         LD R6, R2, velX
 
         LD R3, R1, posX
@@ -785,6 +796,12 @@ INTRONX_ELSE: ; end of else if (first)
         NOP
         NOP
         ST R6, R2, velX
+
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, p1Score
+        ; end NAA
 
         ; start of setting velY, accY, and yStat based on the mouse movement
 
@@ -805,6 +822,12 @@ INTRONX_ELSE: ; end of else if (first)
         NOP
         NOP
         ST R6, R2, velY
+        
+        ; NAA
+        LBI R0, scoreAddr_high
+        SLBI R0, scoreAddr_low
+        ST R6, p2Score
+        ; end NAA
   
         J ENDOW
 ENDINTROW: ; end if (intersect(opponent) || first)
@@ -820,7 +843,7 @@ ENDINTROW: ; end if (intersect(opponent) || first)
         SLBI R0, scoreAddr_low      ; r0 <-- scoreAddr
         LD R3, R0, #0
         ADDI R3, R3, #1
-        ST R3, R0, p1Score          ; playerScore++
+        ;ST R3, R0, p1Score          ; playerScore++
         LBI R0, depth_high
         SLBI R0, depth_low
         ST R0, R1, posZ             ; ball->posZ = DEPTH
