@@ -272,10 +272,10 @@ GSTALL2:
 	LBI R5, #127
 	SLBI R5, #255
 	LBI R4, #2
-GSTALL2:
+GSTALL3:
 	BEQZ R5, #2
 	SUBI R5, R5, #1
-	J GSTALL2
+	J GSTALL3
 
         JAL P2UPDATE                ; opp_update()
         JAL P1UPDATE                ; paddle_update()
@@ -374,15 +374,16 @@ BTRANS:
         LBI R0, #1
         SLBI R0, #0                 ; r0 <-- 256
         SUB R1, R1, R0              ; r1 <-- gameX - 256
-        LBI R3, #1
-        SLBI R3, #84                ; r3 <-- 340
-        LBI R5, #3
-        SLBI R5, #232               ; r5 <-- gameZ (1000)
-        ADD R5, R5, R3              ; r5 <-- 340 + gameZ
+        LBI R4, #1
+        SLBI R4, #84                ; r3 <-- 340
+        ;LBI R5, #3
+        ;SLBI R5, #232               ; r5 <-- gameZ (1000)
+		
+        ADD R5, R3, R4              ; r5 <-- 340 + gameZ
 
         SRAI R1, R1, #2
         SRAI R5, R5, #2
-        MULT R4, R3, R1
+        MULT R4, R4, R1
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 256)) / (340 + gameZ)
         LBI R0, #1
@@ -394,15 +395,16 @@ BTRANS:
         LBI R0, #0
         SLBI R0, #192               ; r0 <-- 192
         SUB R2, R2, R0              ; r2 <-- gameY - 192
-        LBI R3, #1
-        SLBI R3, #84                ; r3 <-- 340
-        LBI R5, #3
-        SLBI R5, #232               ; r5 <-- gameZ (1000)
-        ADD R5, R5, R3              ; r5 <-- 340 + gameZ
+        LBI R4, #1
+        SLBI R4, #84                ; r3 <-- 340
+        ;LBI R5, #3
+        ;SLBI R5, #232               ; r5 <-- gameZ (1000)
+		
+        ADD R5, R3, R4              ; r5 <-- 340 + gameZ
 
         SRAI R2, R2, #2
         SRAI R5, R5, #2
-        MULT R4, R3, R2
+        MULT R4, R4, R2
 
         DIV R4, R4, R5              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ)
         LBI R0, #0
@@ -788,9 +790,9 @@ INTRONX_ELSE: ; end of else if (first)
         LBI R4, #51             
         SUB R5, R5, R4
         BLTZ R5, #2
-        ADDI R6, R6, #1
-        J #1
         SUBI R6, R6, #1
+        J #1
+        ADDI R6, R6, #1
         NOP
         NOP
         NOP
@@ -827,7 +829,7 @@ INTRONX_ELSE: ; end of else if (first)
         ; NAA
         LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low
-        ST R6, p2Score
+        ST R6, R0, p2Score
         ; end NAA
   
         J ENDOW
