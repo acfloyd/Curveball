@@ -131,8 +131,8 @@ MAIN:   LBI R0, scoreAddr_high
 
         LBI R0, ballVelAddr
         LBI R2, velz_start
-	BNEZ R4, #1
-	MULTI R2, R2, #-1
+        BNEZ R4, #1
+        MULTI R2, R2, #-1
         ST R2, R0, velZ             ; ball->velZ = VELZ_START
 
 SETUP:  
@@ -176,10 +176,6 @@ CONTINUE:
         LBI R0, ballVelAddr         
         ST R1, R0, velX             ; ball->velX = 0
         ST R1, R0, velY             ; ball->velY = 0
-        ST R1, R0, accX             ; ball->accX = 0
-        ST R1, R0, accY             ; ball->accY = 0
-        ST R1, R0, xStat            ; ball->xStat = 0
-        ST R1, R0, yStat            ; ball->xStat = 0
 
         ; set difficulty
         LBI R1, #1
@@ -197,11 +193,11 @@ WAITCLICK:
         ; check ball->posZ to determine which paddle to check against
         LBI R1, ballAddr            ; r1 <-- ballAddr
         LD R3, R1, posZ             ; r3 <-- ball->posZ
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         BEQZ R3, #2                 ; if (ball->posZ != 0) check against paddle2
         LBI R0, paddle2Addr
         J #1
@@ -215,12 +211,12 @@ WAITCLICK:
 		
         ; check whether to look at the mouse or the spart
         LD R3, R1, posZ
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         BEQZ R3, #3                 ; if (ball->posZ != 0) check spart
         LBI R3, spartAddr_high
         SLBI R3, spartAddr_low
@@ -271,6 +267,15 @@ GSTALL2:
 	SUBI R5, R5, #1
 	J GSTALL2
 
+	; start of a wait loop decrimenting from 20,000 to 0
+	LBI R5, #127
+	SLBI R5, #255
+	LBI R4, #2
+GSTALL2:
+	BEQZ R5, #2
+	SUBI R5, R5, #1
+	J GSTALL2
+
         JAL P2UPDATE                ; opp_update()
         JAL P1UPDATE                ; paddle_update()
         JAL BUPDATE                 ; ball_update()
@@ -282,42 +287,14 @@ P2UPDATE:
         LBI R0, paddle2Addr
         LBI R3, spartAddr_high
         SLBI R3, spartAddr_low
-        LBI R4, pPaddle2Addr
-
-	
-
-	      LDI R5, pPad2Cnt
-	      LBI R6, #20
-	      SUB R6, R6, R5
-	      BNEZ R6, NOP2UP
-	      LBI R5, #0
-
-        LD R1, R0, posX
-        LD R2, R0, posY
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-        ST R1, R4, posX             ; pPaddle2 = opp->posX
-        ST R2, R4, posY             ; pPaddle2 = opp->posY
-
-NOP2UP:
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	ADDI R5, R5, #1
-	STI R5, pPad2Cnt
 
         LD R1, R3, mPosx
         LD R2, R3, mPosy
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         ST R1, R0, posX             ; opponent->posX = spart->posX
         ST R2, R0, posY             ; opponent->posY = spart->posY
 
@@ -326,24 +303,24 @@ NOP2UP:
         SLBI R6, paddle2Tran_low
 
         ;x value
-	LBI R0, width_high
-	SLBI R0, width_low
-	SUB R1, R0, R1
-	LBI R0, paddle_width
-	SUB R1, R1, R0	
-	SRAI R1, R1, #2
-	LBI R0, #1
-	SLBI R0, #0
-	;LBI R0, #64
-	ADD R1, R1, R0
+        LBI R0, width_high
+        SLBI R0, width_low
+        SUB R1, R0, R1
+        LBI R0, paddle_width
+        SUB R1, R1, R0	
+        SRAI R1, R1, #2
+        LBI R0, #1
+        SLBI R0, #0
+        ;LBI R0, #64
+        ADD R1, R1, R0
         ST R1, R6, posX
 
         ;y value
-	SRAI R2, R2, #2
-	LBI R0, #0
-	SLBI R0, #192
-	;LBI R0, #48
-	ADD R2, R2, R0
+        SRAI R2, R2, #2
+        LBI R0, #0
+        SLBI R0, #192
+        ;LBI R0, #48
+        ADD R2, R2, R0
         ST R2, R6, posY             
 
         JR R7, #0                   ; return
@@ -351,42 +328,15 @@ NOP2UP:
 ; save off the current location of the paddle #2
 P1UPDATE: 
         LBI R0, paddle1Addr
-
-	LDI R6, pPad1Cnt
-	LBI R5, #20
-	SUB R5, R5, R6
-	BNEZ R5, NOP1UP
-	LBI R6, #0
-
-        LD R1, R0, posX
-        LD R2, R0, posY
-        LBI R4, pMouseAddr
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-        ST R1, R4, posX             ; pMouse->posX = paddle->posX
-        ST R2, R4, posY             ; pMouse->posY = paddle->posY
-
-NOP1UP:
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	ADDI R6, R6, #1
-	STI R6, pPad1Cnt
-
         LBI R3, mouseAddr_high
         SLBI R3, mouseAddr_low
         LD R1, R3, mPosx
         LD R2, R3, mPosy
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         ST R1, R0, posX             ; paddle->posX = mouse->posX
         ST R2, R0, posY             ; paddle->posY = mouse->posY
 
@@ -410,14 +360,14 @@ BTRANS:
         LD R3, R5, posZ
         LBI R6, ballTran_high
         SLBI R6, ballTran_low
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	ST R3, R6, posZ
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        ST R3, R6, posZ
 	
         ;x value
         LBI R0, #1
@@ -463,7 +413,7 @@ BTRANS:
 ; update the ball location and calc the curve for the ball
 BUPDATE:   
         JAL BTRANS
-BUPTE:
+      
         LBI R1, ballAddr            ; r1 <-- ballAddr
         LBI R2, ballVelAddr         ; r2 <-- ballVelAddr
         LBI R3, ENDPBN_HIGH
@@ -473,32 +423,32 @@ BUPTE:
 
         LD R4, R1, posZ             ; r4 <-- ball->posZ
         LD R5, R2, velZ             ; r5 <-- ball->velZ
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         ADD R4, R4, R5              
         ST R4, R1, posZ             ; ball->posZ += ball->velZ
         LD R0, R2, velX             ; r0 <-- ball->velX
-	LD R3, R1, posX		    ; r3 <-- ball->posX
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	ADD R3, R3, R0
-	ST R3, R1, posX		    ; ball->posX += ball->velX
+        LD R3, R1, posX		        ; r3 <-- ball->posX
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        ADD R3, R3, R0
+        ST R3, R1, posX		    ; ball->posX += ball->velX
         
         LD R0, R2, velY             ; r0 <-- ball->velY
-	LD R3, R1, posY		    ; r4 <-- ball->posY
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	ADD R3, R3, R0
-	ST R3, R1, posY		    ; ball->posY += ball->velY
+        LD R3, R1, posY		    ; r4 <-- ball->posY
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        ADD R3, R3, R0
+        ST R3, R1, posY		    ; ball->posY += ball->velY
 
 ENDPBN: ; end if (pball != NULL)
 
@@ -530,7 +480,7 @@ INRLW:
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
         LBI R3, #128
-	SLBI R3, #0
+        SLBI R3, #0
         ST R3, R0, #0               ; play the wall hit sound
 
         ; right wall
@@ -557,11 +507,11 @@ ENDIFRW: ; end if (ball->posX + BALL_RAD >= WIDTH)
 
 ENDIFLW:
         LD R0, R2, velX             ; r0 <-- ball->velX
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         MULTI R0, R0, #-1
         ST R0, R2, velX             ; ball->velX *= -1
 ENDRLW: ; end if ((ball->posX + BALL_RAD >= WIDTH) || (ball->posX - BALL_RAD <= 0))
@@ -589,8 +539,8 @@ INTBW:
         LBI R0, audioAddr_high
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
         LBI R3, #128
-	SLBI R3, #4
-	ST R3, R0, #4               ; play the wall hit sound
+        SLBI R3, #4
+        ST R3, R0, #4               ; play the wall hit sound
 
         ; top wall
         LD R0, R1, posY             ; r0 <-- ball->posY
@@ -614,11 +564,11 @@ ENDIFTW:
 
 ENDIFBW:
         LD R0, R2, velY            ; r0 <-- ball->velY
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         MULTI R0, R0, #-1
         ST R0, R2, velY             ; ball->velY *= -1
 ENDTBW: ; end if ((ball->posX + BALL_RAD >= HEIGHT) || (ball->posX - BALL_RAD <= 0))
@@ -668,6 +618,8 @@ ENDTBW: ; end if ((ball->posX + BALL_RAD >= HEIGHT) || (ball->posX - BALL_RAD <=
         ; start of setting velX, accX, and xStat based on the mouse movement
 
         BEQZ R3, INTRPNFX           ; if (first)
+        LBI R3, #0
+        STI R3, firstAddr           ; first = FALSE
         LBI R0, velz_start
         ST R0, R2, velZ             ; ball->velZ = VELZ_START
         J INTRPNX_ELSE
@@ -675,17 +627,16 @@ INTRPNFX: ; end if (first)
 
         ; else of if (first)
         LD R0, R2, velZ             ; r0 <-- ball->velZ
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
         LDI R3, difficultyAddr      ; r3 <-- difficulty
         ADD R0, R0, R3
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
 INTRPNX_ELSE: ; end of else if (first)
-        ; r6 has mouseDiff at this point
         LBI R0, paddle1Addr
         LD R6, R2, velX
 
@@ -698,20 +649,14 @@ INTRPNX_ELSE: ; end of else if (first)
         ADDI R6, R6, #1
         J #1
         SUBI R6, R6, #1
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	ST R6, R2, velX
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
-
-        LDI R3, firstAddr
-        BEQZ R3, INTRPNFY           ; if (first)
-        LBI R3, #0
-        STI R3, firstAddr           ; first = FALSE
-INTRPNFY: ; end if (first)
 
         LBI R0, paddle1Addr
         LD R6, R2, velY
@@ -799,17 +744,13 @@ ENDPW: ; end if (ball->posZ - BALL_RAD <= 0)
         ST R0, R1, posZ             ; ball->posZ = DEPTH - BALL_RAD - 1
 
         ; start of setting velX, accX, and xStat based on the mouse movement
-        LBI R4, paddle2Addr         ; r4 <-- paddle2Addr (opponent)
-        LBI R5, pPaddle2Addr        ; r5 <-- pPaddle2Addr (popponent)
         LDI R3, firstAddr
-
         BEQZ R3, INTRONFX           ; if (first)
         LBI R0, velz_start
         MULTI R0, R0, #-1
         ST R0, R2, velZ             ; ball->velZ = VELZ_START * -1
-        LD R3, R4, posX             ; r3 <-- opponent->posX
-        LD R6, R5, posX             ; r6 <-- popponent->posX
-        SUB R6, R3, R6              ; r6(mouseDiff) <-- opponent->posX - popponent->posX
+        LBI R0, #0
+        STI R0, firstAddr
         J INTRONX_ELSE
 INTRONFX: ; end if (first)
 
@@ -818,59 +759,53 @@ INTRONFX: ; end if (first)
         ;LDI R3, difficultyAddr      ; r3 <-- difficulty
         ;ADD R0, R0, R3
         MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
-
-        LD R0, R5, posX             ; r0 <-- popponent->posX
-        LD R3, R4, posX             ; r3 <-- opponent->posX
-        SUB R3, R3, R0              ; r3 <-- opponent->posX - popponent->posX
-        LD R0, R2, velX             ; r0 <-- ball->velX
-        ADD R6, R0, R3              ; r6(mouseDiff) <-- (opponent->posX - popponent->posX) + ball->velX 
 INTRONX_ELSE: ; end of else if (first)
-        ; r6 has mouseDiff at this point
 
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-  SRAI R6, R6, #4
-	ST R6, R2, velX
-  
+        LBI R0, paddle1Addr
+        LD R6, R2, velX
+
+        LD R3, R1, posX
+        LD R4, R0, posX
+        SUB R5, R3, R4
+        LBI R4, #51             
+        SUB R5, R5, R4
+        BLTZ R5, #2
+        ADDI R6, R6, #1
+        J #1
+        SUBI R6, R6, #1
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        ST R6, R2, velX
+
         ; start of setting velY, accY, and yStat based on the mouse movement
-        LBI R4, paddle2Addr         ; r4 <-- paddle2Addr (opponent)
-        LBI R5, pPaddle2Addr          ; r5 <-- pPaddle2Addr (popponent)
 
-        BEQZ R3, INTRONFY           ; if (first)
-        LBI R3, #0
-        STI R3, firstAddr           ; first = FALSE
-        LD R3, R4, posY             ; r3 <-- opponent->posY
-        LD R6, R5, posY             ; r6 <-- popponent->posY
-        SUB R6, R3, R6              ; r6(mouseDiff) <-- opponent->posY - popponent->posY
-        J INTRONY_ELSE
-INTRONFY: ; end if (first)
+        LD R6, R2, velY
 
-        ; else of if (first)
-        LD R0, R5, posY             ; r0 <-- popponent->posY
-        LD R3, R4, posY             ; r3 <-- opponent->posY
-        SUB R3, R3, R0              ; r3 <-- opponent->posY - popponent->posY
-        LD R0, R2, velY             ; r0 <-- ball->velY
-        ADD R6, R0, R3              ; r6(mouseDiff) <-- (opponent->posY - popponent->posY) + ball->velY 
-INTRONY_ELSE: ; end of else if (first)
-        ; r6 has mouseDiff at this point
-
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-  SRAI R6, R6, #4
-	ST R6, R2, velY
-
+        LD R3, R1, posY
+        LD R4, R0, posY
+        SUB R5, R3, R4
+        LBI R4, #38             
+        SUB R5, R5, R4
+        BLTZ R5, #2
+        ADDI R6, R6, #1
+        J #1
+        SUBI R6, R6, #1
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        ST R6, R2, velY
+  
         J ENDOW
 ENDINTROW: ; end if (intersect(opponent) || first)
 
