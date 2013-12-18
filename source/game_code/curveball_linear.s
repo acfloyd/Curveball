@@ -17,7 +17,7 @@ MACRO depth_low #232
 MACRO stallCnt_high #127
 MACRO stallCnt_low #255 ; cnt = 32767, 0x7FFF
 
-MACRO velz_start #5
+MACRO velz_start #7
 MACRO ball_rad #35
 MACRO curve_reduce #20
 MACRO paddle_width #101
@@ -263,7 +263,7 @@ GSTALL1:
 	J GSTALL1
 
 	; start of a wait loop decrimenting from 20,000 to 0
-	LBI R5, #1
+	LBI R5, #127
 	SLBI R5, #255
 	LBI R4, #2
 GSTALL2:
@@ -417,6 +417,7 @@ BTRANS:
 	NOP
 	NOP
 	NOP
+	ST R3, R6, posZ
 	
         ;x value
         LBI R0, #1
@@ -704,7 +705,7 @@ INTRPNX_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #3
+  SRAI R6, R6, #4
 	ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -736,7 +737,7 @@ INTRPNY_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #3
+  SRAI R6, R6, #4
 	ST R6, R2, velY
         
         J ENDOW
@@ -845,7 +846,7 @@ INTRONX_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #3
+  SRAI R6, R6, #4
 	ST R6, R2, velX
   
         ; start of setting velY, accY, and yStat based on the mouse movement
@@ -875,7 +876,7 @@ INTRONY_ELSE: ; end of else if (first)
 	NOP
 	NOP
 	NOP
-  SRAI R6, R6, #3
+  SRAI R6, R6, #4
 	ST R6, R2, velY
 
         J ENDOW
