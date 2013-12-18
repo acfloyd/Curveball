@@ -60,7 +60,7 @@ MACRO paddle1Tran_high #16
 MACRO paddle1Tran_low #0            ; 4096, 0x1000
 
 ; gen mem bases
-MACRO ballVelAddr #0
+MACRO ballVelAddr #50
 MACRO pMouseAddr #6
 MACRO pPaddle2Addr #8
 MACRO difficultyAddr #10
@@ -163,8 +163,12 @@ OPPWINCHK: ; end if (playerScore == endScore)
         ;ST R3, R0, p2Score          ; playerScore = 0
         J CONTINUE
 CONTINUE:
-
-               LBI R0, #1                  
+		LBI R1, #0	
+        LBI R0, ballVelAddr   
+		
+        ST R1, R0, velX             ; ball->velX = 0
+        ST R1, R0, velY             ; ball->velY = 0
+		LBI R0, #1                  
         STI R0, firstAddr           ; first = TRUE
         LBI R0, ballAddr            ; setup the ball
         LBI R1, halfWidth_high      
@@ -173,11 +177,10 @@ CONTINUE:
         LBI R1, halfHeight_high    
         SLBI R1, halfHeight_low     
         ST R1, R0, posY             ; ball->posY = HEIGHT / 2
-        LBI R1, #0
-        LBI R0, ballVelAddr         
-        ST R1, R0, velX             ; ball->velX = 0
-        ST R1, R0, velY             ; ball->velY = 0
-
+       
+		
+		
+		
         ; set difficulty
         LBI R1, #1
         STI R1, difficultyAddr      ; difficulty = 1
@@ -260,7 +263,7 @@ GSTALL1:
 	J GSTALL1
 
 	; start of a wait loop decrimenting from 20,000 to 0
-	LBI R5, #127
+	LBI R5, #1
 	SLBI R5, #255
 	LBI R4, #2
 GSTALL2:
@@ -676,8 +679,10 @@ INTRPNX_ELSE: ; end of else if (first)
         SUB R5, R5, R4
         BLTZ R5, #2
         ADDI R6, R6, #1
+		;LBI R6, #1
         J #1
         SUBI R6, R6, #1
+		;LBI R6, #-1
         NOP
         NOP
         NOP
@@ -686,9 +691,9 @@ INTRPNX_ELSE: ; end of else if (first)
         ST R6, R2, velY
 
         ; NAA
-        LBI R0, scoreAddr_high
-        SLBI R0, scoreAddr_low
-        ST R6, R0, p2Score
+        LBI R5, scoreAddr_high
+        SLBI R5, scoreAddr_low
+        ST R6, R5, p2Score
         ; end NAA
         
         J ENDOW
@@ -817,8 +822,10 @@ INTRONX_ELSE: ; end of else if (first)
         SUB R5, R5, R4
         BLTZ R5, #2
         ADDI R6, R6, #1
+		;LBI R6, #1
         J #1
         SUBI R6, R6, #1
+		;LBI R6, #-1
         NOP
         NOP
         NOP
@@ -827,9 +834,9 @@ INTRONX_ELSE: ; end of else if (first)
         ST R6, R2, velY
         
         ; NAA
-        LBI R0, scoreAddr_high
-        SLBI R0, scoreAddr_low
-        ST R6, R0, p2Score
+        LBI R5, scoreAddr_high
+        SLBI R5, scoreAddr_low
+        ST R6, R5, p2Score
         ; end NAA
   
         J ENDOW
