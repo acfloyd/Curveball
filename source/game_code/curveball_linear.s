@@ -160,6 +160,7 @@ OPPWINCHK: ; end if (playerScore == endScore)
         ST R0, R3, #0               ; set gamestate reg to player 2 win
         LBI R3, #0
         ;ST R3, R0, p1Score          ; playerScore = 0
+        ;ST R3, R0, p2Score          ; playerScore = 0
         J CONTINUE
 CONTINUE:
 
@@ -690,7 +691,6 @@ INTRPNX_ELSE: ; end of else if (first)
         
         J ENDOW
 NOINTRP: ; end if (sect || first)
-        HALT
 
         ; contact with wall, play a sound
         LBI R0, audioAddr_high
@@ -832,7 +832,6 @@ INTRONX_ELSE: ; end of else if (first)
   
         J ENDOW
 ENDINTROW: ; end if (intersect(opponent) || first)
-        HALT
 
         ; contact with wall, play a sound
         LBI R0, audioAddr_high
