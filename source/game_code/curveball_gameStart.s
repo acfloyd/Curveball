@@ -129,6 +129,8 @@ MAIN:   LBI R0, scoreAddr_high
 
         LBI R0, ballVelAddr
         LBI R2, velz_start
+	BNEZ R4, #1
+	MULTI R2, R2, #-1
         ST R2, R0, velZ             ; ball->velZ = VELZ_START
 
 SETUP:  
@@ -245,9 +247,9 @@ WAITCLICK:
         LBI R4, scoreAddr_high
         SLBI R4, scoreAddr_low
 	LD R3, R4, p2Score
-	LBI R0, #-1
-	SLBI R0, #240
-	AND R3, R3, R0
+	LBI R1, #-1
+	SLBI R1, #240
+	AND R3, R3, R1
 	OR R6, R3, R5 
         ST R6, R4, p2Score
         ;/* NAA NAA END */
@@ -344,13 +346,18 @@ BTRANS:
         LD R3, R5, posZ
         LBI R6, ballTran_high
         SLBI R6, ballTran_low
-        ;ST R3, R6, posZ             ; posZ stays the same, stored here
-
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
 	; NAA NAA
 	LBI R0, scoreAddr_high
 	SLBI R0, scoreAddr_low
 	ST R3, R0, p1Score
 	;end NAA NAA
+        ST R3, R6, posZ             ; posZ stays the same, stored here
+
 
         ;x value
         LBI R0, #1
@@ -401,16 +408,16 @@ BTRANS:
 BUPDATE:   
         JAL BTRANS
 		
-		LBI R0, ballAddr
-		LBI R1, ballVelAddr
-		LD R2, R0, posZ
-		LD R3, R1, velZ
-		ADD R2, R2, R1
-		ST R2, R0, posZ
+	LBI R0, ballAddr
+	LBI R1, ballVelAddr
+	LD R2, R0, posZ
+	LD R3, R1, velZ
+	ADD R2, R2, R1
+	ST R2, R0, posZ
 
-		LBI R0, GLOOP_HIGH
-		SLBI R0, GLOOP_LOW
-		JR R0, #0
+	LBI R0, GLOOP_HIGH
+	SLBI R0, GLOOP_LOW
+	JR R0, #0
 
 ; intersect(PAD_t * p) 
 ; p is passed through R0, and true/false is returned through R0

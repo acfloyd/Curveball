@@ -46,6 +46,8 @@ MACRO mouseAddr_low #0
 MACRO mouseAddr_high #64            ; 16384
 MACRO scoreAddr_low #7
 MACRO scoreAddr_high #16            ; 4110
+MACRO gameStateAddr_low #9
+MACRO gameStateAddr_high #16        ; 4114
 MACRO gameStartAddr_high #80
 MACRO gameStartAddr_low #0          ; 0x5000 (20480)
 
@@ -56,8 +58,6 @@ MACRO paddle2Tran_high #16
 MACRO paddle2Tran_low #2            ; 4098, 0x1002
 MACRO paddle1Tran_high #16
 MACRO paddle1Tran_low #0            ; 4096, 0x1000
-MACRO gameStateAddr_low #9
-MACRO gameStateAddr_high #16        ; 4114
 
 ; gen mem bases
 MACRO ballVelAddr #0
@@ -129,6 +129,8 @@ MAIN:   LBI R0, scoreAddr_high
 
         LBI R0, ballVelAddr
         LBI R2, velz_start
+	BNEZ R4, #1
+	MULTI R2, R2, #-1
         ST R2, R0, velZ             ; ball->velZ = VELZ_START
 
 SETUP:  
@@ -144,7 +146,9 @@ SETUP:
         ST R4, R3, #0               ; set gamestate reg to player 1 win
         LBI R3, #0
         ST R3, R0, p1Score          ; playerScore = 0
-        ST R3, R0, p2Score          ; oppScore = 0
+	; NAA 
+        ;ST R3, R0, p2Score          ; oppScore = 0
+	; end NAA
         J CONTINUE
 OPPWINCHK: ; end if (playerScore == endScore)
         LD R3, R0, p2Score
@@ -161,7 +165,9 @@ OPPWINCHK: ; end if (playerScore == endScore)
         ST R0, R3, #0               ; set gamestate reg to player 2 win
         LBI R3, #0
         ST R3, R0, p1Score          ; playerScore = 0
-        ST R3, R0, p2Score          ; oppScore = 0
+	; NAA
+        ;ST R3, R0, p2Score          ; oppScore = 0
+	; end NAA
         J CONTINUE
 CONTINUE:
 
@@ -219,13 +225,13 @@ WAITCLICK:
 	;/* NAA NAA */
         LBI R4, scoreAddr_high
         SLBI R4, scoreAddr_low
-	LD R3, R4, p2Score
-	LBI R5, #-1
-	SLBI R5, #0
-	AND R3, R3, R5
-	SLLI R6, R0, #4
-	OR R6, R3, R6 
-        ST R6, R4, p2Score
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+        ST R0, R4, p2Score
         ;/* NAA NAA END */
 
         ; check whether to look at the mouse or the spart
@@ -245,9 +251,9 @@ WAITCLICK:
         LBI R4, scoreAddr_high
         SLBI R4, scoreAddr_low
 	LD R3, R4, p2Score
-	LBI R0, #-1
-	SLBI R0, #240
-	AND R3, R3, R0
+	LBI R1, #-1
+	SLBI R1, #240
+	AND R3, R3, R1
 	OR R6, R3, R5 
         ST R6, R4, p2Score
         ;/* NAA NAA END */
@@ -258,6 +264,24 @@ WAITCLICK:
 
 ; loop runs forever updating the game state
 GLOOP:  
+	; start of a wait loop decrimenting from 20,000 to 0
+	LBI R5, #127
+	SLBI R5, #255
+	LBI R4, #2
+GSTALL0:
+	BEQZ R5, #2
+	SUBI R5, R5, #1
+	J GSTALL0
+
+	; start of a wait loop decrimenting from 20,000 to 0
+	LBI R5, #127
+	SLBI R5, #255
+	LBI R4, #2
+GSTALL1:
+	BEQZ R5, #2
+	SUBI R5, R5, #1
+	J GSTALL1
+
         JAL P2UPDATE                ; opp_update()
         JAL P1UPDATE                ; paddle_update()
         JAL BUPDATE                 ; ball_update()
@@ -286,22 +310,24 @@ P2UPDATE:
         SLBI R6, paddle2Tran_low
 
         ;x value
-		LBI R0, width_high
+	LBI R0, width_high
 		SLBI R0, width_low
 		SUB R1, R0, R1
 		LBI R0, paddle_width
-		SUB R1, R1, R0
-        SRAI R1, R1, #2
-		LBI R0, #1
-		SLBI R0, #0
-		ADD R1, R1, R0
+		SUB R1, R1, R0	
+	;SRAI R1, R1, #2
+	;LBI R0, #1
+	;SLBI R0, #0
+	LBI R0, #64
+	ADD R1, R1, R0
         ST R1, R6, posX
 
         ;y value
-		SRAI R2, R2, #2
-		LBI R0, #0
-		SLBI R0, #192
-		ADD R2, R2, R0
+	;SRAI R2, R2, #2
+	;LBI R0, #0
+	;SLBI R0, #192
+	LBI R0, #48
+	ADD R2, R2, R0
         ST R2, R6, posY             
 
         JR R7, #0                   ; return
@@ -344,12 +370,30 @@ BTRANS:
         LD R3, R5, posZ
         LBI R6, ballTran_high
         SLBI R6, ballTran_low
-        ST R3, R6, posZ             ; posZ stays the same, stored here
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	
+	;LBI R0, width_high
+	;SLBI R0, width_low
+	;SUB R1, R0, R1
+	LBI R0, #64
+	ADD R1, R1, R0
+	ST R1, R6, posX             ; posX offset by 64
+	LBI R0, #48
+	ADD R2, R2, R0
+	ST R2, R6, posY             ; posY offset by 48
+	ST R3, R6, posZ             ; posZ stays the same, stored here
 
 	; NAA NAA
 	LBI R0, scoreAddr_high
 	SLBI R0, scoreAddr_low
 	ST R3, R0, p1Score
+	JR R7, #0
 	;end NAA NAA
 
         ;x value
@@ -396,6 +440,7 @@ BTRANS:
         ADD R4, R4, R0              ; r4 <-- (340 * (gameX - 192)) / (340 + gameZ) + 240
         ST R4, R6, posY             
         JR R7, #0
+
 
 ; update the ball location and calc the curve for the ball
 BUPDATE:   
@@ -687,8 +732,8 @@ INTRPNFX: ; end if (first)
         ; else of if (first)
         LD R0, R2, velZ             ; r0 <-- ball->velZ
         MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
-        LDI R3, difficultyAddr      ; r3 <-- difficulty
-        ADD R0, R0, R3
+        ;LDI R3, difficultyAddr      ; r3 <-- difficulty
+        ;ADD R0, R0, R3
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
 
         LD R0, R5, posX             ; r0 <-- pmouse->posX
@@ -707,6 +752,12 @@ INTRPNX_ELSE: ; end of else if (first)
         MULTI R6, R6, #-1           ; mouseDiff *= -1
         LBI R5, #-1
         ; r6: mouseDiff, r5: mouseDir
+
+	; NAA NAA
+	LBI R0, scoreAddr_high
+	SLBI R0, scoreAddr_low
+	ST R6, R0, p2Score
+	; end NAA NAA
 
         BEQZ R6, MTSTEX0            ; if (mouseDiff != 0)
 
@@ -843,7 +894,7 @@ NOINTRP: ; end if (sect || first)
         SLBI R0, audioAddr_low      ; r0 <-- audioAddr
         LBI R3, #1
         SLLI R3, R3, #15            ; r3 <-- r3 has a 1 in the most significant bit
-        ST R3, R0, #8               ; play the wall hit sound
+        ST R3, R0, #8               ; play the score sound
         
         LBI R0, scoreAddr_high
         SLBI R0, scoreAddr_low
@@ -920,8 +971,8 @@ INTRONFX: ; end if (first)
 
         ; else of if (first)
         LD R0, R2, velZ             ; r0 <-- ball->velZ
-        LDI R3, difficultyAddr      ; r3 <-- difficulty
-        ADD R0, R0, R3
+        ;LDI R3, difficultyAddr      ; r3 <-- difficulty
+        ;ADD R0, R0, R3
         MULTI R0, R0, #-1           ; r0 <-- ball->velZ * -1
         ST R0, R2, velZ             ; ball->velZ = (ball->velZ * -1) + difficulty
 
