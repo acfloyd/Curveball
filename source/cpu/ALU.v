@@ -11,7 +11,9 @@ module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk,
     wire divByZero;
     wire divEnable;
     
+    //Modify value of A if needed. Can invert, shift arithmetically left 8 (SLBI), or set to zero.
     assign Aout = (AOp == 2'b00) ? A : (AOp == 2'b01) ? ~A : (AOp == 2'b10) ? {A[7:0], 8'd0} : 16'd0;
+    
     assign Bout = (ZeroB) ? 16'd0 : B;
     
     Adder_16 adder (.A(Aout), .B(Bout), .AddMode(AddMode), .Out(AdderOut), .Z(AdderZero), .Overflow(AdderOverflow));
@@ -21,7 +23,7 @@ module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk,
     div_16 divider (.A(Aout), .B(Bout), .enable(divEnable), .ready(ready), .Out(DividerOut), .RemOut(Remainder), .clk(clk), .divByZero(divByZero));
 
     shifter shift (.In(Aout), .Cnt(Bout[3:0]), .Op(ShiftMode), .Out(ShifterOut));
-    
+    //Only enable the divider when instruction is being used, otherwise it constantly runs
     assign divEnable = ALUMux[0] && ALUMux[1] && ~ALUMux[2];
     
     assign AndOut = Aout & Bout;
@@ -29,7 +31,7 @@ module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk,
     assign OrOut = Aout | Bout;
     
     assign XorOut = Aout ^ Bout;
-    
+    //Final mux to decide which value to output
     assign ALUMuxOut = (ALUMux == 3'b000) ? AdderOut : 
                        (ALUMux == 3'b001) ? ShifterOut : 
                        (ALUMux == 3'b010) ? MultiplierOut : 
@@ -39,7 +41,7 @@ module ALU (A, B, ALUMux, SetFlag, FlagMux, AOp, ZeroB, ShiftMode, AddMode, clk,
                        (ALUMux == 3'b110) ? XorOut : 
                        (ALUMux == 3'b111) ? Aout :
                         16'bzzzzzzzzzzzzzzzz;
-    
+    //Flag Logic
     assign Flag = (SetFlag == 2'b00) ? AdderZero : //SEQ
                   (SetFlag == 2'b01) ? AdderOut[15] : //SLT (if MSB of AdderOut is 0, Rs is less)
                   (SetFlag == 2'b10) ? AdderOut[15] | AdderZero : //SLE
