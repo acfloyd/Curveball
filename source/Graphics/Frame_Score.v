@@ -1,15 +1,15 @@
 // Top level module for displaying frame and score data
 module Frame_Score(
-	input clk,
-	input rst,
-	input VGA_Ready,
-	input[15:0] your_score,
-	input[15:0] their_score,
-	input[15:0] game_state,
-	input[15:0] ball_z,
-	input[15:0] pixel_x,
-	input[15:0] pixel_y,
-	output[23:0] color
+	input clk, // CPU clk
+	input rst, // global reset
+	input VGA_Ready, // signal indicating VGA is ready for input
+	input[15:0] your_score, // P1 score
+	input[15:0] their_score, // P2 score
+	input[15:0] game_state, // current state of game
+	input[15:0] ball_z, // ball's z coordinate
+	input[15:0] pixel_x, // current x coordinate
+	input[15:0] pixel_y, // current y coordinate
+	output[23:0] color // color to be output from frame_score module
     );
 	// colors
 	localparam[23:0] BLACK = 24'h000000;
@@ -38,50 +38,55 @@ module Frame_Score(
 	Static_Frame_Draw #(247, 185, 145, 109) frame7(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[7]));
 	Static_Frame_Draw #(255, 191, 130,  98) frame8(.pixel_x(pixel_x), .pixel_y(pixel_y), .draw(frame_draw[8]));
 
+	// Diagonals
 	Diagonal_Draw #(63, 47, 255, 191) d1(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[0]));
 	Diagonal_Draw #(384, 288, 576, 432) d2(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[1]));
 	Diagonal_Draw_R #(255, 288, 63, 432) d3(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[2]));
 	Diagonal_Draw_R #(576, 47, 384, 191) d4(.clk(clk), .rst(rst), .en(VGA_Ready), .pixel_x(pixel_x), .pixel_y(pixel_y), .draw(diag_draw[3]));
 	
-	// Score
+	// Score and win info
 	Score_Draw score(.clk(clk), .pixel_x(pixel_x), .pixel_y(pixel_y), .your_score(your_score), .their_score(their_score), .draw(score_draw)); 
 	Win_Draw wd(.clk(clk), .rst(rst), .pixel_x(pixel_x), .pixel_y(pixel_y), .game_state(game_state[1:0]), .ready(VGA_Ready), .color(win_color));
 	
+	// Sets highlighting to frame nearest ball z position
 	assign highlight_draw = (frame_draw[0] && ball_z >=   0 && ball_z <=  62) ||
-									(frame_draw[1] && ball_z >=  63 && ball_z <= 187) ||
-									(frame_draw[2] && ball_z >= 188 && ball_z <= 312) ||
-									(frame_draw[3] && ball_z >= 313 && ball_z <= 437) ||
-									(frame_draw[4] && ball_z >= 438 && ball_z <= 562) ||
-									(frame_draw[5] && ball_z >= 563 && ball_z <= 687) ||
-									(frame_draw[6] && ball_z >= 688 && ball_z <= 812) ||
-									(frame_draw[7] && ball_z >= 813 && ball_z <= 937) ||
-									(frame_draw[8] && ball_z >= 938);
+				(frame_draw[1] && ball_z >=  63 && ball_z <= 187) ||
+				(frame_draw[2] && ball_z >= 188 && ball_z <= 312) ||
+				(frame_draw[3] && ball_z >= 313 && ball_z <= 437) ||
+				(frame_draw[4] && ball_z >= 438 && ball_z <= 562) ||
+				(frame_draw[5] && ball_z >= 563 && ball_z <= 687) ||
+				(frame_draw[6] && ball_z >= 688 && ball_z <= 812) ||
+			 	(frame_draw[7] && ball_z >= 813 && ball_z <= 937) ||
+				(frame_draw[8] && ball_z >= 938);
 	
-	assign color = (win_color) ? 			win_color :
-						(highlight_draw) ?	TEAL :
-						(frame_draw) ? 		GREEN : 
-						(diag_draw) ? 			GREEN : 
-						(score_draw) ? 		TEAL : 
-													BLACK;
-	
+	// color layering
+	assign color =  (win_color) ? 		win_color :
+			(highlight_draw) ?	TEAL :
+			(frame_draw) ? 		GREEN : 
+			(diag_draw) ? 		GREEN : 
+			(score_draw) ? 		TEAL : 
+						BLACK;
 endmodule
 
+// Draw a single -3/4 slope line based on parameters
 module Diagonal_Draw (
-	input clk,
-	input rst,
-	input en,
-	input[15:0] pixel_x,
-	input[15:0] pixel_y,
-	output draw);
+	input clk, // CPU clk
+	input rst, // global rst
+	input en, // enable signal for updating sequential logic
+	input[15:0] pixel_x, // current x coordinate
+	input[15:0] pixel_y, // current y coordinate
+	output draw // signal indicating drawing of diagonal
+	);
 	
-	parameter x1 = 63;
-	parameter y1 = 47;
-	parameter x2 = 255;
-	parameter y2 = 191;
+	parameter x1 = 63; // starting x
+	parameter y1 = 47; // starting y
+	parameter x2 = 255; // ending x
+	parameter y2 = 191; // ending y
 	
-	reg[1:0] cnt3;
-	reg[15:0] x_start;
+	reg[1:0] cnt3; // cnts when to write three pixels 
+	reg[15:0] x_start; // start position in x dir
 	
+	// determine staring x position
 	always@(posedge clk) begin
 		if(rst) begin
 			x_start <= x1;
@@ -100,28 +105,32 @@ module Diagonal_Draw (
 		end
 	end
 	
+	// decide whether to draw or not
 	assign draw = ~(pixel_y >= y1 && pixel_y <= y2 && pixel_x >= x1 && pixel_x <= x2) ? 1'd0 : 
-						(cnt3 == 2) ? (pixel_x >= x_start && pixel_x <= x_start + 2) :
-										  (pixel_x >= x_start && pixel_x <= x_start + 1);
+			(cnt3 == 2) ? (pixel_x >= x_start && pixel_x <= x_start + 2) :
+			(pixel_x >= x_start && pixel_x <= x_start + 1);
 	
 endmodule
 
+// Draw a single 3/4 slope line based on parameters
 module Diagonal_Draw_R (
-	input clk,
-	input rst,
-	input en,
-	input[15:0] pixel_x,
-	input[15:0] pixel_y,
-	output draw);
+	input clk, // CPU clk
+	input rst, // global reset
+	input en, // enable signal for updating sequential logic
+	input[15:0] pixel_x, // current x coordinate
+	input[15:0] pixel_y, // current y coordinate
+	output draw // signal indicating drawing of diagonal
+	);
 	
-	parameter x1 = 63;
-	parameter y1 = 47;
-	parameter x2 = 255;
-	parameter y2 = 191;
+	parameter x1 = 63; // starting x
+	parameter y1 = 47; // starting y
+	parameter x2 = 255; // ending x
+	parameter y2 = 191; // ending y
 	
-	reg[1:0] cnt3;
-	reg[15:0] x_start;
-	
+	reg[1:0] cnt3; // cnts when to write three pixels 
+	reg[15:0] x_start; // start position in x dir
+
+	// determine staring x position	
 	always@(posedge clk) begin
 		if(rst) begin
 			x_start <= x1;
@@ -140,25 +149,27 @@ module Diagonal_Draw_R (
 		end
 	end
 	
+	// decide whether to draw or not
 	assign draw = ~(pixel_y >= y1 && pixel_y <= y2 && pixel_x >= x2 && pixel_x <= x1) ? 1'd0 : 
-						(cnt3 == 2) ? (pixel_x >= x_start - 2 && pixel_x <= x_start) :
-										  (pixel_x >= x_start - 1 && pixel_x <= x_start);
+			(cnt3 == 2) ? (pixel_x >= x_start - 2 && pixel_x <= x_start) :
+			(pixel_x >= x_start - 1 && pixel_x <= x_start);
 	
 endmodule
 
 
 // module for drawing a static frame. Parameters specify upper left corner point and side lengths
 module Static_Frame_Draw(
-	input[15:0] pixel_x,
-	input[15:0] pixel_y,
-	output draw
+	input[15:0] pixel_x, // current x coordinate
+	input[15:0] pixel_y, // current y coordinate
+	output draw // signal indicating drawing of frame
     );
 	
-	parameter box_ul_x = 63;
-	parameter box_ul_y = 47;
-	parameter x_len = 514;
-	parameter y_len = 386;
+	parameter box_ul_x = 63; // upper left x
+	parameter box_ul_y = 47; // upper left y
+	parameter x_len = 514; // x length
+	parameter y_len = 386; // y length
 	
+	// determine if pixel_x and pixel_y are in box
 	wire h_line_v, h_line_h;
 	wire v_line_v, v_line_h;
 	
@@ -167,6 +178,7 @@ module Static_Frame_Draw(
 	assign v_line_v = (pixel_y >= box_ul_y && pixel_y < box_ul_y + y_len) ? 1'b1 : 1'b0;
 	assign v_line_h = (pixel_x == box_ul_x || pixel_x == box_ul_x + x_len - 1) ? 1'b1 : 1'b0;
 
+	// assert draw when on box
 	assign draw = ((h_line_v && h_line_h) || (v_line_v && v_line_h)) ? 1'b1 : 1'b0;
 	
 endmodule
@@ -174,12 +186,12 @@ endmodule
 
 // module for drawing scores. Uses a pre-built ROM
 module Score_Draw(
-  input clk,
-  input[15:0] pixel_x,
-  input[15:0] pixel_y,
-  input[15:0] your_score,
-  input[15:0] their_score,
-  output draw
+  input clk, // CPU clk
+  input[15:0] pixel_x, // current x coordinate
+  input[15:0] pixel_y, // current y coordinate
+  input[15:0] your_score, // P1 score
+  input[15:0] their_score, // P2 score
+  output draw // indicates score info to be drawn
     );
 	 
   // general score parameters
@@ -211,9 +223,9 @@ module Score_Draw(
   assign addr_y = pixel_y - y;
   assign digit = (pixel_x < x1 + score_width) ? your_score[3:0] :
 					  their_score[3:0];
-					  
   assign addr = {addr_y, digit, addr_x};
    
+  // ceiling log2, used for address sizing
   function integer clog2;
     input integer value;
     begin 
@@ -224,22 +236,24 @@ module Score_Draw(
   endfunction
 endmodule
 
+// module for drawing win condition
 module Win_Draw(
-	input clk,
-	input rst,
-	input[15:0] pixel_x,
-	input[15:0] pixel_y,
-	input[1:0] game_state,
-	input ready,
-	output[23:0] color
+	input clk, // CPU clk
+	input rst, // global reset
+	input[15:0] pixel_x, // current x coordinate
+	input[15:0] pixel_y, // current y coordinate
+	input[1:0] game_state, // game state info
+	input ready, // enable signal for updating sequential logic
+	output[23:0] color // color to be drawn
    );
-	 
+	
+	// character info 
 	parameter CHAR_WIDTH = 32;
 	parameter CHAR_HEIGHT = 32;
 	parameter addr_width = clog2(CHAR_WIDTH * CHAR_HEIGHT * 8);
 
-	parameter x = 192;
-	parameter y = 10;
+	parameter x = 192; // upper left x
+	parameter y = 10; // upper left y
 
 	// ROMS
 	wire[addr_width - 1:0] addr;
@@ -276,12 +290,13 @@ module Win_Draw(
 	end
 	
 	assign color = ~(pixel_x >= x && pixel_x <= x + CHAR_WIDTH * 8 && 
-						  pixel_y >= y && pixel_y <= y + CHAR_HEIGHT) ? 24'h000000 :
-						 (game_state == 2'b01 && P1_data) ? colors[(addr_y >> 1) + offset[21:19]] :
-						 (game_state == 2'b10 && P2_data) ? colors[(addr_y >> 1) + offset[21:19]]  :
-						  24'd0;
-		
-	function integer clog2;
+			 pixel_y >= y && pixel_y <= y + CHAR_HEIGHT) ? 24'h000000 :
+			(game_state == 2'b01 && P1_data) ? colors[(addr_y >> 1) + offset[21:19]] :
+			(game_state == 2'b10 && P2_data) ? colors[(addr_y >> 1) + offset[21:19]]  :
+			 24'd0;
+
+    // ceiling log2, used for address sizing		
+    function integer clog2;
     input integer value;
     begin 
       value = value-1;
