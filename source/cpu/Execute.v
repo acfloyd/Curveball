@@ -6,10 +6,8 @@ module Execute(DataOut1, DataOut2, ForwardRs, ForwardRt, ALUOp, SetFlag, AOp, Ze
  	input[1:0] SetFlag, AOp, ShiftMode;
  	input[2:0] ALUOp;
  	input[15:0] DataOut1, DataOut2, WriteDataIn;
- 	//Forwarding
  	input[15:0] MemData2, WriteBackData, WriteBack2Data;
  	input[1:0] RsForwardSel, RtForwardSel;
-
  	output divReady;
  	output[15:0] Remainder, ALUOut, WriteDataOut;
 
@@ -17,7 +15,8 @@ module Execute(DataOut1, DataOut2, ForwardRs, ForwardRt, ALUOp, SetFlag, AOp, Ze
  	wire Flag;
  	wire [15:0] AIn, BIn, RemainderRegIn, ALUOutRegIn; 
  	wire [15:0] RsForwarding, RtForwarding;
-
+	
+	//Data Forwarding logic
  	assign RsForwarding = (RsForwardSel == 2'b00) ? ALUOut: 
 					  (RsForwardSel == 2'b01) ? MemData2:
 					  (RsForwardSel == 2'b10) ? WriteBackData:
@@ -26,7 +25,7 @@ module Execute(DataOut1, DataOut2, ForwardRs, ForwardRt, ALUOp, SetFlag, AOp, Ze
 					  (RtForwardSel == 2'b01) ? MemData2:
 					  (RtForwardSel == 2'b10) ? WriteBackData:
 					  WriteBack2Data;
-
+	//Determines true value of two values entering the ALU
  	assign AIn = (ForwardRs) ? RsForwarding : DataOut1;
  	assign BIn = (ForwardRt) ? RtForwarding : DataOut2;
 
