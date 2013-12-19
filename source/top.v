@@ -54,15 +54,6 @@ module top(input clk_100mhz,
 	wire [15:0] Addr, WriteData, DataToCPU, DataBus;
 	wire [3:0] zone;
 	
-	//assign LED_0 = (sw2)?~CS_RAM:rxd;
-	//assign LED_1 = (sw2)?~CS_Graphics:txd;
-	//assign LED_2 = (sw2)?~CS_Spart:0;
-	//assign LED_3 = (sw2)?~CS_PS2:0;
-	
-	assign LED_0 = ~sw1;
-	assign LED_1 = zone[1];
-	assign LED_2 = zone[2];
-	assign LED_3 = zone[3];
 	
 	proc PROC(.clk(cpuclk), 
 			  .rst(rst | ~cpu_locked_dcm), 
