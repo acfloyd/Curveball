@@ -1,4 +1,3 @@
-
 module Control(
 	input clk,
 	input rst,
@@ -11,7 +10,7 @@ module Control(
 	output reg[15:0] pixel_y,
 	output reg[23:0] color,
 	output reg[18:0] address
-    );
+	);
 	// colors
 	localparam[23:0] BLACK = 24'h000000;
 	localparam[23:0] GREEN = 24'h00FF00;
@@ -24,17 +23,8 @@ module Control(
 
 	reg[15:0] next_x, next_y;
 
-    reg[18:0] next_addr;
+	reg[18:0] next_addr;
 
-	/*assign color = 		(paddle_1) ? 
-										paddle_1 
-									: (ball) ? 
-										ball 
-									: (frame_score) ? 
-										frame_score 
-									: (paddle_2) ? 
-										paddle_2 
-									: BLACK;*/
 	always@(*) begin
 		color = BLACK;		// default
 		if(paddle_1 == BLUE)
@@ -61,15 +51,14 @@ module Control(
 		end
 	end
 
-    always @( * ) begin
+	always @( * ) begin
 		next_addr = address;
-        next_x = pixel_x;
-        next_y = pixel_y;
-		
+		next_x = pixel_x;
+		next_y = pixel_y;
 		if (rst) begin
 			next_addr = 19'd0;
             next_x = 16'd0; 
-            next_y = 16'd0; 
+			next_y = 16'd0; 
 		end
 		else if (VGA_ready) begin
 			if (address == 19'h4AFFF) begin
@@ -77,24 +66,23 @@ module Control(
                 next_x = 16'd0;
                 next_y = 16'd0;
 			end
-         else if (pixel_x == 16'd639) begin
-                next_x = 16'd0;
-                next_y = pixel_y + 16'd1;
-					 next_addr = address + 19'd1;
-            end
+			else if (pixel_x == 16'd639) begin
+				next_x = 16'd0;
+				next_y = pixel_y + 16'd1;
+				next_addr = address + 19'd1;
+			end
 			else begin
 				next_addr = address + 19'd1;
-            next_x = pixel_x + 16'd1;
-         end
+	            next_x = pixel_x + 16'd1;
+			end
 		end
-			
 	end
 	
 	always @(posedge clk) begin
 		if (rst) begin
 			address <= 19'd0;
-            pixel_x <= 16'd0;
-            pixel_y <= 16'd0;
+			pixel_x <= 16'd0;
+			pixel_y <= 16'd0;
         end
 		else begin
 			address <= next_addr;
