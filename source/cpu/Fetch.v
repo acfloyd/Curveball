@@ -6,16 +6,19 @@ module Fetch(clk, rst, Stall, FetchStall, TruePC, NotBranchOrJump, NextPC,
 
     reg [15:0] PC;
     wire [15:0] MuxOut, NextPCRegIn, InstructRegIn;
-
+    
+    //Instruction memory
     simple_rom #(745,"game_code.bin") mem(MuxOut, InstructRegIn);
 
+    //PC Register
     always @ (posedge clk, posedge rst) begin
         if(rst) PC <= 16'd0;
         else if (Halt) PC <= 16'd0;
         else if (Stall | FetchStall) PC <= PC;
         else PC <= NextPCRegIn;
     end
-
+    
+    //Next PC logic
     assign MuxOut = (NotBranchOrJump) ? PC : TruePC;
     assign NextPCRegIn = MuxOut + 1;
 
