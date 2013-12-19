@@ -1,13 +1,12 @@
-
 module Graphics_ASIC(
-   input clk,
+	input clk,
 	input rst,
 	input chipselect,
 	inout[15:0] databus,
 	input[3:0] data_address,
-   input read,
+	input read,
 	input VGA_ready,
-   output[23:0] color,
+	output[23:0] color,
 	output[3:0] zone);
 
 	parameter paddle_1_x_pos = 0;
@@ -23,16 +22,16 @@ module Graphics_ASIC(
 
 	wire[18:0] pixel_address;
 
-   reg[15:0] databus_reg;
-	reg[15:0] paddle_1_x, paddle_1_y, paddle_2_x, paddle_2_y, ball_x, ball_y, ball_z,
-				 p1_score, p2_score, game_state;
+	reg[15:0] databus_reg;
+	reg[15:0] paddle_1_x, paddle_1_y, paddle_2_x, paddle_2_y, ball_x, ball_y, ball_z, p1_score, p2_score,
+			game_state;
 	
 	wire[15:0] pixel_x, pixel_y;
 	wire[23:0] paddle_1_color, paddle_2_color, ball_color,  frame_score_color;
 	
 	reg[15:0] buffer_regs[9:0];
 
-   assign databus = databus_reg;
+	assign databus = databus_reg;
 
 	// data bus assignment
 	always@(posedge clk) begin
@@ -94,75 +93,73 @@ module Graphics_ASIC(
 	end
 		
 
-	Paddle_1 paddle_1(
-					.x_loc(paddle_1_x),
-					.y_loc(paddle_1_y),
-					.pixel_x(pixel_x),
-					.pixel_y(pixel_y),
-					.color(paddle_1_color));
+	Paddle_1 paddle_1(.x_loc(paddle_1_x),
+			.y_loc(paddle_1_y),
+			.pixel_x(pixel_x),
+			.pixel_y(pixel_y),
+			.color(paddle_1_color));
 
 	
-	Paddle_2 paddle_2(
-					.x_loc(paddle_2_x),
-					.y_loc(paddle_2_y),
-					.pixel_x(pixel_x),
-					.pixel_y(pixel_y),
-					.color(paddle_2_color));
+	Paddle_2 paddle_2(.x_loc(paddle_2_x),
+			.y_loc(paddle_2_y),
+			.pixel_x(pixel_x),
+			.pixel_y(pixel_y),
+			.color(paddle_2_color));
 	
 	
-	Ball ball(
-				.clk(clk),
-				.rst(rst),
-				.x_loc(ball_x),
-				.y_loc(ball_y),
-				.z_loc(ball_z),
-				.pixel_x(pixel_x),
-				.pixel_y(pixel_y),
-				.color(ball_color));
+	Ball ball(.clk(clk),
+		.rst(rst),
+		.x_loc(ball_x),
+		.y_loc(ball_y),
+		.z_loc(ball_z),
+		.pixel_x(pixel_x),
+		.pixel_y(pixel_y),
+		.color(ball_color));
 	
 	//assign ball_color = 0;
 	
 	Frame_Score frame_score(.clk(clk),
-							.rst(rst),
-							.VGA_Ready(VGA_ready),
-							.your_score(p1_score),
-							.their_score(p2_score),
-							.game_state(game_state),
-							.ball_z(ball_z),
-							.pixel_x(pixel_x),
-							.pixel_y(pixel_y),
-							.color(frame_score_color));
+				.rst(rst),
+				.VGA_Ready(VGA_ready),
+				.your_score(p1_score),
+				.their_score(p2_score),
+				.game_state(game_state),
+				.ball_z(ball_z),
+				.pixel_x(pixel_x),
+				.pixel_y(pixel_y),
+				.color(frame_score_color));
 							
 	wire[23:0] cntrl_color, cage_color;			
 	Control control(.clk(clk),
-					.rst(rst),
-					.paddle_1(paddle_1_color),
-					.paddle_2(paddle_2_color),
-					.ball(ball_color),
-					.frame_score(frame_score_color),
-					.VGA_ready(VGA_ready),
-					.pixel_x(pixel_x),
-					.pixel_y(pixel_y),
-					.color(cntrl_color),
-					.address(pixel_address));
-					
-					wire[13:0] cage1_addr, cage2_addr;
-					wire[23:0] cage_data1, cage_data2;
-					
-					reg[25:0] count;
-					
-					assign cage1_addr = {pixel_y - 192, pixel_x[6:0]};
-					assign cage2_addr = {pixel_y - 192, pixel_x[6:0]};
-					
-					CAGE1 c1(clk, cage1_addr, cage_data1);
-					CAGE2 c2(clk, cage2_addr, cage_data2);
-				
-					always@(posedge clk) begin
-						if(rst) count <= 0;
-						else count <= count + 1;
-					end
-					
-					assign cage_color = (count[25]) ? cage_data1 : cage_data2;
-					assign color = (game_state && pixel_x >= 256 && pixel_x <= 384 && pixel_y >= 192 && pixel_y <= 288) ? cage_color : cntrl_color;
+			.rst(rst),
+			.paddle_1(paddle_1_color),
+			.paddle_2(paddle_2_color),
+			.ball(ball_color),
+			.frame_score(frame_score_color),
+			.VGA_ready(VGA_ready),
+			.pixel_x(pixel_x),
+			.pixel_y(pixel_y),
+			.color(cntrl_color),
+			.address(pixel_address));
+	// Nick Cage splash screen				
+	wire[13:0] cage1_addr, cage2_addr;
+	wire[23:0] cage_data1, cage_data2;
+	
+	reg[25:0] count;
+	
+	assign cage1_addr = {pixel_y - 192, pixel_x[6:0]};
+	assign cage2_addr = {pixel_y - 192, pixel_x[6:0]};
+	
+	CAGE1 c1(clk, cage1_addr, cage_data1);
+	CAGE2 c2(clk, cage2_addr, cage_data2);
+
+	always@(posedge clk) begin
+		if(rst) count <= 0;
+		else count <= count + 1;
+	end
+	
+	assign cage_color = (count[25]) ? cage_data1 : cage_data2;
+	assign color = (game_state && pixel_x >= 256 && pixel_x <= 384 && pixel_y >= 192 && pixel_y <= 288) ?
+			cage_color : cntrl_color;
 endmodule
 
