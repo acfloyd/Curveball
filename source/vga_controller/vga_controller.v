@@ -22,10 +22,10 @@
 module vga_controller(
 	input clk_100mhz_buf,
 	input rst,
-    input[23:0] Wdata,
+	input[23:0] Wdata,
 	input vgaclk,
-    input locked_dcm,
-    output reg state,
+	input locked_dcm,
+	output reg state,
 	output blank,
 	output comp_sync,
 	output hsync,
@@ -35,15 +35,15 @@ module vga_controller(
 	output[7:0] pixel_b
     );
 
-    // color decode
-    localparam[23:0] BLACK = 24'h000000;
-    localparam[23:0] GREEN = 24'h00FF00;
-    localparam[23:0] BLUE = 24'h0000FF;
-    localparam[23:0] RED = 24'hFF0000;
-    localparam[23:0] TEAL = 24'h66FFFF;
-    localparam[23:0] GRAY = 24'hD3D3D3;
-    localparam[23:0] WHITE = 24'hFFFFFF;
-    localparam[23:0] GWHITE = 24'hCCFF99;
+	// color decode
+	localparam[23:0] BLACK = 24'h000000;
+	localparam[23:0] GREEN = 24'h00FF00;
+	localparam[23:0] BLUE = 24'h0000FF;
+	localparam[23:0] RED = 24'hFF0000;
+	localparam[23:0] TEAL = 24'h66FFFF;
+	localparam[23:0] GRAY = 24'hD3D3D3;
+	localparam[23:0] WHITE = 24'hFFFFFF;
+	localparam[23:0] GWHITE = 24'hCCFF99;
 
 	localparam FILL = 1'b1;
 	localparam READ = 1'b0;
@@ -58,36 +58,34 @@ module vga_controller(
 	wire wr_en, empty, full; 
 	
 	// ram wires
-    wire[23:0] color_val;
+	wire[23:0] color_val;
 
 	// global reset
 	wire g_rst;
 
-    // color value decode
-    /*always @(*) begin
-        case(Wdata)
-            3'd0: color_val = BLACK;
-            3'd1: color_val = GREEN;
-            3'd2: color_val = BLUE;
-            3'd3: color_val = RED;
-            3'd4: color_val = TEAL;
-            3'd5: color_val = GRAY;
-            3'd6: color_val = WHITE;
-            3'd7: color_val = GWHITE;
-        endcase
-    end*/
-	 assign color_val = Wdata;
+	// color value decode
+	/*always @(*) begin
+		case(Wdata)
+			3'd0: color_val = BLACK;
+			3'd1: color_val = GREEN;
+			3'd2: color_val = BLUE;
+			3'd3: color_val = RED;
+			3'd4: color_val = TEAL;
+			3'd5: color_val = GRAY;
+			3'd6: color_val = WHITE;
+			3'd7: color_val = GWHITE;
+		endcase
+	end*/
+	assign color_val = Wdata;
 
 	// state transition logic
 	always@(*) begin
 		case(state)	
-			READ: if(full) 
-						next_state = READ;					
-					else 
-						next_state = FILL;
-						
+			READ:	if(full) 
+					next_state = READ;					
+				else 
+					next_state = FILL;
 			FILL: next_state = READ;
-
 			endcase
 	end
 	
