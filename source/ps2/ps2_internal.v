@@ -5,12 +5,12 @@ module ps2_internal(
 	output txd,					//serial data out
 	inout[15:0] DataBus,				//input/output databus
 	inout MOUSE_CLOCK, MOUSE_DATA,			//input/output MOUSE_CLOCK and MOUSE_DATA
+);			
 	
 	wire[15:0] ps2_mouse_data,			//data read from ps2_mouse
 	wire[1:0] ps2_mouse_addr,			//address to read from ps2_mouse
 	wire[7:0] data_out,				//data to be transmit out
-	wire tbr					//transmit buffer ready
-);							
+	wire tbr					//transmit buffer ready				
 	
 	//instantiate ps2_mouse
 	ps2_mouse mouse(.r_ack(ack),
