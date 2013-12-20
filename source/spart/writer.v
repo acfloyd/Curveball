@@ -1,36 +1,19 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:   
-// Design Name: 
-// Module Name:    spart 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+//writer module
 module writer(
-    input clk,
-    input rst,
-	 input write,
-    output tbr,
-    input [7:0] data_in,
-    output txd
+    input clk,				//system clk
+    input rst,				//system reset
+    input write,			//write signal
+    output tbr,				//transmit buffer ready
+    input [7:0] data_in,		//data to transmit
+    output txd				//serial output
     );
-                     
+    
+    //instantiate write_baud_generator                 
     write_baud_generator bg(.clk(clk), 
-                      .rst(rst),
-                      .txEnable(txEnable));
+                            .rst(rst),
+                            .txEnable(txEnable));
                       
+    //instantiate transmitter           
     transmitter tx(.TxD(txd), 
                    .TBR(tbr), 
                    .trans_buff(data_in), 
