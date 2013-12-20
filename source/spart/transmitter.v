@@ -1,23 +1,4 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 	UW-Madison ECE 554
-// Engineer: 	John Cabaj, Nate Williams, Paul McBride
-// 
-// Create Date:    September 15, 2013
-// Design Name: 	 SPART
-// Module Name:    transmitter
-// Project Name: 		Mini-Project 1 - SPART
-// Target Devices: 	Xilinx Vertex II FPGA
-// Tool versions: 
-// Description: 		Transmits data to workstation terminal
-//
-// Dependencies: 
-//
-// Revision: 		1.0
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+//transmits data serially
 module transmitter(output TxD, output reg TBR, input [7:0] trans_buff, input clk, rst, txEnable, trans_load);
   
   reg [7:0] trans_buff_hold;			// hold the data to transmit
