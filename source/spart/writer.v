@@ -1,6 +1,6 @@
 //writer module
 module writer(
-    input clk,				//system clk
+    input clk,				//system clock
     input rst,				//system reset
     input write,			//write signal
     output tbr,				//transmit buffer ready
