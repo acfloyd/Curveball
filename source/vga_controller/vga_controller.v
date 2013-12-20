@@ -63,19 +63,6 @@ module vga_controller(
 	// global reset
 	wire g_rst;
 
-	// color value decode
-	/*always @(*) begin
-		case(Wdata)
-			3'd0: color_val = BLACK;
-			3'd1: color_val = GREEN;
-			3'd2: color_val = BLUE;
-			3'd3: color_val = RED;
-			3'd4: color_val = TEAL;
-			3'd5: color_val = GRAY;
-			3'd6: color_val = WHITE;
-			3'd7: color_val = GWHITE;
-		endcase
-	end*/
 	assign color_val = Wdata;
 
 	// state transition logic
