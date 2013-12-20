@@ -1,24 +1,12 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 	UW-Madison ECE 554
-// Engineer: 	John Cabaj, Nate Williams, Paul McBride
-// 
-// Create Date:    September 15, 2013
-// Design Name: 	 SPART
-// Module Name:    receiver
-// Project Name: 		Mini-Project 1 - SPART
-// Target Devices: 	Xilinx Vertex II FPGA
-// Tool versions: 
-// Description: 		Receives data from workstation terminal
-//
-// Dependencies: 
-//
-// Revision: 		1.0
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
-module receiver(output [7:0] rec_buff, output RDA, input clk, rst, RxD, rxEnable);
+//receiver module
+module receiver(
+	output [7:0] rec_buff, 			//data received
+	output RDA, 				//receive data available
+	input clk, 				//system clock
+	input rst, 				//system reset
+	input RxD, 				//input serial data
+	input rxEnable				//receive enable
+);
     
   //instantiate receiver and sampler
   rx r(.rec_buff(rec_buff), .RDA(RDA), .clk(clk), .rst(rst), .RxD(RxD), .rxEnable(rxEnable), .start(start), .enable(enable));
