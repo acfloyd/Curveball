@@ -1,36 +1,19 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 	UW-Madison ECE 554
-// Engineer: 	John Cabaj, Nate Williams, Paul McBride
-// 
-// Create Date:    September 15, 2013
-// Design Name: 	 SPART
-// Module Name:    driver 
-// Project Name: 		Mini-Project 1 - SPART
-// Target Devices: 	Xilinx Vertex II FPGA
-// Tool versions: 
-// Description: 		Implements a driver to control SPART operation
-//
-// Dependencies: 
-//
-// Revision: 		1.0
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+// writer_driver module
 module write_driver(
-    input clk,						// 100 MHz clock
-    input rst,						// Asynchronous reset, tied to dip switch 0
-	 input dav,
-	 input [15:0] data_in,
-	 output reg [1:0] addr,
-	 input tbr,
-	 output reg [7:0] data_out,
-	 output reg write
-    );
+    input clk,						//system clock
+    input rst,						//system reset
+    input dav,						//data available
+    input [15:0] data_in,				//data from ps2_mouse
+    output reg [1:0] addr,				//address to read write data from
+    input tbr,						//transmit buffer ready
+    output reg [7:0] data_out,				//data to write 
+    output reg write					//write signal
+);
 	 
-	 reg [3:0] state, next_state;
-	 reg [1:0] status, next_status;
+	 reg [3:0] state, next_state;			//state variables
+	 reg [1:0] status, next_status;			//status from ps2_mouse
     
+    	 //state parameters
 	 localparam WAIT = 4'h0;
 	 localparam WRITE_STATUS_1 = 4'h1;
 	 localparam WRITE_STATUS_2 = 4'h2;
@@ -43,6 +26,7 @@ module write_driver(
 	 localparam START_BYTE_1 = 4'h9;
 	 localparam START_BYTE_2 = 4'ha;
 	 
+    //sequential logic to update state and status
     always@(posedge clk, posedge rst) begin
 		if(rst) begin
 		    state <= WAIT;
@@ -54,77 +38,128 @@ module write_driver(
 		end
     end
     
+    //combinational logic
     always@(*) begin
+       //defaults
        next_state = state;
        addr = 2'd0;
        next_status = status;
 		 data_out = 15'd0;
 		 write = 1'b0;
+            //state case statement
 	    case(state)
+	    	//wait for data available
 	        WAIT: begin
+	           //data available
 	           if(dav)
+	              //go to next state
 	              next_state = START_BYTE_1;
 	        end
-			  START_BYTE_1: begin
+	        //sending a start byte
+		START_BYTE_1: begin
+		   //transmit buffer ready
 	           if(tbr) begin
-					  write = 1'b1;
-	              data_out = 8'hBA;//data_in[15:8];
+	              //assert write signal
+		      write = 1'b1;
+		      //send first start byte
+	              data_out = 8'hBA;
+	              //go to next state
 	              next_state = START_BYTE_2;
 	           end
 	        end
-			  START_BYTE_2: begin
+	        //send second start byte
+		START_BYTE_2: begin
+		   //transmit buffer ready
 	           if(tbr) begin
-					  write = 1'b1;
-	              data_out = 8'h11;//data_in[15:8];
+	              //assert write signal
+		      write = 1'b1;
+		      //send second start byte
+	              data_out = 8'h11;
+	              //go to next state
 	              next_state = WRITE_STATUS_1;
 	           end
 	        end
+	        //write first byte of status
 	        WRITE_STATUS_1: begin
+	           //transmit buffer ready
 	           if(tbr) begin
+	              //read data from ps2_mouse
 	              addr = 2'd0;
 	              next_status = data_in[1:0];
-					  write = 1'b1;
+	              //assert write signal
+		      write = 1'b1;
+		      //setup data for serial output
 	              data_out = data_in[15:8];
+	              //go to next state
 	              next_state = WRITE_STATUS_2;
 	           end
 	        end
+	        //write second byte of status
 	        WRITE_STATUS_2: begin
+	           //transmits buffer ready
 	           if(tbr) begin
+	              //read data from ps2_mouse
 	              addr = 2'd0;
-					  write = 1'b1;
+	              //assert write signal
+		      write = 1'b1;
+		      //setup data for serial output
 	              data_out = data_in[7:0];
+	              //go to next state
 	              next_state = WRITE_X_1;
 	           end
 	        end
+	        //write first byte of x position
 	        WRITE_X_1: begin
+	           //transmit buffer ready
 	           if(tbr) begin
+	              //read data from ps2_mouse
 	              addr = 2'd1;
-					  write = 1'b1;
+	              //assert write signal
+		      write = 1'b1;
+		      //setup data for serial output
 	              data_out = data_in[15:8];
+	              //go to next state
 	              next_state = WRITE_X_2;
 	           end
 	        end
+	        //write second byte of x position
 	        WRITE_X_2: begin
+	           //transmit buffer ready
 	           if(tbr) begin
+	              //read data from ps2_mouse
 	              addr = 2'd1;
-					  write = 1'b1;
+	              //assert write signal
+		      write = 1'b1;
+		      //setup data for serial output
 	              data_out = data_in[7:0];
+	              //go to next state
 	              next_state = WRITE_Y_1;
 	           end
 	        end
+	        //write first byte of y position
 	        WRITE_Y_1: begin
+	           //transmit buffer ready
 	           if(tbr) begin
+	              //read data from ps2_mouse
 	              addr = 2'd2;
-					  write = 1'b1;
+	              //assert write signal
+		      write = 1'b1;
+		      //setup data for serial output
 	              data_out = data_in[15:8];
+	              //go to next state
 	              next_state = WRITE_Y_2;
 	           end
 	        end
+	        //write second byte of y position
 	        WRITE_Y_2: begin
 	           if(tbr) begin
+	              //read data from ps2_mouse
 	              addr = 2'd2;
-					  write = 1'b1;
+	              //assert write signal
+		      write = 1'b1;
+		      //setup data for serial output
 	              data_out = data_in[7:0];
+	              //go to next state
 	              next_state = WAIT;
 	           end
 	        end
