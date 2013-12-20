@@ -1,41 +1,24 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:   
-// Design Name: 
-// Module Name:    spart 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+//reader module
 module reader(
-    input clk,
-    input rst,
-    output rda,
-	 output [7:0] data_out,
-    input rxd
-    );
-                     
+    input clk,				//system clock
+    input rst,				//system reset
+    output rda,				//receive data available
+    output [7:0] data_out,		//data received
+    input rxd				//input serial data
+);
+
+    //instantiate read_baud_generator                     
     read_baud_generator bg(.clk(clk), 
-                      .rst(rst), 
-                      .rxEnable(rxEnable));
+                           .rst(rst), 
+                           .rxEnable(rxEnable));
                      
-    receiver rx(  .rec_buff(data_out), 
-                  .RDA(rda),
-                  .clk(clk), 
-                  .rst(rst), 
-                  .RxD(rxd), 
-                  .rxEnable(rxEnable));
+    //instantiating receiver  
+    receiver rx(.rec_buff(data_out), 
+                .RDA(rda),
+                .clk(clk), 
+                .rst(rst), 
+                .RxD(rxd), 
+                .rxEnable(rxEnable));
 
 endmodule
 
