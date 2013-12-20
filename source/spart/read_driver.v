@@ -1,50 +1,34 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 	UW-Madison ECE 554
-// Engineer: 	John Cabaj, Nate Williams, Paul McBride
-// 
-// Create Date:    September 15, 2013
-// Design Name: 	 SPART
-// Module Name:    driver 
-// Project Name: 		Mini-Project 1 - SPART
-// Target Devices: 	Xilinx Vertex II FPGA
-// Tool versions: 
-// Description: 		Implements a driver to control SPART operation
-//
-// Dependencies: 
-//
-// Revision: 		1.0
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+//read_driver module
 module read_driver(
-    input clk,						// 75 MHz clock
-    input rst,						// Asynchronous reset, tied to dip switch 0
-    input rda,						// received data available
-	 input [7:0] data_in,
-	 input [1:0] addr,
-	 output [15:0] data_out
-    );
+    input clk,						//system clock
+    input rst,						//system reset
+    input rda,						//receive data available
+    input [7:0] data_in,				//data received 
+    input [1:0] addr,					//input address
+    output [15:0] data_out				//data output
+);
 	 
-	 localparam MSTATUS = 2'b00;
-	 localparam XPOS = 2'b01;
-	 localparam YPOS = 2'b10;
+	 localparam MSTATUS = 2'b00;			//mouse status parameter
+	 localparam XPOS = 2'b01;			//mouse x position parameter
+	 localparam YPOS = 2'b10;			//mouse y position parameter
 	 
-	 reg[15:0] mouseData[0:2];
+	 reg[15:0] mouseData[0:2];			//memory mapped registers
     
+	 //status, x and y location registers
 	 reg [7:0] first_status, second_status, next_first_status, next_second_status;
 	 reg [7:0] first_x_loc, second_x_loc, next_first_x_loc, next_second_x_loc;
 	 reg [7:0] first_y_loc, second_y_loc, next_first_y_loc, next_second_y_loc;
-    reg [3:0] state, next_state;			// state and next state
-	 reg next_dav, dav;
+
+
+    	 reg [3:0] state, next_state;			//state and next state		
+	 reg next_dav, dav;				//data available
     
 	 // state variables
 	 localparam WAIT_START_1 = 4'hc;
 	 localparam READ_START_1 = 4'hd;
 	 localparam WAIT_START_2 = 4'he;
 	 localparam READ_START_2 = 4'hf;
-    localparam WAIT_STATUS_1 = 4'h0;
+    	 localparam WAIT_STATUS_1 = 4'h0;
 	 localparam READ_STATUS_1 = 4'h1;
 	 localparam WAIT_STATUS_2 = 4'h2;
 	 localparam READ_STATUS_2 = 4'h3;
@@ -57,10 +41,12 @@ module read_driver(
 	 localparam WAIT_Y_2 = 4'ha;
 	 localparam READ_Y_2 = 4'hb;
 	 
+	 //setup data to output given an input address
 	 assign data_out = (addr == 2'b00) ? mouseData[MSTATUS] : 
                 (addr == 2'b01) ? mouseData[XPOS] :
                 (addr == 2'b10) ? mouseData[YPOS] : 16'd0;
 					 
+	//update status, x and y location registers
 	always @(posedge clk, posedge rst) begin
 		if (rst) begin
 			mouseData[MSTATUS] <= 16'd0;
@@ -74,142 +60,198 @@ module read_driver(
 		end
 	end
     
-	 // sequential logic
+    // sequential logic
     always@(posedge clk, posedge rst) begin
+       //reset signals
        if(rst) begin
            state <= WAIT_START_1;	
-			  first_status <= 8'd0;
-			  second_status <= 8'd0;
-			  first_x_loc <= 8'd0;
-			  second_x_loc <= 8'd0;
-			  first_y_loc <= 8'd0;
-			  second_y_loc <= 8'd0;
-			  dav <= 1'b0;
+	   first_status <= 8'd0;
+	   second_status <= 8'd0;
+	   first_x_loc <= 8'd0;
+	   second_x_loc <= 8'd0;
+	   first_y_loc <= 8'd0;
+	   second_y_loc <= 8'd0;
+	   dav <= 1'b0;
        end 
        else begin
+	   //update state, status, x and y locations, and data available
            state <= next_state;		
-			  first_status <= next_first_status;
-			  second_status <= next_second_status;
-			  first_x_loc <= next_first_x_loc;
-			  second_x_loc <= next_second_x_loc;
-			  first_y_loc <= next_first_y_loc;
-			  second_y_loc <= next_second_y_loc;
-			  dav <= next_dav;
+	   first_status <= next_first_status;
+	   second_status <= next_second_status;
+	   first_x_loc <= next_first_x_loc;
+	   second_x_loc <= next_second_x_loc;
+	   first_y_loc <= next_first_y_loc;
+	   second_y_loc <= next_second_y_loc;
+	   dav <= next_dav;
        end
     end
     
-	 // next state and combinational logic
-	 // determine next state and output signals
+    //combinational logic
     always@(*) begin
-		  next_state = state;
-		  next_first_status = first_status;
-		  next_second_status = second_status;
-		  next_first_x_loc = first_x_loc;
-		  next_second_x_loc = second_x_loc;
-		  next_first_y_loc = first_y_loc;
-		  next_second_y_loc = second_y_loc;
-		  next_dav = 1'b0;
+	//defaults
+	next_state = state;
+	next_first_status = first_status;
+	next_second_status = second_status;
+	next_first_x_loc = first_x_loc;
+	next_second_x_loc = second_x_loc;
+	next_first_y_loc = first_y_loc;
+	next_second_y_loc = second_y_loc;
+	next_dav = 1'b0;
+	//state case statement
         case(state)
+	   //wait for first start byte
            WAIT_START_1: begin
+	      //receive data available
               if(rda) begin
+	         //go to read start 1 state
                  next_state = READ_START_1;
               end 
               else begin
+		 //stay in state
                  next_state = WAIT_START_1; 
               end
            end
-			  READ_START_1: begin
-				  if(data_in != 8'hBA)
-				     next_state = WAIT_START_1;
-				  else
-				     next_state = WAIT_START_2;
+	   //read first start byte
+	   READ_START_1: begin
+	      //not valid first start byte
+	      if(data_in != 8'hBA)
+		//go back to wait start 1 state
+		next_state = WAIT_START_1;
+	      else
+		//valid first start byte, go to wait start 2
+		next_state = WAIT_START_2;
            end
-			  WAIT_START_2: begin
+	   //wait for second start byte
+	   WAIT_START_2: begin
+              //receive data available
               if(rda) begin
+		 //go to read start 2 state
                  next_state = READ_START_2;
               end 
               else begin
+		 //stay in state
                  next_state = WAIT_START_2; 
               end
            end
-			  READ_START_2: begin
-				  if(data_in != 8'h11)
-				     next_state = WAIT_START_1;
-				  else
-				     next_state = WAIT_STATUS_1;
+	   //read second start byte
+	   READ_START_2: begin
+              //not valid second start byte
+	      if(data_in != 8'h11)
+		 //stay in state
+	         next_state = WAIT_START_1;
+	      else
+                 //valid second start byte, go to wait status 1
+		 next_state = WAIT_STATUS_1;
            end
-			  WAIT_STATUS_1: begin
+           //wait for first status byte
+	   WAIT_STATUS_1: begin
+	      //receive data available
               if(rda) begin
+                 //go to read status 1 state
                  next_state = READ_STATUS_1;
               end 
               else begin
+		 //stay in state
                  next_state = WAIT_STATUS_1; 
               end
            end
+           //read first status byte
            READ_STATUS_1: begin
-				  next_first_status = data_in;
-				  next_state = WAIT_STATUS_2;
+	      //read first status byte and go to wait status 2 state
+	      next_first_status = data_in;
+	      next_state = WAIT_STATUS_2;
            end
+           //wait for second status byte
            WAIT_STATUS_2: begin
+	      //receive data available
               if(rda) begin
+                 //go to read status 2 state
                  next_state = READ_STATUS_2;
               end 
               else begin
+                 //stay in state
                  next_state = WAIT_STATUS_2; 
               end
            end
+           //read second status byte
            READ_STATUS_2: begin
-				  next_second_status = data_in;
+              //read second status byte and go to wait x 1 state
+	      next_second_status = data_in;
               next_state = WAIT_X_1;
            end
+           //wait for first x movement byte
            WAIT_X_1: begin
+	      //receive data available
               if(rda) begin
+                 //go to read x 1 state
                  next_state = READ_X_1;
               end 
               else begin
+                 //stay in state
                  next_state = WAIT_X_1; 
               end
            end
+           //read first x movement byte
            READ_X_1: begin
-				  next_first_x_loc = data_in;
+	      //read first x movement byte and go to wait x 2 state
+	      next_first_x_loc = data_in;
               next_state = WAIT_X_2;
            end
+           //wait for second x movement byte
            WAIT_X_2: begin
+	      //receive data available
               if(rda) begin
+		 //go to read x 2 state
                  next_state = READ_X_2;
               end 
               else begin
+                 //stay in state
                  next_state = WAIT_X_2; 
               end
            end
+	   //read second x movement byte
            READ_X_2: begin
-				  next_second_x_loc = data_in;
+	      //read second x movement byte and go to wait y 1 state
+	      next_second_x_loc = data_in;
               next_state = WAIT_Y_1;
            end
+	   //wait for first y movement byte
            WAIT_Y_1: begin
+	      //receive data available
               if(rda) begin
+                 //go to read y 1 state
                  next_state = READ_Y_1;
               end 
               else begin
+                 //stay in state
                  next_state = WAIT_Y_1; 
               end
            end
+	   //read first y movement byte
            READ_Y_1: begin
-				  next_first_y_loc = data_in;
+	      //read first y movement byte and go to wait y 2 state
+	      next_first_y_loc = data_in;
               next_state = WAIT_Y_2;
            end
+           //wait for second y movement byte
            WAIT_Y_2: begin
+	      //receive data available	
               if(rda) begin
+	         //go to read y 2 state
                  next_state = READ_Y_2;
               end 
               else begin
+                 //stay in state
                  next_state = WAIT_Y_2; 
               end
            end
+	   //read second y movement byte
            READ_Y_2: begin
-					next_dav = 1'b1;
-					next_second_y_loc = data_in;
-               next_state = WAIT_START_1;
+	      //assert data available
+	      next_dav = 1'b1;
+              //read second y movement byte and go to wait start 1 state
+	      next_second_y_loc = data_in;
+              next_state = WAIT_START_1;
            end
        endcase
     end
