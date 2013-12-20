@@ -4,7 +4,7 @@ module CPU_Control(clk, rst, Stall, divReady, Instruct, NotBranchOrJump, WrRegEn
 				SetFlagE, AOp, ZeroB, FlagMux, WrMemEn, MemToReg, RsForwardSel, RtForwardSel,
 				ForwardRs, ForwardRt, FetchStall, BJForwardSel, Halt, StoreDataForward, 
 				StoreDataForwardSel, BranchOrJumpRegForwardRs, StoreImmed, ReadMem);
-//ForwardRsDecode, ForwardRtDecode
+
 input clk, rst, divReady;
 input[15:0] Instruct;
 
@@ -29,6 +29,7 @@ assign FetchStall = BranchOrJumpRegForwardRsWithStall;
 reg [15:0] i2, i3, i4, i5, i6;
 parameter NOP = 16'b1110100000000000;
 
+//a pipeline of instructions.  i2 = decode, i3 = execute...
 always @ (posedge clk, posedge rst) begin
 	if(rst) begin
 		i2 <= NOP;
@@ -75,6 +76,7 @@ reg ValidDest4, ValidDest5, ValidDest6;
 reg [2:0] Dest4, Dest5, Dest6;
 wire [1:0] ChooseDest;
 
+//forwarding logic to match destinations with operands
 always @ (posedge clk, posedge rst) begin
 	if(rst) begin
 		ValidDest4 <= 1'b0;
@@ -102,6 +104,7 @@ always @ (posedge clk, posedge rst) begin
 	end
 end
 
+//logic to stall the processor for one cycle on a mem load
 always @(posedge clk or posedge rst) begin
 	if (rst) begin
 		StallReg <= 1'b0;		
@@ -113,6 +116,7 @@ end
 assign ReadMem = MemLoadDetect ^ StallReg;
 assign Stall = ReadMem | divStall;
 
+//logic to stall the processor on a division operation
 always @(posedge clk or posedge rst) begin
 	if (rst) begin
 		divStallCount <= 1'b0;		
@@ -128,6 +132,7 @@ assign changeDivStall = divStallCount & divReady;
 assign divStall = tempDivStall ^ changeDivStall;
 
 
+//control signal logic
 assign NotBranchOrJump = !((i2[15] & !i2[14] & i2[13]) | (i2[15] & i2[14] & !i2[13]));
 assign SignExtSel[0] = (i2[15:13] == 3'b011) | (i2[15:13] == 3'b101) | (i2[15] & i2[14] & !i2[13] & i2[11]);
 assign SignExtSel[1] = (i2[15:12] == 4'b0111) | (i2[15:11] == 5'b01101) | (i2[15] & i2[14] & !i2[13] & !i2[11]);
@@ -163,6 +168,7 @@ assign WrRegAddr = (WrMuxSel == 2'b00) ? i6[7:5] :
 					  (WrMuxSel == 2'b10) ? i6[10:8] :
 					  (WrMuxSel == 2'b11) ? 3'd7 : 3'bzzz;
 
+//logic for branch and jump control signals
 assign BranchOrJumpRegForwardRsEnable = (i2[15:13] == 3'b101) | ((i2[15:13] == 3'b110) & i2[11]);
 
 assign BranchOrJumpRegForwardRsWithStall = BranchOrJumpRegForwardRsEnable &
@@ -177,9 +183,10 @@ assign BJForwardSel = (BranchOrJumpRegForwardRs & ValidDest4 & (i2[10:8] == Dest
 					  (BranchOrJumpRegForwardRs & ValidDest5 & (i2[10:8] == Dest5)) ? 2'b10 :
 					  2'b11;
 
+//logic to decide whether to forward data or not
 assign ValidDest = !((i3[15:11] == 5'b01110) | (i3[15] & !i3[14] & i3[13]) | (i3[15:12] == 4'b1100) | 
 					   (i3[15:12] == 4'b1110) | (i3[15:11] == 5'b11110));
-//NEED TO FIX!!!!!
+
 assign ChooseDest[0] = !(!i3[15] | (&i3[15:11]));
 assign ChooseDest[1] = (i3[15:13] == 3'b011) | (i3[15:12] == 4'b1101);
 
@@ -209,7 +216,7 @@ assign RtForwardSel = (ValidDest4 & (i3[7:5] == Dest4) & (&i4[14:11])) ? 2'b01:
 					  (ValidDest5 & (i3[7:5] == Dest5)) ? 2'b10 :
 					  (ValidDest6 & (i3[7:5] == Dest6)) ? 2'b11 : 2'b00;
 
-
+//logic to forward data to be stored
 assign StoreDataForwardEnable = i4[14:11] == 4'b1110;
 assign StoreDataForward = StoreDataForwardEnable & (i4[15] ? ((ValidDest5 & (i4[7:5] == Dest5)) |
 									(ValidDest6 & (i4[7:5] == Dest6))) :
@@ -217,7 +224,7 @@ assign StoreDataForward = StoreDataForwardEnable & (i4[15] ? ((ValidDest5 & (i4[
 									(ValidDest6 & (i4[10:8] == Dest6))));
 assign StoreDataForwardSel = ValidDest5 & ((i4[15] & (i4[7:5] == Dest5)) | (!i4[15] & (i4[10:8] == Dest5)));
 
-
+//ALU ops
 always @ (i3) begin
    casez({i3[15:11], i3[1:0]})
 	   7'b00010zz: ALUOp = 3'b010;
