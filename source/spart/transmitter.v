@@ -1,5 +1,13 @@
 //transmits data serially
-module transmitter(output TxD, output reg TBR, input [7:0] trans_buff, input clk, rst, txEnable, trans_load);
+module transmitter(
+	output TxD, 				//output serial data
+	output reg TBR, 			//transmit buffer ready
+	input [7:0] trans_buff, 		//data to transmit
+	input clk, 				//system clock
+	input rst, 				//system reset
+	input txEnable, 			//transmit enable
+	input trans_load			//load data to transmit
+);
   
   reg [7:0] trans_buff_hold;			// hold the data to transmit
   reg[3:0] state, next_state;			// state and next state
