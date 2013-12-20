@@ -1,8 +1,7 @@
 //generators transmit signals at baud rate
-module write_baud_generator(clk, rst, txEnable);
-    
-    input rst, clk;				// inputs 
-	 output reg txEnable;
+module write_baud_generator(
+	input rst, clk;				// inputs 
+	output reg txEnable;			//transmit enable signal
     reg [15:0] counter;					// counter to decrement
     reg [3:0] txCount;					// count for baud rate signal
 	 reg rxEnable;
